@@ -1,17 +1,23 @@
 import os
 import requests
+from dotenv import load_dotenv
+from utils.config import tenantId
+
+# Load environment variables from .env file
+load_dotenv()
 
 def get_auth_token(service: str):
     url = os.getenv("BASE_URL") + "/user/oauth/token"
+    print("URL ", url)
 
     # Build dynamic payload based on service (role)
     payload = {
-        "username": os.getenv(f"{service.upper()}_USERNAME"),
-        "password": os.getenv(f"{service.upper()}_PASSWORD"),
+        "username": os.getenv("USERNAME"),
+        "password": os.getenv("PASSWORD"),
         "grant_type": "password",
         "scope": "read",
-        "tenantId": os.getenv(f"{service.upper()}_TENANTID"),
-        "userType": os.getenv(f"{service.upper()}_USERTYPE")
+        "tenantId": tenantId,
+        "userType": os.getenv("USERTYPE")
     }
 
     headers = {
@@ -22,6 +28,4 @@ def get_auth_token(service: str):
 
     response = requests.post(url, data=payload, headers=headers)
     assert response.status_code == 200, f"Auth failed: {response.text}"
-
-    token = response.json().get("access_token")
-    return token
+    return response.json().get("access_token")

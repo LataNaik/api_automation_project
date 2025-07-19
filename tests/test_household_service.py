@@ -2,7 +2,7 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import tenantId
+from utils.config import tenantId, search_limit, search_offset, boundaryCode
 import uuid
 import json
 
@@ -15,7 +15,8 @@ def test_create_household():
 
     # Generate dynamic IDs
     payload["Household"]["clientReferenceId"] = str(uuid.uuid4())
-    payload["Household"]["address"]["clientReferenceId"] = str(uuid.uuid4())    
+    payload["Household"]["address"]["clientReferenceId"] = str(uuid.uuid4())  
+    payload["Household"]["address"]["locality"]["code"]=boundaryCode
 
     # Inject RequestInfo manually
     payload["RequestInfo"] = get_request_info(token)
@@ -39,44 +40,42 @@ def test_create_household():
 
 
 def test_search_household_by_id():
-    token = get_auth_token("user")  # Or the relevant service role
-    client = APIClient("user")  # Injects token automatically
-    # Read the text file and extract Household ID
+    token = get_auth_token("user")
+    client = APIClient("user")
+
+    # Extract Household ID from file
     with open("output/data.txt", "r") as f:
         lines = f.readlines()
 
-    # Initialize variable
-    householdId = None
+    householdId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Household ID:")), None)
+    assert householdId, "Household ID not found in file"
 
-    # Loop through lines and extract the ID from the label
-    for line in lines:
-        if line.startswith("Household ID:"):
-            householdId = line.split("Household ID:")[1].strip()
-
-    # Use householdId in your next request
     # print("Extracted Household ID:", householdId)
 
-     # Load payload and manually insert dynamic RequestInfo
+    # Load payload and inject dynamic data
     payload = load_payload("household", "search_household.json")
-    
-     # Generate dynamic IDs
-    payload["Household"]["id"] = [householdId] 
-
-    # Query parameters
-    # params = {
-    #     "limit": 200,
-    #     "offset": 0,
-    #     "tenantId": "mz"
-    # }
-
-    # Inject RequestInfo manually
+    payload["Household"]["id"] = [householdId]
     payload["RequestInfo"] = get_request_info(token)
 
-    res = client.post("/household/v1/_search?limit=200&offset=0&tenantId=mz", payload)
-            # Save full response
+    # Build dynamic query parameters
+    params = {
+        "limit": search_limit,
+        "offset": search_offset,
+        "tenantId": tenantId
+    }
+
+    # Build query string from params
+    query_string = "&".join(f"{k}={v}" for k, v in params.items())
+    url = f"/household/v1/_search?{query_string}"
+
+    res = client.post(url, payload)
+
+    # Save response
     with open("output/response.json", "w") as f:
         json.dump(res.json(), f, indent=2)
-    assert res.status_code == 200
+
+    assert res.status_code == 200, f"Search failed: {res.text}"
     household_data = res.json().get("Households", [])
-    # assert any(h["id"] == householdId for h in household_data), "Household not found"
-    assert householdId.strip() in [h["id"].strip() for h in household_data], "Household not found"
+    assert householdId in [h["id"] for h in household_data], "Household not found"
+
+
