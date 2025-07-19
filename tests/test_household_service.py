@@ -2,7 +2,7 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import tenantId, search_limit, search_offset, boundaryCode
+from utils.config import tenantId, search_params, boundaryCode
 import uuid
 import json
 
@@ -30,6 +30,7 @@ def test_create_household():
     householdAddressObject = response_data["Household"]["address"]
 
     with open("output/data.txt", "w") as f:
+        f.write("\n--- Household details ---\n")
         f.write(f"Household ID: {householdId}\n")
         f.write(f"Client Reference ID: {householdClientReferenceId}\n")
         f.write(f"Household Address: {householdAddressObject}\n")
@@ -50,22 +51,15 @@ def test_search_household_by_id():
     householdId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Household ID:")), None)
     assert householdId, "Household ID not found in file"
 
-    # print("Extracted Household ID:", householdId)
+    print("Extracted Household ID:", householdId)
 
     # Load payload and inject dynamic data
     payload = load_payload("household", "search_household.json")
     payload["Household"]["id"] = [householdId]
     payload["RequestInfo"] = get_request_info(token)
 
-    # Build dynamic query parameters
-    params = {
-        "limit": search_limit,
-        "offset": search_offset,
-        "tenantId": tenantId
-    }
-
     # Build query string from params
-    query_string = "&".join(f"{k}={v}" for k, v in params.items())
+    query_string = "&".join(f"{k}={v}" for k, v in search_params.items())
     url = f"/household/v1/_search?{query_string}"
 
     res = client.post(url, payload)

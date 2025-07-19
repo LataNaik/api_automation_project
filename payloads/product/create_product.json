@@ -1,0 +1,26 @@
+{
+    "Product": [
+        {
+            "tenantId": "mz",
+            "type": "DRUG",
+            "name": "SP",
+            "manufacturer": "Generic",
+            "additionalFields": {
+                "schema": "test_3e1c7976b4d6",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "form",
+                        "value": "tablet"
+                    }
+                ]
+            },
+            "isDeleted": false,
+            "clientAuditDetails": {
+                "createdTime": 1752736682466,
+                "lastModifiedTime": 1752736682466
+            }
+        }
+    ],
+    "apiOperation": "CREATE"
+}
