@@ -17,3 +17,9 @@ if not BASE_URL:
 
 print("Loaded BASE_URL:", BASE_URL)
 
+# Define reusable params dict
+search_params = {
+    "limit": search_limit,
+    "offset": search_offset,
+    "tenantId": tenantId
+}
