@@ -8,7 +8,7 @@ load_dotenv()
 
 def get_auth_token(service: str):
     url = os.getenv("BASE_URL") + "/user/oauth/token"
-    print("URL ", url)
+    # print("URL ", url)
 
     # Build dynamic payload based on service (role)
     payload = {
