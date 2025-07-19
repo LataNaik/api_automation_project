@@ -22,7 +22,7 @@ def test_create_product():
 
     print("Newly created Product Id:", productId)
 
-    with open("output/data.txt", "a") as f:
+    with open("output/ids.txt", "a") as f:
         f.write("\n--- Product details ---\n")
         f.write(f"Product ID: {productId}\n")
 
@@ -32,7 +32,7 @@ def test_search_product():
     client = APIClient(token=token)  # Use the token once
 
     # Extract Household ID from file
-    with open("output/data.txt", "r") as f:
+    with open("output/ids.txt", "r") as f:
         lines = f.readlines()
     
     productId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Product ID:")), None)

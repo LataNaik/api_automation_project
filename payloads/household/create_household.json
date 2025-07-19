@@ -11,7 +11,7 @@
       "version": 1,
       "fields": [
         { "key": "houseStructureTypes", "value": "GLASS" },
-        { "key": "noOfRooms", "value": 12 },
+        { "key": "noOfRooms", "value": 1 },
         { "key": "pregnantWomen", "value": 1 },
         { "key": "children", "value": 3 },
         { "key": "latitude", "value": 12.9716 },

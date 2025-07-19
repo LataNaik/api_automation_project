@@ -5,10 +5,17 @@ from utils.request_info import get_request_info
 from utils.config import search_params, boundaryCode
 import uuid
 import json
+import random
+
+# Load the values from JSON file
+with open("data/inputs.json", "r") as f:
+    structure_data = json.load(f)
 
 def test_create_household():
     token = get_auth_token("user")
     client = APIClient(token=token)  # Use the token once
+
+    selected_type = random.choice(structure_data["houseStructureTypes"])
 
     # Load payload and manually insert dynamic RequestInfo
     payload = load_payload("household", "create_household.json")
@@ -17,6 +24,7 @@ def test_create_household():
     payload["Household"]["clientReferenceId"] = str(uuid.uuid4())
     payload["Household"]["address"]["clientReferenceId"] = str(uuid.uuid4())  
     payload["Household"]["address"]["locality"]["code"]=boundaryCode
+    payload["Household"]["additionalFields"]["fields"][0]["value"] = selected_type
 
     # Inject RequestInfo manually
     payload["RequestInfo"] = get_request_info(token)
@@ -28,10 +36,9 @@ def test_create_household():
     householdId = response_data["Household"]["id"]
     householdClientReferenceId = response_data["Household"]["clientReferenceId"]
     householdAddressObject = response_data["Household"]["address"]
-
     print("Newly created Houseld Id:", householdId)
 
-    with open("output/data.txt", "w") as f:
+    with open("output/ids.txt", "w") as f:
         f.write("\n--- Household details ---\n")
         f.write(f"Household ID: {householdId}\n")
         f.write(f"Client Reference ID: {householdClientReferenceId}\n")
@@ -47,7 +54,7 @@ def test_search_household_by_id():
     client = APIClient(token=token)  # Use the token once
 
     # Extract Household ID from file
-    with open("output/data.txt", "r") as f:
+    with open("output/ids.txt", "r") as f:
         lines = f.readlines()
 
     householdId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Household ID:")), None)
