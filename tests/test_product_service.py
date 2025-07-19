@@ -2,12 +2,12 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import tenantId, search_params
+from utils.config import search_params
 
 
 def test_create_product():
-    token = get_auth_token("user")  # Or the relevant service role
-    client = APIClient("user")  # Injects token automatically
+    token = get_auth_token("user")
+    client = APIClient(token=token)  # Use the token once
 
     # Load payload and manually insert dynamic RequestInfo
     payload = load_payload("product", "create_product.json")
@@ -20,6 +20,8 @@ def test_create_product():
     response_data = res.json()
     productId = response_data["Product"][0]["id"]
 
+    print("Newly created Product Id:", productId)
+
     with open("output/data.txt", "a") as f:
         f.write("\n--- Product details ---\n")
         f.write(f"Product ID: {productId}\n")
@@ -27,7 +29,7 @@ def test_create_product():
 
 def test_search_product():
     token = get_auth_token("user")
-    client = APIClient("user")
+    client = APIClient(token=token)  # Use the token once
 
     # Extract Household ID from file
     with open("output/data.txt", "r") as f:

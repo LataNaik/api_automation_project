@@ -2,13 +2,13 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import tenantId, search_params, boundaryCode
+from utils.config import search_params, boundaryCode
 import uuid
 import json
 
 def test_create_household():
-    token = get_auth_token("user")  # Or the relevant service role
-    client = APIClient("user")  # Injects token automatically
+    token = get_auth_token("user")
+    client = APIClient(token=token)  # Use the token once
 
     # Load payload and manually insert dynamic RequestInfo
     payload = load_payload("household", "create_household.json")
@@ -29,6 +29,8 @@ def test_create_household():
     householdClientReferenceId = response_data["Household"]["clientReferenceId"]
     householdAddressObject = response_data["Household"]["address"]
 
+    print("Newly created Houseld Id:", householdId)
+
     with open("output/data.txt", "w") as f:
         f.write("\n--- Household details ---\n")
         f.write(f"Household ID: {householdId}\n")
@@ -42,7 +44,7 @@ def test_create_household():
 
 def test_search_household_by_id():
     token = get_auth_token("user")
-    client = APIClient("user")
+    client = APIClient(token=token)  # Use the token once
 
     # Extract Household ID from file
     with open("output/data.txt", "r") as f:
