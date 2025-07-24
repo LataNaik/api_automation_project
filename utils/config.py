@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)  # This forces reloading of updated values
 
 BASE_URL = os.getenv("BASE_URL")
 tenantId = os.getenv("TENANTID", "mz")
@@ -14,8 +14,6 @@ boundaryCode = os.getenv("BOUNDARY_CODE")
 if not BASE_URL:
     raise ValueError("BASE_URL not found in .env")
 
-
-print("Loaded BASE_URL:", BASE_URL)
 
 # Define reusable params dict
 search_params = {

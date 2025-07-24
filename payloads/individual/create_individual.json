@@ -1,0 +1,88 @@
+{
+    "Individual": {
+        "tenantId": "mz",
+        "clientReferenceId": "92d31c1d-e0c9-45d0-960f-bde9f5800038",
+        "name": {
+            "givenName": "Moussa ",
+            "familyName": "Khumalo"
+        },
+        "dateOfBirth": "10/2/2024",
+        "gender": "MALE",
+        "bloodGroup": "B-",
+        "mobileNumber": "8908098919",
+        "altContactNumber": "9999999999",
+        "email": "souravganguly_dada@gmail.com",
+        "address": [
+            {
+                "clientReferenceId": "94abde69-c140-4c35-b7f7-1678450e0b67",
+                "tenantId": "mz",
+                "doorNo": "123",
+                "latitude": 12.938808,
+                "longitude": 77.6379754,
+                "locationAccuracy": 11.27,
+                "type": "PERMANENT",
+                "addressLine1": "Apartment",
+                "addressLine2": "2nd Floor",
+                "landmark": "Near Juhu Beach",
+                "district": "MURRUPULA",
+                "city": "Mumbai",
+                "pincode": "123456",
+                "buildingName": "Apartment",
+                "boundaryType": "Aldeia",
+                "street": "Necklace Road",
+                "locality": {
+                    "code": "MICROPLAN_MO_01_01_02_01_21_LIPIRANI",
+                    "name": "test_58630a388978",
+                    "label": "test_7b7f928dcab8",
+                    "latitude": 12.938808,
+                    "longitude": 77.6379754,
+                    "children": []
+                }
+            }
+        ],
+        "fatherName": "Ganguly Sr",
+        "husbandName": null,
+        "identifiers": [
+            {
+                "id": "2dd5390e-559c-42f7-a8e0-68f12f7ed19f",
+                "clientReferenceId": "c31b324e-7cc0-4f33-b15f-428fd5b2e06d",
+                "identifierType": "SYSTEM_GENERATED",
+                "identifierId": "a8c7b5c5-6007-4556-945e-3969c98b5167"
+            }
+        ],
+        "skills": [
+            {
+                "type": "Dancing",
+                "level": "Expert",
+                "experience": "2 Years",
+                "clientReferenceId": "5f85ddfc-d5a5-4702-a401-243515a183e6"
+            }
+        ],
+        "photo": "test_35bd4e8545d8",
+        "additionalFields": {
+            "schema": "test_f76b4cca6bff",
+            "version": 23,
+            "fields": [
+                {
+                    "key": "test_80f7fb8d8a45",
+                    "value": "test_38bfd0dc223b"
+                }
+            ]
+        },
+        "isSystemUser": false,
+        "rowVersion": 1,
+        "nonRecoverableError": false,
+        "clientAuditDetails": {
+            "createdBy": "3c3737c7-cbea-4d22-a4fc-f64826b3a67b",
+            "lastModifiedBy": "e3073a4d-d96c-48d9-935c-0b5d5c6a18c8",
+            "createdTime": 1752755087878,
+            "lastModifiedTime": 1752755087878
+        },
+        "auditDetails": {
+            "createdBy": "a8c7b5c5-6007-4556-945e-3969c98b5155",
+            "lastModifiedBy": "a8c7b5c5-6007-4556-945e-3969c98b5155",
+            "createdTime": 1752755087878,
+            "lastModifiedTime": 1752755087878
+        }
+    }
+}
