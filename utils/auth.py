@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from utils.config import tenantId
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)  # This forces reloading of updated values
 
 def get_auth_token(service: str):
     url = os.getenv("BASE_URL") + "/user/oauth/token"

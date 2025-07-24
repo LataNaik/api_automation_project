@@ -36,7 +36,7 @@ def test_create_household():
     householdId = response_data["Household"]["id"]
     householdClientReferenceId = response_data["Household"]["clientReferenceId"]
     householdAddressObject = response_data["Household"]["address"]
-    print("Newly created Houseld Id:", householdId)
+    print("Newly created Household Id:", householdId)
 
     with open("output/ids.txt", "w") as f:
         f.write("\n--- Household details ---\n")
