@@ -1,0 +1,20 @@
+{
+    "HouseholdMember": {
+        "tenantId": "mz",
+        "status": "active",
+        "source": "in dolore cupidatat anim",
+        "applicationId": "Duis cillum eu ipsum",
+        "hasErrors": false,
+        "clientReferenceId": "f70bce72-7a1f-4c31-85a5-73e0a4f62458",
+        "householdId": "",
+        "householdClientReferenceId": "",
+        "individualId": "",
+        "individualClientReferenceId": "",
+        "clientAuditDetails": {
+            "createdBy": "8f23a559-7743-4223-9cb1-e7a6402536fb",
+            "lastModifiedBy": "f7e3ac0e-ccb9-4c78-8232-8fbb0fa0e9f5",
+            "createdTime": 1753369393010,
+            "lastModifiedTime": 1753369393010
+        }
+    }
+}
