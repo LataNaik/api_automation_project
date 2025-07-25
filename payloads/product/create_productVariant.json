@@ -1,0 +1,21 @@
+{
+    "ProductVariant": [
+        {
+            "tenantId": "mz",
+            "productId": "P-2025-07-25-000520",
+            "sku": "Bednet",
+            "variation": "Grade 1",
+            "additionalFields": {
+                "schema": "test",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "weight",
+                        "value": "100g"
+                    }
+                ]
+            }
+        }
+    ],
+    "apiOperation": "CREATE"
+}

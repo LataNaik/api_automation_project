@@ -2,57 +2,100 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import search_params
+from utils.search_helpers import search_entity, extract_id_from_file
 
+
+# --- Test functions ---
 
 def test_create_product():
     token = get_auth_token("user")
-    client = APIClient(token=token)  # Use the token once
+    client = APIClient(token=token)
 
-    # Load payload and manually insert dynamic RequestInfo
-    payload = load_payload("product", "create_product.json")
+    res = create_product(token, client)
+    assert res.status_code in [200, 202], f"Product creation failed: {res.text}"
 
-    # Inject RequestInfo manually
-    payload["RequestInfo"] = get_request_info(token)
-    res = client.post("/product/v1/_create", payload)
-    assert res.status_code in [200, 202], f"Unexpected response: {res.text}"
-
-    response_data = res.json()
-    productId = response_data["Product"][0]["id"]
-
-    print("Newly created Product Id:", productId)
+    productId = res.json()["Product"][0]["id"]
+    assert productId, "Product ID not found in response"
+    print("Product created with ID:", productId)
 
     with open("output/ids.txt", "a") as f:
         f.write("\n--- Product details ---\n")
         f.write(f"Product ID: {productId}\n")
 
 
+def test_create_product_variant():
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    variant_res = create_product_variant(token, client)
+    assert variant_res.status_code in [200, 202], f"Variant creation failed: {variant_res.text}"
+
+    variantId = variant_res.json()["ProductVariant"][0]["id"]
+    assert variantId, "Variant ID was not created"
+    print("Product Variant created with ID:", variantId)
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Product Variant details ---\n")
+        f.write(f"Variant ID: {variantId}\n")
+
+
 def test_search_product():
     token = get_auth_token("user")
-    client = APIClient(token=token)  # Use the token once
+    client = APIClient(token=token)
 
-    # Extract Household ID from file
-    with open("output/ids.txt", "r") as f:
-        lines = f.readlines()
-    
-    productId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Product ID:")), None)
+    productId = extract_id_from_file("Product ID:")
     assert productId, "Product ID not found in file"
 
-    print("Extracted Product ID:", productId)
+    products = search_entity(
+        entity_type="product",
+        token=token,
+        client=client,
+        entity_id=productId,
+        payload_file="search_product.json",
+        endpoint="/product/v1/_search",
+        response_key="Product"
+    )
 
-    # Load payload and inject dynamic data
-    payload = load_payload("product", "search_product.json")
-    payload["Product"]["id"] = [productId]
+    assert productId in [p["id"] for p in products], "Product not found"
+    print("Product found with ID:", productId)
+
+
+def test_search_product_variant():
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    variantId = extract_id_from_file("Variant ID:")
+    assert variantId, "Variant ID not found in file"
+
+    variants = search_entity(
+        entity_type="product",
+        token=token,
+        client=client,
+        entity_id=variantId,
+        payload_file="search_productVariant.json",
+        endpoint="/product/variant/v1/_search",
+        response_key="ProductVariant"
+    )
+
+    assert variantId in [v["id"] for v in variants], "Product Variant not found"
+    print("Product Variant found with ID:", variantId)
+
+
+# --- Reusable Functions ---
+
+def create_product(token, client):
+    payload = load_payload("product", "create_product.json")
     payload["RequestInfo"] = get_request_info(token)
+    return client.post("/product/v1/_create", payload)
 
 
-    # Build query string from params
-    query_string = "&".join(f"{k}={v}" for k, v in search_params.items())
-    url = f"/product/v1/_search?{query_string}"
-    res = client.post(url, payload)
+def create_product_variant(token, client):
+    product_res = create_product(token, client)
+    assert product_res.status_code in [200, 202], f"Product creation for variant failed: {product_res.text}"
 
-    assert res.status_code == 200, f"Search failed: {res.text}"
-    product_data = res.json().get("Product", [])
-    assert productId in [h["id"] for h in product_data], "Product not found"
+    productId = product_res.json()["Product"][0]["id"]
 
-
+    payload = load_payload("product", "create_productVariant.json")
+    payload["ProductVariant"][0]["productId"] = productId
+    payload["RequestInfo"] = get_request_info(token)
+    return client.post("/product/variant/v1/_create", payload)

@@ -1,37 +1,25 @@
 from utils.api_client import APIClient
-from utils.data_loader import load_payload
 from utils.auth import get_auth_token
+from utils.data_loader import load_payload
 from utils.request_info import get_request_info
-from utils.config import search_params, boundaryCode
+from utils.search_helpers import search_entity, extract_id_from_file
+from utils.config import boundaryCode, search_params
 import uuid
 import json
 
 
+# --- Test functions ---
+
 def test_create_individual():
     token = get_auth_token("user")
-    client = APIClient(token=token)  # Use the token once
+    client = APIClient(token=token)
 
-    # Load payload and manually insert dynamic RequestInfo
-    payload = load_payload("individual", "create_individual.json")
-
-    # Generate dynamic IDs
-    payload["Individual"]["clientReferenceId"] = str(uuid.uuid4())
-    payload["Individual"]["address"][0]["clientReferenceId"] = str(uuid.uuid4())  
-    payload["Individual"]["address"][0]["locality"]["code"]=boundaryCode
-    payload["Individual"]["identifiers"][0]["clientReferenceId"]=str(uuid.uuid4())
-    payload["Individual"]["skills"][0]["clientReferenceId"]=str(uuid.uuid4())
+    individualId, individualClientReferenceId, individualIndId, status_code  = create_individual(token, client)
     
-    # Inject RequestInfo manually
-    payload["RequestInfo"] = get_request_info(token)
+    # Assertion in test
+    assert status_code in [200, 202], f"Individual creation failed: {status_code}"
 
-    res = client.post("/individual/v1/_create", payload)
-    assert res.status_code in [200, 202], f"Unexpected response: {res.text}"
-
-    response_data = res.json()
-    individualId = response_data["Individual"]["id"]
-    individualClientReferenceId = response_data["Individual"]["clientReferenceId"]
-    individualIndId = response_data["Individual"]["individualId"]
-    print("Newly created Individual Id:", individualId)
+    print("Individual created with ID:", individualId)
 
     with open("output/ids.txt", "a") as f:
         f.write("\n--- Individual details ---\n")
@@ -39,41 +27,50 @@ def test_create_individual():
         f.write(f"Individual Client Reference ID: {individualClientReferenceId}\n")
         f.write(f"Individual Ind ID: {individualIndId}\n")
 
-    # Save full response
-    with open("output/response.json", "w") as f:
-        json.dump(res.json(), f, indent=2)
 
-
-def test_search_individual_by_id():
+def test_search_individual():
     token = get_auth_token("user")
-    client = APIClient(token=token)  # Use the token once
+    client = APIClient(token=token)
 
-    # Extract Individual ID from file
-    with open("output/ids.txt", "r") as f:
-        lines = f.readlines()
-
-    individualId = next((line.split(":", 1)[1].strip() for line in lines if line.startswith("Individual ID:")), None)
+    individualId = extract_id_from_file("Individual ID:")
     assert individualId, "Individual ID not found in file"
 
-    print("Extracted Individual ID:", individualId)
+    individuals = search_entity(
+        entity_type="individual",
+        token=token,
+        client=client,
+        entity_id=individualId,
+        payload_file="search_individual.json",
+        endpoint=f"/health-individual/v1/_search",
+        response_key="Individual"
+    )
 
-    # Load payload and inject dynamic data
-    payload = load_payload("individual", "search_individual.json")
-    payload["Individual"]["id"] = [individualId]
+    assert individualId in [i["id"] for i in individuals], "Individual not found"
+    print("Individual found with ID:", individualId)
+
+
+# --- Helper function (no assertion) ---
+def create_individual(token, client):
+    payload = load_payload("individual", "create_individual.json")
+
+    # Inject dynamic values
+    payload["Individual"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["address"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["address"][0]["locality"]["code"] = boundaryCode
+    payload["Individual"]["identifiers"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["RequestInfo"] = get_request_info(token)
 
-    # Build query string from params
-    query_string = "&".join(f"{k}={v}" for k, v in search_params.items())
-    url = f"/individual/v1/_search?{query_string}"
+    response = client.post("/health-individual/v1/_create", payload)
+    # Handle error if status is not success
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household creation failed with status {response.status_code}: {response.text}")
 
-    res = client.post(url, payload)
+    individual_data = response.json()["Individual"]
+    individual_id = individual_data["id"]
+    individual_client_reference_id = individual_data["clientReferenceId"]
+    individual_ind_id = individual_data["individualId"]
 
-    # Save response
-    with open("output/response.json", "w") as f:
-        json.dump(res.json(), f, indent=2)
-
-    assert res.status_code == 200, f"Search failed: {res.text}"
-    individual_data = res.json().get("Individual", [])
-    assert individualId in [h["id"] for h in individual_data], "Individual not found"
-
+    # Return all desired values including status_code
+    return individual_id, individual_client_reference_id, individual_ind_id, response.status_code
 
