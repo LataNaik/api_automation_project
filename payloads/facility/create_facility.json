@@ -1,0 +1,44 @@
+{
+    "Facility": {
+        "clientReferenceId": "a536d189-38a8-4dcf-ab42-8b63341f1867",
+        "tenantId": "mz",
+        "isPermanent": "true",
+        "name": "Facility Storage Konobo",
+        "usage": "Storing Resource",
+        "storageCapacity": 200,
+        "address": {
+            "tenantId": "mz",
+            "doorNo": "123",
+            "latitude": 12.34,
+            "longitude": 123.45,
+            "locationAccuracy": 123.76,
+            "type": "PERMANENT",
+            "addressLine1": "Alpine Apartments",
+            "addressLine2": "Road Number 12",
+            "landmark": "Near Niagara Lake",
+            "city": "Bangalore",
+            "pincode": "1234567",
+            "buildingName": "Alpine Apartments",
+            "street": "test_da0b8ebec5ef",
+            "locality": {
+                "code": "MICROPLAN_MO_13_03_KONOBO",
+                "name": "mz"
+            }
+        },
+        "additionalFields": {
+            "schema": "test_e37466be924cjhghjg",
+            "version": 8,
+            "fields": [
+                {
+                    "key": "test_12bc5f24692f",
+                    "value": "test_bf376bce4c01"
+                }
+            ]
+        },
+        "rowVersion": 0,
+        "clientAuditDetails": {
+            "createdTime": 1692774209,
+            "lastModifiedTime": 1692774209
+        }
+    }
+}
