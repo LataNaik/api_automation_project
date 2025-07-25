@@ -12,3 +12,7 @@ pytest tests/ --html=reports/report.html --self-contained-html
 pytest --alluredir=allure-results
 allure generate allure-results --clean -o allure-report
 allure open allure-report
+
+
+#clears data from ids.txt file and runs new test
+echo "=== New Test Run ===" > output/ids.txt && pytest tests/ --html=reports/report.html --self-contained-html
