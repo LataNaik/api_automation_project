@@ -1,0 +1,8 @@
+{
+    "MdmsCriteria": {
+        "tenantId": "mz",
+        "offset":0,
+        "limit": 100,
+        "schemaCode": "HCM-PROJECT-TYPES.projectTypes"
+    }
+}
