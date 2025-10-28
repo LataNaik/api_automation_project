@@ -15,6 +15,8 @@
             "lastModifiedBy": "f7e3ac0e-ccb9-4c78-8232-8fbb0fa0e9f5",
             "createdTime": 1753369393010,
             "lastModifiedTime": 1753369393010
-        }
+        },
+         "isHeadOfHousehold": true,
+        "isDeleted": false
     }
 }
