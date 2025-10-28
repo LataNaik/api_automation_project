@@ -8,7 +8,7 @@ tenantId = os.getenv("TENANTID", "mz")
 
 search_limit = os.getenv("SEARCH_LIMIT", "100")
 search_offset = os.getenv("SEARCH_OFFSET", "0")
-
+hierarchyType = os.getenv("HIERARCHYTYPE")
 boundaryCode = os.getenv("BOUNDARY_CODE")
 boundaryType=os.getenv("BOUNDARY_TYPE")
 
@@ -23,5 +23,6 @@ search_params = {
     "tenantId": tenantId
 }
 
-
-    
+individual=os.getenv("SERVICE_INDIVIDUAL")
+project=os.getenv("SERVICE_PROJECT")
+mdms=os.getenv("SERVICE_MDMS")

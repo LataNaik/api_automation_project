@@ -1,0 +1,31 @@
+ {
+   "RequestInfo": {
+     "apiId": "hcm",
+     "ver": ".01",
+     "ts": 1717570385903,
+     "action": "_search",
+     "did": "1",
+     "key": "1",
+     "authToken": "{{authToken}}",
+     "userInfo": {
+       "id": 6128,
+       "uuid": "5fcff5f5-0c0c-445a-af09-a18d958a26ae",
+       "userName": "DIST",
+       "name": "Distributor",
+       "mobileNumber": "5610999988",
+       "emailId": null,
+       "locale": null,
+       "active": true,
+       "tenantId": "mz",
+       "permanentCity": null,
+       "gender": null,
+       "roles": [
+         {
+           "name": "Distributor",
+           "code": "DISTRIBUTOR",
+           "tenantId": "mz"
+         }
+       ]
+     }
+   }
+ }

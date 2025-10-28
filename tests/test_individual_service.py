@@ -3,7 +3,7 @@ from utils.auth import get_auth_token
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import boundaryCode, search_params
+from utils.config import boundaryCode, individual
 import uuid
 import json
 
@@ -41,7 +41,7 @@ def test_search_individual():
         client=client,
         entity_id=individualId,
         payload_file="search_individual.json",
-        endpoint=f"/health-individual/v1/_search",
+        endpoint=f"/{individual}/v1/_search",
         response_key="Individual"
     )
 
@@ -60,8 +60,9 @@ def create_individual(token, client):
     payload["Individual"]["identifiers"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["RequestInfo"] = get_request_info(token)
-
-    response = client.post("/health-individual/v1/_create", payload)
+    
+    url = f"/{individual}/v1/_create"
+    response = client.post(url, payload)
     # Handle error if status is not success
     if response.status_code not in [200, 202]:
         raise Exception(f"Household creation failed with status {response.status_code}: {response.text}")
