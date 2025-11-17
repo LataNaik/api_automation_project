@@ -1,4 +1,4 @@
-from tests.test_mdms_service import get_project_type
+# from tests.test_mdms_service import get_project_type
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
