@@ -50,8 +50,8 @@ def test_create_householdMember():
         f.write(f"Household Member ID: {memberId}\n")
         f.write(f"Household Member Client Reference ID: {clientRefId}\n")
 
-    with open("output/response.json", "w") as f:
-        json.dump(response_data, f, indent=2)
+    # with open("output/response.json", "w") as f:
+    #     json.dump(response_data, f, indent=2)
 
 
 def test_search_household():

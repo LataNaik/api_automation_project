@@ -1,3 +1,4 @@
+import json
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
@@ -30,6 +31,9 @@ def test_project_types():
         f.write("\n--- Project Type ID details ---\n")
         for pid, code in project_types:
             f.write(f"{code}: {pid}\n")
+            
+    with open("output/response.json", "w") as f:
+        json.dump(mdms_data, f, indent=2)
 
 def test_roles():
     token = get_auth_token("user")
@@ -112,11 +116,11 @@ def search_mdms_data(token, client, master_name):
     response = client.post(url, payload)
     return response
 
-def get_project_type(token, client, master_name, code):
-    payload = load_payload("mdms", "search_mdmsData.json")
-    payload["MdmsCriteria"]["schemaCode"]=master_name
-    payload["MdmsCriteria"]["schemaCode"]["filters"]["code"]=code
-    payload["RequestInfo"] = get_request_info(token)
-    url = f"/{mdms}/v2/_search"
-    response = client.post(url, payload)
-    return response
+# def get_project_type(token, client, master_name, code):
+#     payload = load_payload("mdms", "search_mdmsData.json")
+#     payload["MdmsCriteria"]["schemaCode"]=master_name
+#     payload["MdmsCriteria"]["schemaCode"]["filters"]["code"]=code
+#     payload["RequestInfo"] = get_request_info(token)
+#     url = f"/{mdms}/v2/_search"
+#     response = client.post(url, payload)
+#     return response
