@@ -1,0 +1,683 @@
+import json
+import os
+from datetime import datetime
+import re
+
+def parse_ids_file():
+    """Parse the ids.txt file to extract created entities"""
+    base_path = os.path.dirname(__file__)
+    ids_file_path = os.path.join(base_path, "..", "output", "ids.txt")
+
+    entities = {
+        "Facility": [],
+        "Household": [],
+        "Individual": [],
+        "Product": [],
+        "Product Variant": [],
+        "Project": []
+    }
+
+    try:
+        with open(os.path.abspath(ids_file_path), 'r', encoding='utf-8') as f:
+            content = f.read()
+
+            # Extract Facility IDs
+            facilities = re.findall(r'Facility ID: (F-[\d-]+)', content)
+            entities["Facility"] = facilities
+
+            # Extract Household IDs
+            households = re.findall(r'Household ID: (H-[\d-]+)', content)
+            entities["Household"] = households
+
+            # Extract Individual IDs
+            individuals = re.findall(r'Individual Ind ID: (IND-[\d-]+)', content)
+            entities["Individual"] = individuals
+
+            # Extract Product IDs
+            products = re.findall(r'Product ID: (P-[\d-]+)', content)
+            entities["Product"] = products
+
+            # Extract Variant IDs
+            variants = re.findall(r'Variant ID: (PVAR-[\d-]+)', content)
+            entities["Product Variant"] = variants
+
+    except Exception as e:
+        print(f"Warning: Could not parse ids.txt: {e}")
+
+    return entities
+
+def parse_test_results():
+    """Parse test results from JSON file"""
+    base_path = os.path.dirname(__file__)
+    results_file = os.path.join(base_path, "..", "output", "test_results.json")
+
+    default_results = {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "tests": [],
+        "start_time": None,
+        "end_time": None
+    }
+
+    try:
+        if os.path.exists(os.path.abspath(results_file)):
+            with open(os.path.abspath(results_file), 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Warning: Could not parse test results: {e}")
+
+    return default_results
+
+def count_operations(test_results):
+    """Count create and search operations from test names"""
+    operations = {
+        "create": 0,
+        "search": 0,
+        "other": 0
+    }
+
+    for test in test_results.get("tests", []):
+        test_name = test.get("name", "").lower()
+        if "create" in test_name:
+            operations["create"] += 1
+        elif "search" in test_name:
+            operations["search"] += 1
+        else:
+            operations["other"] += 1
+
+    return operations
+
+def get_service_breakdown(test_results):
+    """Get test breakdown by service"""
+    services = {}
+
+    for test in test_results.get("tests", []):
+        test_name = test.get("name", "")
+        # Extract service name from test file path
+        if "individual" in test_name.lower():
+            service = "Individual"
+        elif "household" in test_name.lower():
+            service = "Household"
+        elif "facility" in test_name.lower():
+            service = "Facility"
+        elif "product" in test_name.lower():
+            service = "Product"
+        elif "project" in test_name.lower():
+            service = "Project"
+        elif "boundary" in test_name.lower():
+            service = "Boundary"
+        elif "mdms" in test_name.lower():
+            service = "MDMS"
+        else:
+            service = "Other"
+
+        if service not in services:
+            services[service] = {"passed": 0, "failed": 0, "total": 0}
+
+        services[service]["total"] += 1
+        if test.get("outcome") == "passed":
+            services[service]["passed"] += 1
+        elif test.get("outcome") == "failed":
+            services[service]["failed"] += 1
+
+    return services
+
+def calculate_duration(start_time, end_time):
+    """Calculate test execution duration"""
+    if not start_time or not end_time:
+        return "N/A"
+
+    try:
+        start = datetime.fromisoformat(start_time)
+        end = datetime.fromisoformat(end_time)
+        duration = (end - start).total_seconds()
+        return f"{duration:.2f}s"
+    except:
+        return "N/A"
+
+def generate_dashboard():
+    """Generate an interactive HTML dashboard"""
+    entities = parse_ids_file()
+    test_results = parse_test_results()
+    operations = count_operations(test_results)
+    service_breakdown = get_service_breakdown(test_results)
+
+    # Count entities
+    entity_counts = {k: len(v) for k, v in entities.items()}
+    total_entities = sum(entity_counts.values())
+
+    # Calculate pass rate
+    total_tests = test_results.get("total", 0)
+    passed_tests = test_results.get("passed", 0)
+    pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
+
+    # Get timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    duration = calculate_duration(test_results.get("start_time"), test_results.get("end_time"))
+
+    # Generate HTML
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Execution Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }}
+
+        .container {{
+            max-width: 1600px;
+            margin: 0 auto;
+        }}
+
+        .header {{
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }}
+
+        .header h1 {{
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }}
+
+        .header .timestamp {{
+            color: #666;
+            font-size: 1em;
+        }}
+
+        .stats-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }}
+
+        .stat-card {{
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+        }}
+
+        .stat-card:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }}
+
+        .stat-card .stat-number {{
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }}
+
+        .stat-card .stat-label {{
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+
+        .stat-card.success .stat-number {{ color: #28a745; }}
+        .stat-card.danger .stat-number {{ color: #dc3545; }}
+        .stat-card.info .stat-number {{ color: #667eea; }}
+        .stat-card.warning .stat-number {{ color: #ffc107; }}
+
+        .charts-container {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }}
+
+        .chart-card {{
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }}
+
+        .chart-card h2 {{
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }}
+
+        .data-table {{
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }}
+
+        .data-table h2 {{
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }}
+
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+
+        th, td {{
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }}
+
+        th {{
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+        }}
+
+        tr:hover {{
+            background: #f8f9fa;
+        }}
+
+        .badge {{
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }}
+
+        .badge-success {{ background: #d4edda; color: #155724; }}
+        .badge-danger {{ background: #f8d7da; color: #721c24; }}
+        .badge-info {{ background: #d1ecf1; color: #0c5460; }}
+        .badge-warning {{ background: #fff3cd; color: #856404; }}
+
+        .entity-id {{
+            font-family: 'Courier New', monospace;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }}
+
+        .progress-bar {{
+            width: 100%;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }}
+
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }}
+
+        .collapsible-header {{
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: color 0.3s ease;
+        }}
+
+        .collapsible-header:hover {{
+            color: #4c5fd5;
+        }}
+
+        .collapsible-header .toggle-icon {{
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }}
+
+        .collapsible-header.collapsed .toggle-icon {{
+            transform: rotate(-90deg);
+        }}
+
+        .collapsible-content {{
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }}
+
+        .collapsible-content.collapsed {{
+            max-height: 0;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Test Execution Dashboard</h1>
+            <p class="timestamp">Generated: {timestamp}</p>
+            <p class="timestamp">Duration: {duration}</p>
+        </div>
+
+        <!-- Test Execution Stats -->
+        <div class="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-number">{total_tests}</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-number">{test_results.get('passed', 0)}</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-number">{test_results.get('failed', 0)}</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-number">{pass_rate:.1f}%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+
+        <!-- Pass Rate Progress Bar -->
+        <div class="data-table">
+            <h2>📊 Test Execution Progress</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {pass_rate}%">{pass_rate:.1f}%</div>
+            </div>
+        </div>
+
+        <!-- Operations Stats -->
+        <div class="stats-grid">
+            <div class="stat-card info">
+                <div class="stat-number">{operations.get('create', 0)}</div>
+                <div class="stat-label">Create Operations</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-number">{operations.get('search', 0)}</div>
+                <div class="stat-label">Search Operations</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-number">{total_entities}</div>
+                <div class="stat-label">Entities Created</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-number">{len(entity_counts)}</div>
+                <div class="stat-label">Service Types</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h2>📊 Test Results</h2>
+                <canvas id="testResultsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>📈 Entities by Service</h2>
+                <canvas id="entitiesChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>🎯 Service Test Coverage</h2>
+                <canvas id="serviceBreakdownChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Service Breakdown Table -->
+        <div class="data-table">
+            <h2>🏢 Service-wise Test Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Total Tests</th>
+                        <th>Passed</th>
+                        <th>Failed</th>
+                        <th>Success Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+
+    # Add service breakdown rows
+    for service, stats in service_breakdown.items():
+        total = stats["total"]
+        passed = stats["passed"]
+        success_rate = (passed / total * 100) if total > 0 else 0
+
+        html_content += f"""
+                    <tr>
+                        <td><span class="badge badge-info">{service}</span></td>
+                        <td>{stats['total']}</td>
+                        <td>{stats['passed']}</td>
+                        <td>{stats['failed']}</td>
+                        <td>{success_rate:.1f}%</td>
+                    </tr>
+"""
+
+    html_content += """
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Entities Table -->
+        <div class="data-table">
+            <h2>🔖 Created Entities</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Entity ID</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+
+    # Add entity rows
+    for service, ids in entities.items():
+        for entity_id in ids:
+            html_content += f"""
+                    <tr>
+                        <td><span class="badge badge-info">{service}</span></td>
+                        <td><span class="entity-id">{entity_id}</span></td>
+                        <td><span class="badge badge-success">✓ Created</span></td>
+                    </tr>
+"""
+
+    html_content += """
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Test Details Table (Collapsible) -->
+        <div class="data-table">
+            <div class="collapsible-header collapsed" onclick="toggleSection('testDetails')">
+                <h2>📝 Test Execution Details</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div id="testDetails" class="collapsible-content collapsed">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test Name</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"""
+
+    # Add test rows
+    for test in test_results.get("tests", []):
+        test_name = test.get("name", "Unknown").split("::")[-1]
+        outcome = test.get("outcome", "unknown")
+        duration = test.get("duration", 0)
+
+        badge_class = "badge-success" if outcome == "passed" else "badge-danger" if outcome == "failed" else "badge-warning"
+        status_icon = "✓" if outcome == "passed" else "✗" if outcome == "failed" else "⊘"
+
+        html_content += f"""
+                        <tr>
+                            <td style="font-family: monospace; font-size: 0.9em;">{test_name}</td>
+                            <td><span class="badge {badge_class}">{status_icon} {outcome.upper()}</span></td>
+                            <td>{duration}s</td>
+                        </tr>
+"""
+
+    # Prepare chart data
+    service_names = list(service_breakdown.keys())
+    service_totals = [service_breakdown[s]["total"] for s in service_names]
+
+    html_content += f"""
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test Results Chart
+        const testResultsCtx = document.getElementById('testResultsChart').getContext('2d');
+        new Chart(testResultsCtx, {{
+            type: 'doughnut',
+            data: {{
+                labels: ['Passed', 'Failed', 'Skipped'],
+                datasets: [{{
+                    data: [{test_results.get('passed', 0)}, {test_results.get('failed', 0)}, {test_results.get('skipped', 0)}],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 193, 7, 0.8)'
+                    ],
+                    borderWidth: 2
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                plugins: {{
+                    legend: {{
+                        position: 'bottom'
+                    }}
+                }}
+            }}
+        }});
+
+        // Entities Chart
+        const entitiesCtx = document.getElementById('entitiesChart').getContext('2d');
+        new Chart(entitiesCtx, {{
+            type: 'bar',
+            data: {{
+                labels: {json.dumps(list(entity_counts.keys()))},
+                datasets: [{{
+                    label: 'Entities Created',
+                    data: {json.dumps(list(entity_counts.values()))},
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                plugins: {{
+                    legend: {{
+                        display: false
+                    }}
+                }},
+                scales: {{
+                    y: {{
+                        beginAtZero: true,
+                        ticks: {{
+                            stepSize: 1
+                        }}
+                    }}
+                }}
+            }}
+        }});
+
+        // Service Breakdown Chart
+        const serviceBreakdownCtx = document.getElementById('serviceBreakdownChart').getContext('2d');
+        new Chart(serviceBreakdownCtx, {{
+            type: 'bar',
+            data: {{
+                labels: {json.dumps(service_names)},
+                datasets: [{{
+                    label: 'Tests Executed',
+                    data: {json.dumps(service_totals)},
+                    backgroundColor: 'rgba(118, 75, 162, 0.8)',
+                    borderColor: 'rgba(118, 75, 162, 1)',
+                    borderWidth: 2
+                }}]
+            }},
+            options: {{
+                responsive: true,
+                plugins: {{
+                    legend: {{
+                        display: false
+                    }}
+                }},
+                scales: {{
+                    y: {{
+                        beginAtZero: true,
+                        ticks: {{
+                            stepSize: 1
+                        }}
+                    }}
+                }}
+            }}
+        }});
+
+        // Toggle collapsible section
+        function toggleSection(sectionId) {{
+            const content = document.getElementById(sectionId);
+            const header = content.previousElementSibling;
+
+            content.classList.toggle('collapsed');
+            header.classList.toggle('collapsed');
+        }}
+    </script>
+</body>
+</html>
+"""
+
+    # Write dashboard file
+    base_path = os.path.dirname(__file__)
+    dashboard_path = os.path.join(base_path, "..", "reports", "dashboard.html")
+
+    os.makedirs(os.path.dirname(os.path.abspath(dashboard_path)), exist_ok=True)
+
+    with open(os.path.abspath(dashboard_path), 'w', encoding='utf-8') as f:
+        f.write(html_content)
+
+    print(f"✓ Dashboard generated: {os.path.abspath(dashboard_path)}")
+    return os.path.abspath(dashboard_path)
+
+if __name__ == "__main__":
+    dashboard_path = generate_dashboard()
+    print(f"\nOpen the dashboard in your browser:")
+    print(f"file://{dashboard_path}")

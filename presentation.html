@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Automation Framework Presentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-transform: none;
+        }
+        .reveal section {
+            text-align: left;
+        }
+        .reveal section.title-slide {
+            text-align: center;
+        }
+        .reveal ul {
+            margin-left: 1em;
+        }
+        .reveal pre {
+            font-size: 0.55em;
+            width: 100%;
+        }
+        .reveal code {
+            padding: 2px 5px;
+        }
+        .highlight {
+            color: #42affa;
+            font-weight: bold;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .stat-box {
+            background: rgba(66,175,250,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid rgba(66,175,250,0.3);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            color: #42affa;
+            font-weight: bold;
+        }
+        .architecture-diagram {
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.8em;
+            line-height: 1.6;
+        }
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .feature-box {
+            background: rgba(66,175,250,0.1);
+            padding: 15px;
+            border-left: 4px solid #42affa;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section class="title-slide">
+                <h1>API Automation Framework</h1>
+                <h3>Microservices Testing Solution</h3>
+                <p style="margin-top: 80px; font-size: 1.1em;">
+                    <strong>Python | Pytest | REST APIs</strong>
+                </p>
+                <p style="font-size: 0.8em; margin-top: 80px; opacity: 0.6;">
+                    E-Governance Platform Testing
+                </p>
+            </section>
+
+            <!-- Overview with Stats -->
+            <section>
+                <h2>Framework Overview</h2>
+                <p style="font-size: 1.1em; margin-bottom: 40px;">
+                    An automation framework for testing microservices APIs
+                </p>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">7</div>
+                        <div>Microservices</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">751+</div>
+                        <div>Lines of Code</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">16</div>
+                        <div>Test Templates</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">100%</div>
+                        <div>Pass Rate</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section>
+                <h2>Framework Architecture</h2>
+                <div class="architecture-diagram" style="font-size: 0.85em; text-align: center;">
+┌─────────┐      ┌─────────┐      ┌──────────┐      ┌──────┐      ┌─────────┐
+│ <span class="highlight">Config</span>  │      │ <span class="highlight">Payloads</span>│      │  <span class="highlight">Tests</span>  │      │ <span class="highlight">API</span>  │      │<span class="highlight">Reports</span> │
+│  .env   │─────▶│  JSON   │─────▶│7 Services│─────▶│Calls │─────▶│HTML/    │
+│         │      │Templates│      │          │      │      │      │Allure   │
+└─────────┘      └─────────┘      └────┬─────┘      └──────┘      └─────────┘
+                                       │
+                                       ▼
+                                 ┌──────────┐
+                                 │<span class="highlight">Utilities</span>│
+                                 │Auth/     │
+                                 │Client    │
+                                 └──────────┘
+                </div>
+            </section>
+
+            <!-- Key Features -->
+            <section>
+                <h2>Key Features</h2>
+                <div class="two-column">
+                    <div>
+                        <ul>
+                            <li><strong>Multi-Service Testing</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">7 microservices automated</span>
+                            </li>
+                            <li><strong>Dynamic Payloads</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">Template-based with runtime data</span>
+                            </li>
+                            <li><strong>Token Authentication</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">Access token generation via API</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <ul>
+                            <li><strong>Comprehensive Reports</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">HTML & Allure reporting</span>
+                            </li>
+                            <li><strong>Negative Testing</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">Error scenarios covered</span>
+                            </li>
+                            <li><strong>Modular Design</strong>
+                                <br><span style="font-size: 0.8em; opacity: 0.8;">Easy to extend & maintain</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Technologies -->
+            <section>
+                <h2>Technology Stack</h2>
+                <div class="two-column" style="margin-top: 50px;">
+                    <div>
+                        <h3 class="highlight" style="font-size: 1.3em;">Core</h3>
+                        <ul style="font-size: 1.1em; line-height: 1.8;">
+                            <li><strong>Python 3.12</strong></li>
+                            <li><strong>pytest 8.4.1</strong></li>
+                            <li><strong>requests 2.32.4</strong></li>
+                            <li><strong>python-dotenv 1.1.1</strong></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="highlight" style="font-size: 1.3em;">Reporting</h3>
+                        <ul style="font-size: 1.1em; line-height: 1.8;">
+                            <li><strong>pytest-html</strong></li>
+                            <li><strong>allure-pytest</strong></li>
+                            <li><strong>Git & VS Code</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Tested -->
+            <section>
+                <h2>Services Tested</h2>
+                <div style="font-size: 0.9em;">
+                    <div class="feature-box">
+                        <strong>Individual Service</strong> - Create & search individuals with address, identifiers
+                    </div>
+                    <div class="feature-box">
+                        <strong>Household Service</strong> - Manage households & members
+                    </div>
+                    <div class="feature-box">
+                        <strong>Facility Service</strong> - Create facilities, negative testing
+                    </div>
+                    <div class="feature-box">
+                        <strong>Product Service</strong> - Products & variants with dependencies
+                    </div>
+                    <div class="feature-box">
+                        <strong>Project Service</strong> - Create projects with MDMS data
+                    </div>
+                    <div class="feature-box">
+                        <strong>Boundary & MDMS</strong> - Hierarchical search & master data
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works -->
+            <section>
+                <h2>How It Works</h2>
+                <pre><code class="language-python">def test_create_individual():
+    # 1. Authenticate
+    token = get_token()
+
+    # 2. Create API client
+    client = APIClient(service="individual", token=token)
+
+    # 3. Load payload template
+    payload = load_json_payload("individual_create.json")
+
+    # 4. Inject dynamic data
+    payload["Individual"]["id"] = str(uuid.uuid4())
+
+    # 5. Make API call
+    response = client.post("/v1/_create", json=payload)
+
+    # 6. Validate response
+    assert response.status_code in [200, 202]
+
+    # 7. Save for future tests
+    save_id("individual_id", payload["Individual"]["id"])
+</code></pre>
+            </section>
+
+            <!-- Reusability -->
+            <section>
+                <h2>Reusable Components</h2>
+                <pre><code class="language-python"># Generic search helper - works for ANY service
+def search_entity(client, endpoint, id_value,
+                  response_key, save_name):
+    """One function for all search operations"""
+    payload = {
+        response_key: {"id": [id_value]},
+        "RequestInfo": build_request_info()
+    }
+    response = client.post(endpoint, json=payload)
+    assert response.status_code == 200
+    return response.json()
+
+# Use for any service:
+search_entity(client, "/individual/v1/_search", id, "Individual", "ind")
+search_entity(client, "/facility/v1/_search", id, "Facility", "fac")
+search_entity(client, "/product/v1/_search", id, "Product", "prod")
+</code></pre>
+            </section>
+
+            <!-- Configuration -->
+            <section>
+                <h2>Configuration</h2>
+                <pre><code class="language-bash"># .env file - Simple environment-based config
+BASE_URL=https://health-demo.digit.org
+USERNAME=LNMZ
+PASSWORD=eGov@1234
+TENANTID=mz
+USERTYPE=EMPLOYEE
+SEARCH_LIMIT=200
+SERVICE_INDIVIDUAL=individual
+SERVICE_PROJECT=project
+</code></pre>
+                <p style="margin-top: 30px; font-size: 1.1em;">
+                    <span class="highlight">✓</span> Centralized configuration<br>
+                    <span class="highlight">✓</span> Easy environment switching<br>
+                    <span class="highlight">✓</span> Secure credential management
+                </p>
+            </section>
+
+            <!-- Reporting -->
+            <section>
+                <h2>Reporting & Analytics</h2>
+                <div class="two-column">
+                    <div>
+                        <h3 class="highlight">HTML Reports</h3>
+                        <ul style="margin-top: 20px;">
+                            <li>Test results summary</li>
+                            <li>Pass/Fail metrics</li>
+                            <li>Error details</li>
+                            <li>Duration tracking</li>
+                        </ul>
+                        <pre style="margin-top: 20px;"><code class="language-bash">pytest --html=reports/report.html</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="highlight">Allure Reports</h3>
+                        <ul style="margin-top: 20px;">
+                            <li>Interactive dashboards</li>
+                            <li>Trend analysis</li>
+                            <li>Test history</li>
+                            <li>Visual charts</li>
+                        </ul>
+                        <pre style="margin-top: 20px;"><code class="language-bash">pytest --alluredir=reports/allure
+allure serve reports/allure</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Benefits -->
+            <section>
+                <h2>Business Benefits</h2>
+                <div style="font-size: 1.05em; margin-top: 50px;">
+                    <div class="feature-box">
+                        <strong>⚡ Saves Time</strong> - Automated testing reduces manual effort by hours per release
+                    </div>
+                    <div class="feature-box">
+                        <strong>🎯 Ensures Quality</strong> - Comprehensive coverage catches bugs early
+                    </div>
+                    <div class="feature-box">
+                        <strong>🚀 Accelerates Development</strong> - Reusable components speed up test creation
+                    </div>
+                    <div class="feature-box">
+                        <strong>🔄 CI/CD Ready</strong> - Pytest compatible for automated pipelines
+                    </div>
+                    <div class="feature-box">
+                        <strong>📈 Scalable</strong> - Easy to add new services and test cases
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Start -->
+            <section>
+                <h2>Quick Start</h2>
+                <pre><code class="language-bash"># 1. Clone and setup
+git clone &lt;repository-url&gt;
+cd api_automation_project
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure
+cp .env.example .env
+# Edit .env with your credentials
+
+# 4. Run tests
+pytest
+
+# 5. Generate reports
+pytest --html=reports/report.html --alluredir=reports/allure
+</code></pre>
+            </section>
+
+            <!-- Running Tests -->
+            <section>
+                <h2>Running Tests</h2>
+                <div style="font-size: 1em;">
+                    <pre><code class="language-bash"># Run all tests
+pytest
+
+# Run specific service
+pytest tests/test_individual_service.py
+
+# Verbose mode
+pytest -v
+
+# With HTML report
+pytest --html=reports/report.html
+
+# Stop on first failure
+pytest -x
+
+# Run in parallel (with pytest-xdist)
+pytest -n auto
+</code></pre>
+                </div>
+            </section>
+
+            <!-- Conclusion -->
+            <section class="title-slide">
+                <h2>Summary</h2>
+                <div style="text-align: left; margin: 50px auto; max-width: 900px; font-size: 1.1em;">
+                    <ul style="line-height: 2;">
+                        <li><span class="highlight">✓</span> API automation framework</li>
+                        <li><span class="highlight">✓</span> 7 microservices fully automated</li>
+                        <li><span class="highlight">✓</span> Modular & maintainable architecture</li>
+                        <li><span class="highlight">✓</span> Comprehensive reporting</li>
+                        <li><span class="highlight">✓</span> Easy to extend & scale</li>
+                    </ul>
+                    <p style="margin-top: 80px; text-align: center; font-size: 1.2em;">
+                        Thank you!
+                    </p>
+                </div>
+                <div style="margin-top: 80px; font-size: 0.75em; opacity: 0.6; text-align: center;">
+                    <p>Navigation: <strong>Space</strong> / <strong>Arrow Keys</strong> | Overview: <strong>Esc</strong> | Fullscreen: <strong>F</strong></p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            transition: 'slide',
+            backgroundTransition: 'fade',
+            plugins: [ RevealHighlight ],
+            width: 1280,
+            height: 720,
+            margin: 0.04,
+            minScale: 0.2,
+            maxScale: 2.0
+        });
+    </script>
+</body>
+</html>

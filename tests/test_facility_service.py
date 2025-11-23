@@ -45,14 +45,24 @@ def test_search_facility():
     print("Facility found with ID:", facilityId)
 
 
+def test_create_facility_with_invalid_tenant_id():
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_facility(token, client, tenantId="invalid.tenant")
+    assert res.status_code in [401], f"Expected error response, but got {res.status_code}: {res.text}"
+    print(f"Test passed: Facility creation with invalid tenant ID correctly rejected with status {res.status_code}")
+
 
 # --- Reusable Functions ---
 
-def create_facility(token, client):
+def create_facility(token, client, tenantId=None):
     payload = load_payload("facility", "create_facility.json")
     payload["RequestInfo"] = get_request_info(token)
     # Inject dynamic values
     payload["Facility"]["clientReferenceId"] = str(uuid.uuid4())
+    if tenantId:
+        payload["Facility"]["tenantId"] = tenantId
     return client.post("/facility/v1/_create", payload)
 
 
