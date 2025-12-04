@@ -41,6 +41,10 @@ def parse_ids_file():
             variants = re.findall(r'Variant ID: (PVAR-[\d-]+)', content)
             entities["Product Variant"] = variants
 
+            # Extract Project IDs (UUID format)
+            projects = re.findall(r'Project ID: ([a-f0-9-]{36})', content)
+            entities["Project"] = projects
+
     except Exception as e:
         print(f"Warning: Could not parse ids.txt: {e}")
 

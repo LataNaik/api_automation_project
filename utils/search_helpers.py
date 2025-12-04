@@ -5,10 +5,18 @@ from utils.config import search_params
 
 def search_entity(entity_type, token, client, entity_id, payload_file, endpoint, response_key):
     payload = load_payload(entity_type, payload_file)
-    
+
     # Dynamically pick the top-level key in payload (e.g. "Product", "ProductVariant")
     top_key = next(iter(payload))
-    payload[top_key]["id"] = [entity_id]
+
+    # Handle different payload structures (dict vs list)
+    if isinstance(payload[top_key], list):
+        # For payloads like Projects: [{id: ..., tenantId: ...}]
+        payload[top_key][0]["id"] = entity_id
+    else:
+        # For payloads like Product: {id: [...]}
+        payload[top_key]["id"] = [entity_id]
+
     payload["RequestInfo"] = get_request_info(token)
 
     query_string = "&".join(f"{k}={v}" for k, v in search_params.items())

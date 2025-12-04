@@ -1,7 +1,9 @@
 {
-    "Projects": {
-        "id": [
-            "placeholder-id"
-        ]
-    }
+    "Projects": [
+        {
+            "id": "9adab653-042c-4c60-a274-3cf37f781920",
+            "tenantId": "mz"
+        }
+    ],
+     "apiOperation": "SEARCH"
 }
