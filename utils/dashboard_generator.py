@@ -14,7 +14,8 @@ def parse_ids_file():
         "Individual": [],
         "Product": [],
         "Product Variant": [],
-        "Project": []
+        "Project": [],
+        "Project Resource": []
     }
 
     try:
@@ -44,6 +45,10 @@ def parse_ids_file():
             # Extract Project IDs (UUID format)
             projects = re.findall(r'Project ID: ([a-f0-9-]{36})', content)
             entities["Project"] = projects
+
+            # Extract Project Resource IDs
+            project_resources = re.findall(r'Project Resource ID: (PR-[\d-]+)', content)
+            entities["Project Resource"] = project_resources
 
     except Exception as e:
         print(f"Warning: Could not parse ids.txt: {e}")
@@ -504,10 +509,11 @@ def generate_dashboard():
         }}
 
         .test-output {{
-            background: #1e1e1e;
-            color: #d4d4d4;
+            background: linear-gradient(135deg, #f0f3ff 0%, #e8ecf8 100%);
+            color: #4a5568;
             padding: 15px;
             border-radius: 8px;
+            border-left: 4px solid #667eea;
             font-family: 'Courier New', monospace;
             font-size: 0.85em;
             white-space: pre-wrap;
@@ -570,14 +576,6 @@ def generate_dashboard():
             <div class="stat-card warning">
                 <div class="stat-number">{pass_rate:.1f}%</div>
                 <div class="stat-label">Pass Rate</div>
-            </div>
-        </div>
-
-        <!-- Pass Rate Progress Bar -->
-        <div class="data-table">
-            <h2>📊 Test Execution Progress</h2>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: {pass_rate}%">{pass_rate:.1f}%</div>
             </div>
         </div>
 

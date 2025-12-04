@@ -1,0 +1,10 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "ProjectResource": {
+        "projectId": [
+            "21355be8-464f-42a9-af13-3652d77b1d42"
+        ]
+    }
+}
