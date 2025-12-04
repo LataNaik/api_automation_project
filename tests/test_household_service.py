@@ -1,10 +1,11 @@
+import pytest
 from utils.api_client import APIClient
 from utils.auth import get_auth_token
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
 from test_individual_service import create_individual
-from utils.config import boundaryCode
+from utils.config import boundaryCode, invalidTenantId
 import uuid
 import json
 import random
@@ -16,6 +17,7 @@ with open("data/inputs.json", "r") as f:
 
 # --- Test functions ---
 
+@pytest.mark.positive
 def test_create_household():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -30,7 +32,8 @@ def test_create_household():
 
     print("Household created with ID:", householdId)
 
-  
+
+@pytest.mark.positive
 def test_create_householdMember():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -51,6 +54,7 @@ def test_create_householdMember():
         f.write(f"Household Member Client Reference ID: {clientRefId}\n")
 
 
+@pytest.mark.positive
 def test_search_household():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -72,6 +76,7 @@ def test_search_household():
     print("Household found with ID:", householdId)
 
 
+@pytest.mark.positive
 def test_search_householdMember_by_id():
     token = get_auth_token("user")
     client = APIClient(token=token)  # Use the token once
@@ -93,6 +98,7 @@ def test_search_householdMember_by_id():
     print("Household Member found with ID:", memberId)
 
 
+@pytest.mark.negative
 def test_create_householdMember_without_householdId():
     """Negative test: Creating household member without householdId should fail"""
     token = get_auth_token("user")
@@ -106,6 +112,7 @@ def test_create_householdMember_without_householdId():
     print("Negative test passed: Creating member without householdId returned 400")
 
 
+@pytest.mark.negative
 def test_create_householdMember_without_individualId():
     """Negative test: Creating household member without individualId should fail"""
     token = get_auth_token("user")
@@ -119,9 +126,41 @@ def test_create_householdMember_without_individualId():
     print("Negative test passed: Creating member without individualId returned 400")
 
 
+@pytest.mark.negative
+def test_create_household_with_invalid_tenant_id():
+    """Negative test: Creating household with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_household(token, client, tenant_id=invalidTenantId)
+
+    # Should fail with 401 Unauthorized
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating household with invalid tenantId returned 401")
+
+
+@pytest.mark.negative
+def test_create_householdMember_with_invalid_tenant_id():
+    """Negative test: Creating household member with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_household_member(token, client, tenant_id=invalidTenantId)
+
+    # Should fail with 401 Unauthorized
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating household member with invalid tenantId returned 401")
+
+
 # --- Helper function ---
 
-def create_household(token, client):
+def create_household(token, client, tenant_id=None):
+    """
+    Create a household.
+
+    Args:
+        tenant_id: Pass None to use default, or provide custom tenantId for negative testing
+    """
     payload = load_payload("household", "create_household.json")
 
     # Inject dynamic values
@@ -132,8 +171,17 @@ def create_household(token, client):
     payload["Household"]["additionalFields"]["fields"][0]["value"] = selected_type
     payload["RequestInfo"] = get_request_info(token)
 
+    # Override tenantId if provided (for negative testing)
+    if tenant_id is not None:
+        payload["Household"]["tenantId"] = tenant_id
+        payload["Household"]["address"]["tenantId"] = tenant_id
+
     # Make the API call
     response = client.post("/household/v1/_create", payload)
+
+    # For negative tests, return response directly
+    if tenant_id is not None:
+        return response
 
     # Handle error if status is not success
     if response.status_code not in [200, 202]:
@@ -148,7 +196,7 @@ def create_household(token, client):
 
 
 def create_household_member(token, client, household_id="create", household_client_ref_id="create",
-                            individual_id="create", individual_client_ref_id="create"):
+                            individual_id="create", individual_client_ref_id="create", tenant_id=None):
     """
     Create a household member.
 
@@ -157,6 +205,7 @@ def create_household_member(token, client, household_id="create", household_clie
         household_client_ref_id: Pass None to skip, "create" to create new, or provide existing ID
         individual_id: Pass None to skip, "create" to create new, or provide existing ID
         individual_client_ref_id: Pass None to skip, "create" to create new, or provide existing ID
+        tenant_id: Pass None to use default, or provide custom tenantId for negative testing
     """
     # Create or use provided household
     if household_id == "create":
@@ -180,6 +229,10 @@ def create_household_member(token, client, household_id="create", household_clie
     payload["HouseholdMember"]["individualId"] = individualId
     payload["HouseholdMember"]["individualClientReferenceId"] = individualClientReferenceId
     payload["RequestInfo"] = get_request_info(token)
+
+    # Override tenantId if provided (for negative testing)
+    if tenant_id is not None:
+        payload["HouseholdMember"]["tenantId"] = tenant_id
 
     res = client.post("/household/member/v1/_create", payload)
     return res

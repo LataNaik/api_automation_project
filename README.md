@@ -358,6 +358,24 @@ pytest tests/ -v
 pytest tests/ -s
 ```
 
+### Run Tests by Tags
+
+Tests are tagged as `positive` or `negative` for selective execution:
+
+```bash
+# Run only positive tests (create, search operations)
+pytest -m positive
+
+# Run only negative tests (invalid inputs, error scenarios)
+pytest -m negative
+
+# Run positive tests with HTML report
+pytest -m positive --html=reports/report.html --self-contained-html
+
+# Run negative tests with verbose output
+pytest -m negative -v
+```
+
 ### HTML Report Generation
 
 ```bash

@@ -1,14 +1,16 @@
+import pytest
 from utils.api_client import APIClient
 from utils.auth import get_auth_token
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import boundaryCode, individual
+from utils.config import boundaryCode, individual, invalidTenantId
 import uuid
 
 
 # --- Test functions ---
 
+@pytest.mark.positive
 def test_create_individual():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -27,6 +29,7 @@ def test_create_individual():
         f.write(f"Individual Ind ID: {individualIndId}\n")
 
 
+@pytest.mark.positive
 def test_search_individual():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -48,8 +51,27 @@ def test_search_individual():
     print("Individual found with ID:", individualId)
 
 
+@pytest.mark.negative
+def test_create_individual_with_invalid_tenant_id():
+    """Negative test: Creating individual with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_individual(token, client, tenant_id=invalidTenantId)
+
+    # Should fail with 401 Unauthorized
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating individual with invalid tenantId returned 401")
+
+
 # --- Helper function (no assertion) ---
-def create_individual(token, client):
+def create_individual(token, client, tenant_id=None):
+    """
+    Create an individual.
+
+    Args:
+        tenant_id: Pass None to use default, or provide custom tenantId for negative testing
+    """
     payload = load_payload("individual", "create_individual.json")
 
     # Inject dynamic values
@@ -59,9 +81,19 @@ def create_individual(token, client):
     payload["Individual"]["identifiers"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["RequestInfo"] = get_request_info(token)
-    
+
+    # Override tenantId if provided (for negative testing)
+    if tenant_id is not None:
+        payload["Individual"]["tenantId"] = tenant_id
+        payload["Individual"]["address"][0]["tenantId"] = tenant_id
+
     url = f"/{individual}/v1/_create"
     response = client.post(url, payload)
+
+    # For negative tests, return response directly
+    if tenant_id is not None:
+        return response
+
     # Handle error if status is not success
     if response.status_code not in [200, 202]:
         raise Exception(f"Individual creation failed with status {response.status_code}: {response.text}")

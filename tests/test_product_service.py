@@ -1,12 +1,15 @@
+import pytest
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
+from utils.config import invalidTenantId
 
 
 # --- Test functions ---
 
+@pytest.mark.positive
 def test_create_product():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -23,6 +26,7 @@ def test_create_product():
         f.write(f"Product ID: {productId}\n")
 
 
+@pytest.mark.positive
 def test_create_product_variant():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -39,6 +43,7 @@ def test_create_product_variant():
         f.write(f"Variant ID: {variantId}\n")
 
 
+@pytest.mark.positive
 def test_search_product():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -60,6 +65,7 @@ def test_search_product():
     print("Product found with ID:", productId)
 
 
+@pytest.mark.positive
 def test_search_product_variant():
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -81,21 +87,86 @@ def test_search_product_variant():
     print("Product Variant found with ID:", variantId)
 
 
+@pytest.mark.negative
+def test_create_product_with_invalid_tenant_id():
+    """Negative test: Creating product with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_product(token, client, tenant_id=invalidTenantId)
+
+    # Should fail with 401 Unauthorized
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating product with invalid tenantId returned 401")
+
+
+@pytest.mark.negative
+def test_create_product_variant_with_invalid_tenant_id():
+    """Negative test: Creating product variant with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_product_variant(token, client, tenant_id=invalidTenantId)
+
+    # Should fail with 401 Unauthorized
+    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating product variant with invalid tenantId returned 401")
+
+
+@pytest.mark.negative
+def test_create_product_variant_without_productId():
+    """Negative test: Creating product variant without productId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = create_product_variant(token, client, product_id=None)
+
+    # Should fail with 400 Bad Request
+    assert res.status_code == 400, f"Expected 400, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating product variant without productId returned 400")
+
+
 # --- Reusable Functions ---
 
-def create_product(token, client):
+def create_product(token, client, tenant_id=None):
+    """
+    Create a product.
+
+    Args:
+        tenant_id: Pass None to use default, or provide custom tenantId for negative testing
+    """
     payload = load_payload("product", "create_product.json")
     payload["RequestInfo"] = get_request_info(token)
+
+    # Override tenantId if provided (for negative testing)
+    if tenant_id is not None:
+        payload["Product"][0]["tenantId"] = tenant_id
+
     return client.post("/product/v1/_create", payload)
 
 
-def create_product_variant(token, client):
-    product_res = create_product(token, client)
-    assert product_res.status_code in [200, 202], f"Product creation for variant failed: {product_res.text}"
+def create_product_variant(token, client, tenant_id=None, product_id="create"):
+    """
+    Create a product variant.
 
-    productId = product_res.json()["Product"][0]["id"]
+    Args:
+        tenant_id: Pass None to use default, or provide custom tenantId for negative testing
+        product_id: Pass "create" to create new product, None to skip, or provide existing ID
+    """
+    # Create or use provided product
+    if product_id == "create":
+        product_res = create_product(token, client)
+        assert product_res.status_code in [200, 202], f"Product creation for variant failed: {product_res.text}"
+        productId = product_res.json()["Product"][0]["id"]
+    else:
+        productId = product_id
 
     payload = load_payload("product", "create_productVariant.json")
     payload["ProductVariant"][0]["productId"] = productId
     payload["RequestInfo"] = get_request_info(token)
+
+    # Override tenantId if provided (for negative testing)
+    if tenant_id is not None:
+        payload["ProductVariant"][0]["tenantId"] = tenant_id
+
     return client.post("/product/variant/v1/_create", payload)

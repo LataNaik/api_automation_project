@@ -26,3 +26,6 @@ search_params = {
 individual=os.getenv("SERVICE_INDIVIDUAL")
 project=os.getenv("SERVICE_PROJECT")
 mdms=os.getenv("SERVICE_MDMS")
+
+# Invalid values for negative testing
+invalidTenantId=os.getenv("INVALID_TENANT_ID", "invalid_tenant")

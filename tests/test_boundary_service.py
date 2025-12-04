@@ -1,3 +1,4 @@
+import pytest
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
@@ -5,6 +6,7 @@ from utils.request_info import get_request_info
 from utils.config import hierarchyType
 
 
+@pytest.mark.positive
 def test_search_boundary():
     token = get_auth_token("user")
     client = APIClient(token=token)
