@@ -89,29 +89,36 @@ def count_operations(test_results):
 
     return operations
 
+def get_service_name(test_name):
+    """Extract service name from test file path (e.g., tests/test_household_service.py::test_name)"""
+    test_name_lower = test_name.lower()
+
+    # Extract service from test file name (more accurate than test function name)
+    if "test_household_service" in test_name_lower:
+        return "Household"
+    elif "test_individual_service" in test_name_lower:
+        return "Individual"
+    elif "test_facility_service" in test_name_lower:
+        return "Facility"
+    elif "test_product_service" in test_name_lower:
+        return "Product"
+    elif "test_project_service" in test_name_lower:
+        return "Project"
+    elif "test_boundary_service" in test_name_lower:
+        return "Boundary"
+    elif "test_mdms_service" in test_name_lower:
+        return "MDMS"
+    else:
+        return "Other"
+
+
 def get_service_breakdown(test_results):
     """Get test breakdown by service"""
     services = {}
 
     for test in test_results.get("tests", []):
         test_name = test.get("name", "")
-        # Extract service name from test file path
-        if "individual" in test_name.lower():
-            service = "Individual"
-        elif "household" in test_name.lower():
-            service = "Household"
-        elif "facility" in test_name.lower():
-            service = "Facility"
-        elif "product" in test_name.lower():
-            service = "Product"
-        elif "project" in test_name.lower():
-            service = "Project"
-        elif "boundary" in test_name.lower():
-            service = "Boundary"
-        elif "mdms" in test_name.lower():
-            service = "MDMS"
-        else:
-            service = "Other"
+        service = get_service_name(test_name)
 
         if service not in services:
             services[service] = {"passed": 0, "failed": 0, "total": 0}
@@ -121,6 +128,22 @@ def get_service_breakdown(test_results):
             services[service]["passed"] += 1
         elif test.get("outcome") == "failed":
             services[service]["failed"] += 1
+
+    return services
+
+
+def get_tests_by_service(test_results):
+    """Group tests by service"""
+    services = {}
+
+    for test in test_results.get("tests", []):
+        test_name = test.get("name", "")
+        service = get_service_name(test_name)
+
+        if service not in services:
+            services[service] = []
+
+        services[service].append(test)
 
     return services
 
@@ -143,6 +166,7 @@ def generate_dashboard():
     test_results = parse_test_results()
     operations = count_operations(test_results)
     service_breakdown = get_service_breakdown(test_results)
+    tests_by_service = get_tests_by_service(test_results)
 
     # Count entities
     entity_counts = {k: len(v) for k, v in entities.items()}
@@ -374,6 +398,147 @@ def generate_dashboard():
         .collapsible-content.collapsed {{
             max-height: 0;
         }}
+
+        .service-section {{
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }}
+
+        .service-header {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: opacity 0.3s ease;
+        }}
+
+        .service-header:hover {{
+            opacity: 0.9;
+        }}
+
+        .service-header h3 {{
+            margin: 0;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }}
+
+        .service-header .service-stats {{
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }}
+
+        .service-header .service-stats span {{
+            font-size: 0.9em;
+            padding: 4px 10px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.2);
+        }}
+
+        .service-header .toggle-icon {{
+            font-size: 1em;
+            transition: transform 0.3s ease;
+        }}
+
+        .service-header.collapsed .toggle-icon {{
+            transform: rotate(-90deg);
+        }}
+
+        .service-tests {{
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }}
+
+        .service-tests.collapsed {{
+            max-height: 0;
+        }}
+
+        .service-tests table {{
+            margin: 0;
+        }}
+
+        .service-tests th {{
+            background: #f0f0f0;
+        }}
+
+        .test-row {{
+            cursor: pointer;
+        }}
+
+        .test-row:hover {{
+            background: #e8f4fc !important;
+        }}
+
+        .test-name {{
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #667eea;
+            text-decoration: underline;
+        }}
+
+        .test-details {{
+            display: none;
+            background: #f8f9fa;
+            border-top: 1px dashed #dee2e6;
+        }}
+
+        .test-details.show {{
+            display: table-row;
+        }}
+
+        .test-details td {{
+            padding: 15px 20px;
+        }}
+
+        .test-output {{
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 0;
+        }}
+
+        .test-output-label {{
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            display: block;
+        }}
+
+        .test-error {{
+            background: #fff5f5;
+            border-left: 4px solid #dc3545;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 8px 8px 0;
+        }}
+
+        .test-error pre {{
+            color: #dc3545;
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 0.85em;
+        }}
+
+        .no-output {{
+            color: #6c757d;
+            font-style: italic;
+        }}
     </style>
 </head>
 <body>
@@ -515,39 +680,126 @@ def generate_dashboard():
             </table>
         </div>
 
-        <!-- Test Details Table (Collapsible) -->
+        <!-- Test Details Table (Grouped by Service) -->
         <div class="data-table">
             <div class="collapsible-header collapsed" onclick="toggleSection('testDetails')">
-                <h2>📝 Test Execution Details</h2>
+                <h2>📝 Test Execution Details (by Service)</h2>
                 <span class="toggle-icon">▼</span>
             </div>
             <div id="testDetails" class="collapsible-content collapsed">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Test Name</th>
-                            <th>Status</th>
-                            <th>Duration</th>
-                        </tr>
-                    </thead>
-                    <tbody>
 """
 
-    # Add test rows
-    for test in test_results.get("tests", []):
-        test_name = test.get("name", "Unknown").split("::")[-1]
-        outcome = test.get("outcome", "unknown")
-        duration = test.get("duration", 0)
+    # Add service-wise test sections
+    service_icons = {
+        "Individual": "👤",
+        "Household": "🏠",
+        "Facility": "🏢",
+        "Product": "📦",
+        "Project": "📋",
+        "Boundary": "🗺️",
+        "MDMS": "📊",
+        "Other": "📁"
+    }
 
-        badge_class = "badge-success" if outcome == "passed" else "badge-danger" if outcome == "failed" else "badge-warning"
-        status_icon = "✓" if outcome == "passed" else "✗" if outcome == "failed" else "⊘"
+    for service, tests in tests_by_service.items():
+        service_id = service.lower().replace(" ", "_")
+        passed_count = sum(1 for t in tests if t.get("outcome") == "passed")
+        failed_count = sum(1 for t in tests if t.get("outcome") == "failed")
+        total_count = len(tests)
+        icon = service_icons.get(service, "📁")
 
         html_content += f"""
-                        <tr>
-                            <td style="font-family: monospace; font-size: 0.9em;">{test_name}</td>
-                            <td><span class="badge {badge_class}">{status_icon} {outcome.upper()}</span></td>
-                            <td>{duration}s</td>
-                        </tr>
+            <div class="service-section">
+                <div class="service-header collapsed" onclick="toggleService('{service_id}')">
+                    <h3>{icon} {service} Service</h3>
+                    <div class="service-stats">
+                        <span>Total: {total_count}</span>
+                        <span style="background: rgba(40,167,69,0.3);">✓ {passed_count}</span>
+                        <span style="background: rgba(220,53,69,0.3);">✗ {failed_count}</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                </div>
+                <div id="{service_id}" class="service-tests collapsed">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+"""
+        for idx, test in enumerate(tests):
+            test_name = test.get("name", "Unknown").split("::")[-1]
+            outcome = test.get("outcome", "unknown")
+            duration = test.get("duration", 0)
+            stdout = test.get("stdout", "")
+            stderr = test.get("stderr", "")
+            error = test.get("error", "")
+
+            badge_class = "badge-success" if outcome == "passed" else "badge-danger" if outcome == "failed" else "badge-warning"
+            status_icon = "✓" if outcome == "passed" else "✗" if outcome == "failed" else "⊘"
+
+            # Unique ID for this test's details row
+            test_id = f"{service_id}_test_{idx}"
+
+            # Escape HTML characters in output
+            stdout_escaped = stdout.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if stdout else ""
+            stderr_escaped = stderr.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if stderr else ""
+            error_escaped = error.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") if error else ""
+
+            html_content += f"""
+                            <tr class="test-row" onclick="toggleTestDetails('{test_id}')">
+                                <td class="test-name">{test_name}</td>
+                                <td><span class="badge {badge_class}">{status_icon} {outcome.upper()}</span></td>
+                                <td>{duration}s</td>
+                            </tr>
+                            <tr class="test-details" id="{test_id}">
+                                <td colspan="3">
+"""
+            # Add stdout if available
+            if stdout_escaped:
+                html_content += f"""
+                                    <span class="test-output-label">📤 Output:</span>
+                                    <pre class="test-output">{stdout_escaped}</pre>
+"""
+            # Add stderr if available
+            if stderr_escaped:
+                html_content += f"""
+                                    <span class="test-output-label">⚠️ Stderr:</span>
+                                    <pre class="test-output" style="border-left: 3px solid #ffc107;">{stderr_escaped}</pre>
+"""
+            # Add error if available (for failed tests)
+            if error_escaped:
+                html_content += f"""
+                                    <div class="test-error">
+                                        <span class="test-output-label">❌ Error:</span>
+                                        <pre>{error_escaped}</pre>
+                                    </div>
+"""
+            # If no output at all
+            if not stdout_escaped and not stderr_escaped and not error_escaped:
+                html_content += """
+                                    <span class="no-output">No output captured for this test.</span>
+"""
+
+            html_content += """
+                                </td>
+                            </tr>
+"""
+
+        html_content += """
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+"""
+
+    html_content += """
+            </div>
+        </div>
+    </div>
 """
 
     # Prepare chart data
@@ -555,11 +807,6 @@ def generate_dashboard():
     service_totals = [service_breakdown[s]["total"] for s in service_names]
 
     html_content += f"""
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 
     <script>
         // Test Results Chart
@@ -659,6 +906,21 @@ def generate_dashboard():
 
             content.classList.toggle('collapsed');
             header.classList.toggle('collapsed');
+        }}
+
+        // Toggle service section
+        function toggleService(serviceId) {{
+            const content = document.getElementById(serviceId);
+            const header = content.previousElementSibling;
+
+            content.classList.toggle('collapsed');
+            header.classList.toggle('collapsed');
+        }}
+
+        // Toggle test details
+        function toggleTestDetails(testId) {{
+            const detailsRow = document.getElementById(testId);
+            detailsRow.classList.toggle('show');
         }}
     </script>
 </body>

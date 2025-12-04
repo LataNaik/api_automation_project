@@ -1,0 +1,39 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+*.egg-info/
+
+# Test outputs and logs
+output/
+*.log
+*.tmp
+reports/
+ci-reports/
+allure-reports/
+allure-results/
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Coverage and test cache
+htmlcov/
+coverage.xml
+.pytest_cache/
+.tox/
+.coverage

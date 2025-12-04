@@ -50,9 +50,6 @@ def test_create_householdMember():
         f.write(f"Household Member ID: {memberId}\n")
         f.write(f"Household Member Client Reference ID: {clientRefId}\n")
 
-    # with open("output/response.json", "w") as f:
-    #     json.dump(response_data, f, indent=2)
-
 
 def test_search_household():
     token = get_auth_token("user")
@@ -81,7 +78,7 @@ def test_search_householdMember_by_id():
 
     memberId = extract_id_from_file("Household Member ID:")
     assert memberId, "Household Member not found in file"
-    
+
     members = search_entity(
         entity_type="household",
         token=token,
@@ -91,10 +88,36 @@ def test_search_householdMember_by_id():
         endpoint="/household/member/v1/_search",
         response_key="HouseholdMembers"
     )
-    
+
     assert memberId in [v["id"] for v in members], "Household Member not found"
     print("Household Member found with ID:", memberId)
-    
+
+
+def test_create_householdMember_without_householdId():
+    """Negative test: Creating household member without householdId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Use helper with householdId=None to test negative scenario
+    res = create_household_member(token, client, household_id=None, household_client_ref_id=None)
+
+    # Should fail with 400 Bad Request
+    assert res.status_code == 400, f"Expected 400, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating member without householdId returned 400")
+
+
+def test_create_householdMember_without_individualId():
+    """Negative test: Creating household member without individualId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Use helper with individualId=None to test negative scenario
+    res = create_household_member(token, client, individual_id=None, individual_client_ref_id=None)
+
+    # Should fail with 400 Bad Request
+    assert res.status_code == 400, f"Expected 400, got {res.status_code}: {res.text}"
+    print("Negative test passed: Creating member without individualId returned 400")
+
 
 # --- Helper function ---
 
@@ -124,10 +147,31 @@ def create_household(token, client):
     return household_id, household_client_reference_id, response.status_code
 
 
-def create_household_member(token, client):
+def create_household_member(token, client, household_id="create", household_client_ref_id="create",
+                            individual_id="create", individual_client_ref_id="create"):
+    """
+    Create a household member.
 
-    householdId, householdClientReferenceId, _ = create_household(token, client)
-    individualId, individualClientReferenceId, _, _ = create_individual(token, client)
+    Args:
+        household_id: Pass None to skip, "create" to create new, or provide existing ID
+        household_client_ref_id: Pass None to skip, "create" to create new, or provide existing ID
+        individual_id: Pass None to skip, "create" to create new, or provide existing ID
+        individual_client_ref_id: Pass None to skip, "create" to create new, or provide existing ID
+    """
+    # Create or use provided household
+    if household_id == "create":
+        householdId, householdClientReferenceId, _ = create_household(token, client)
+    else:
+        householdId = household_id
+        householdClientReferenceId = household_client_ref_id
+
+    # Create or use provided individual
+    if individual_id == "create":
+        individualId, individualClientReferenceId, _, _ = create_individual(token, client)
+    else:
+        individualId = individual_id
+        individualClientReferenceId = individual_client_ref_id
+
     payload = load_payload("household", "create_householdMember.json")
 
     payload["HouseholdMember"]["clientReferenceId"] = str(uuid.uuid4())

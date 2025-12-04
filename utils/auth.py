@@ -8,7 +8,6 @@ load_dotenv(override=True)  # This forces reloading of updated values
 
 def get_auth_token(service: str):
     url = os.getenv("BASE_URL") + "/user/oauth/token"
-    # print("URL ", url)
 
     # Build dynamic payload based on service (role)
     payload = {
