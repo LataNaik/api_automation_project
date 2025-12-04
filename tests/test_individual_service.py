@@ -5,7 +5,6 @@ from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
 from utils.config import boundaryCode, individual
 import uuid
-import json
 
 
 # --- Test functions ---
@@ -65,7 +64,7 @@ def create_individual(token, client):
     response = client.post(url, payload)
     # Handle error if status is not success
     if response.status_code not in [200, 202]:
-        raise Exception(f"Household creation failed with status {response.status_code}: {response.text}")
+        raise Exception(f"Individual creation failed with status {response.status_code}: {response.text}")
 
     individual_data = response.json()["Individual"]
     individual_id = individual_data["id"]

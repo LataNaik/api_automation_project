@@ -1,0 +1,82 @@
+name: API Tests
+
+on:
+  push:
+    branches: [main, product]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:  # Allows manual trigger
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create output directory
+        run: mkdir -p output reports
+
+      - name: Run API tests
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          TENANTID: ${{ secrets.TENANTID }}
+          USERTYPE: ${{ secrets.USERTYPE }}
+          CLIENT_AUTH_HEADER: ${{ secrets.CLIENT_AUTH_HEADER }}
+          SEARCH_LIMIT: ${{ secrets.SEARCH_LIMIT }}
+          SEARCH_OFFSET: ${{ secrets.SEARCH_OFFSET }}
+          HIERARCHYTYPE: ${{ secrets.HIERARCHYTYPE }}
+          BOUNDARY_TYPE: ${{ secrets.BOUNDARY_TYPE }}
+          BOUNDARY_CODE: ${{ secrets.BOUNDARY_CODE }}
+          SERVICE_INDIVIDUAL: ${{ secrets.SERVICE_INDIVIDUAL }}
+          SERVICE_PROJECT: ${{ secrets.SERVICE_PROJECT }}
+          SERVICE_MDMS: ${{ secrets.SERVICE_MDMS }}
+        run: |
+          pytest tests/ -v --html=reports/report.html --self-contained-html --junitxml=reports/junit.xml || true
+
+      - name: Copy output files to reports
+        if: always()
+        run: |
+          cp -r output/* reports/ 2>/dev/null || true
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 30
+
+      - name: Upload test results to GitHub
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results
+          path: reports/junit.xml
+
+      - name: Publish Test Results to Summary
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: reports/junit.xml
+          reporter: java-junit

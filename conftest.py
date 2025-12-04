@@ -59,6 +59,14 @@ def pytest_runtest_logreport(report):
             "duration": round(report.duration, 2)
         }
 
+        # Capture stdout (print statements from tests)
+        if hasattr(report, 'capstdout') and report.capstdout:
+            test_info["stdout"] = report.capstdout
+
+        # Capture stderr
+        if hasattr(report, 'capstderr') and report.capstderr:
+            test_info["stderr"] = report.capstderr
+
         if report.outcome == "passed":
             test_results["passed"] += 1
         elif report.outcome == "failed":
@@ -68,3 +76,27 @@ def pytest_runtest_logreport(report):
             test_results["skipped"] += 1
 
         test_results["tests"].append(test_info)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Hook to capture stdout/stderr for each test"""
+    outcome = yield
+    report = outcome.get_result()
+
+    if call.when == "call":
+        # Capture stdout
+        if hasattr(item, '_captured_stdout'):
+            report.capstdout = item._captured_stdout
+        # Capture stderr
+        if hasattr(item, '_captured_stderr'):
+            report.capstderr = item._captured_stderr
+
+
+@pytest.fixture(autouse=True)
+def capture_test_output(request, capfd):
+    """Fixture to capture test output"""
+    yield
+    captured = capfd.readouterr()
+    request.node._captured_stdout = captured.out
+    request.node._captured_stderr = captured.err

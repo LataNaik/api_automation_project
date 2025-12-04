@@ -41,7 +41,6 @@ def test_roles():
     response = search_mdms_data(token, client, "ACCESSCONTROL-ROLES.roles")
     assert response.status_code == 200, f"MDMS Search failed: {response.text}"
 
-    # print("Roles:", [item["code"] for item in mdms_data])
     mdms_data = response.json().get("mdms", [])
     assert mdms_data, "No Roles data found in response"
     assert all("data" in item and "code" in item["data"] for item in mdms_data), "Missing 'code' in some Roles"
@@ -54,13 +53,9 @@ def test_app_config():
     response = search_mdms_data(token, client, "HCM.APP_CONFIG")
     assert response.status_code == 200, f"MDMS Search failed: {response.text}"
 
-    # print("AppConfig:", [item["code"] for item in mdms_data])
     mdms_data = response.json().get("mdms", [])
     assert mdms_data, "No App Config data found in response"
     app_config = mdms_data[0].get("data", {})
-    # print("App Config Keys:", list(app_config.keys()))
-    # print("App Config Values:", list(app_config.values()))
-    # print("App Config Dict:", app_config)
     print("App Config Dict:")
     for key, value in app_config.items():
         print(f"{key}: {value}")
@@ -115,12 +110,3 @@ def search_mdms_data(token, client, master_name):
     url = f"/{mdms}/v2/_search"
     response = client.post(url, payload)
     return response
-
-# def get_project_type(token, client, master_name, code):
-#     payload = load_payload("mdms", "search_mdmsData.json")
-#     payload["MdmsCriteria"]["schemaCode"]=master_name
-#     payload["MdmsCriteria"]["schemaCode"]["filters"]["code"]=code
-#     payload["RequestInfo"] = get_request_info(token)
-#     url = f"/{mdms}/v2/_search"
-#     response = client.post(url, payload)
-#     return response
