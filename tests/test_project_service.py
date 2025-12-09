@@ -84,6 +84,49 @@ def test_search_project_resource():
     print("Project Resource found with ID:", resource_id)
 
 
+@pytest.mark.positive
+def test_create_project_staff():
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    project_id = extract_id_from_file("Project ID:")
+    userservice_uuid = extract_id_from_file("Employee UserService UUID:")
+
+    assert project_id, "Project ID not found in file"
+    assert userservice_uuid, "Employee UserService UUID not found in file"
+
+    staff_id, status_code = create_project_staff(token, client, project_id, userservice_uuid)
+    assert status_code in [200, 202], f"Project Staff creation failed with status: {status_code}"
+
+    print("Project Staff created with ID:", staff_id)
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Project Staff details ---\n")
+        f.write(f"Project Staff ID: {staff_id}\n")
+
+
+@pytest.mark.positive
+def test_search_project_staff():
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    staff_id = extract_id_from_file("Project Staff ID:")
+    assert staff_id, "Project Staff ID not found in file"
+
+    staff_list = search_entity(
+        entity_type="project/project_staff",
+        token=token,
+        client=client,
+        entity_id=staff_id,
+        payload_file="search_project_staff.json",
+        endpoint=f"/{project}/staff/v1/_search",
+        response_key="ProjectStaff"
+    )
+
+    assert staff_id in [s["id"] for s in staff_list], "Project Staff not found"
+    print("Project Staff found with ID:", staff_id)
+
+
 # --- Helper functions ---
 
 def create_individual_project(token, client, boundaryType, boundaryCode):
@@ -114,7 +157,7 @@ def create_individual_project(token, client, boundaryType, boundaryCode):
 
 
 def create_project_resource(token, client, project_id, variant_id):
-    payload = load_payload("project", "create_project_resource.json")
+    payload = load_payload("project/project_resource", "create_project_resource.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["ProjectResource"]["tenantId"] = tenantId
     payload["ProjectResource"]["projectId"] = project_id
@@ -133,7 +176,7 @@ def create_project_resource(token, client, project_id, variant_id):
 
 
 def search_project_resource(token, client, project_id):
-    payload = load_payload("project", "search_project_resource.json")
+    payload = load_payload("project/project_resource", "search_project_resource.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["ProjectResource"]["projectId"] = [project_id]
 
@@ -144,3 +187,20 @@ def search_project_resource(token, client, project_id):
         raise Exception(f"Project Resource search failed with status {response.status_code}: {response.text}")
 
     return response.json().get("ProjectResources", [])
+
+
+def create_project_staff(token, client, project_id, userservice_uuid):
+    payload = load_payload("project/project_staff", "create_project_staff.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectStaff"]["tenantId"] = tenantId
+    payload["ProjectStaff"]["projectId"] = project_id
+    payload["ProjectStaff"]["userId"] = userservice_uuid
+
+    url = f"/{project}/staff/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Staff creation failed with status {response.status_code}: {response.text}")
+
+    staff_data = response.json()["ProjectStaff"]
+    return staff_data["id"], response.status_code

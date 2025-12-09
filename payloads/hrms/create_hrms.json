@@ -1,0 +1,215 @@
+{
+    "Employees": [
+        {
+            "tenantId": "mz",
+            "employeeStatus": "EMPLOYED",
+            "assignments": [
+                {
+                    "fromDate": 1709058600000,
+                    "isCurrentAssignment": true,
+                    "department": "eGov",
+                    "designation": "DESIG_60"
+                }
+            ],
+            "code": "SD-1",
+            "dateOfAppointment": 1709058600000,
+            "employeeType": "PERMANENT",
+            "jurisdictions": [
+                {
+                    "hierarchy": "MICROPLAN",
+                    "boundaryType": "Country",
+                    "boundary": "MICROPLAN_MO",
+                    "tenantId": "mz",
+                    "roles": [
+                        {
+                            "code": "HELPDESK_USER",
+                            "name": "HELPDESK USER",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_HELPDESK_USER",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "HRMS_ADMIN",
+                            "name": "HRMS Admin",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_HRMS_ADMIN",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "CAMPAIGN_MANAGER",
+                            "name": "Campaign Manager",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_CAMPAIGN_MANAGER",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "SYSTEM_ADMINISTRATOR",
+                            "name": "System Administrator",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_SYSTEM_ADMINISTRATOR",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "BOUNDARY_MANAGER",
+                            "name": "Boundary Manager",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_BOUNDARY_MANAGER",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "NATIONAL_SUPERVISOR",
+                            "name": "National Supervisor",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_NATIONAL_SUPERVISOR",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "MDMS_ADMIN",
+                            "name": "MDMS Admin",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_MDMS_ADMIN",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "DISTRICT_SUPERVISOR",
+                            "name": "District Supervisor",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_DISTRICT_SUPERVISOR",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "HEALTH_FACILITY_WORKER",
+                            "name": "Health Facilty Worker",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_HEALTH_FACILITY_WORKER",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "DISTRIBUTOR",
+                            "name": "Distributor",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_DISTRIBUTOR",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "WAREHOUSE_MANAGER",
+                            "name": "Warehouse Manager",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_WAREHOUSE_MANAGER",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "PGR-ADMIN",
+                            "name": "PGR Administrator",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_PGR-ADMIN",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "PROVINCIAL_SUPERVISOR",
+                            "name": "Provincial Supervisor",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_PROVINCIAL_SUPERVISOR",
+                            "tenantId": "mz"
+                        },
+                        {
+                            "code": "COMMUNITY_CREATOR",
+                            "name": "Community Creator",
+                            "labelKey": "ACCESSCONTROL_ROLES_ROLES_COMMUNITY_CREATOR",
+                            "tenantId": "mz"
+                        }
+                    ]
+                }
+            ],
+            "user": {
+                "mobileNumber": "8887005251",
+                "name": "Shubhang",
+                "correspondenceAddress": "dg",
+                "emailId": "raj@gmail.com",
+                "gender": "MALE",
+                "dob": 1136592000000,
+                "roles": [
+                    {
+                        "code": "HELPDESK_USER",
+                        "name": "HELPDESK USER",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "HRMS_ADMIN",
+                        "name": "HRMS Admin",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "CAMPAIGN_MANAGER",
+                        "name": "Campaign Manager",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "SYSTEM_ADMINISTRATOR",
+                        "name": "System Administrator",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "BOUNDARY_MANAGER",
+                        "name": "Boundary Manager",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "FIELD_SUPERVISOR",
+                        "name": "Field Supervisor",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "NATIONAL_SUPERVISOR",
+                        "name": "National Supervisor",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "MDMS_ADMIN",
+                        "name": "MDMS Admin",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "DISTRICT_SUPERVISOR",
+                        "name": "District Supervisor",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "HEALTH_FACILITY_WORKER",
+                        "name": "Health Facilty Worker",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "SUPERUSER",
+                        "name": "Super User",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "DISTRIBUTOR",
+                        "name": "Distributor",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "WAREHOUSE_MANAGER",
+                        "name": "Warehouse Manager",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "PGR-ADMIN",
+                        "name": "PGR Administrator",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "PROVINCIAL_SUPERVISOR",
+                        "name": "Provincial Supervisor",
+                        "tenantId": "mz"
+                    },
+                    {
+                        "code": "COMMUNITY_CREATOR",
+                        "name": "Community Creator",
+                        "tenantId": "mz"
+                    }
+                ],
+                "tenantId": "mz",
+                "userName": "SD-1",
+                "password": "eGov@1234"
+            },
+            "serviceHistory": [],
+            "education": [],
+            "tests": []
+        }
+    ],
+    "key": "CREATE",
+    "action": "CREATE",
+    "RequestInfo": {
+        "apiId": "Rainmaker",
+        "authToken": "{{authToken}}"
+    }
+}

@@ -15,7 +15,9 @@ def parse_ids_file():
         "Product": [],
         "Product Variant": [],
         "Project": [],
-        "Project Resource": []
+        "Project Resource": [],
+        "Localization": [],
+        "Employee": []
     }
 
     try:
@@ -49,6 +51,14 @@ def parse_ids_file():
             # Extract Project Resource IDs
             project_resources = re.findall(r'Project Resource ID: (PR-[\d-]+)', content)
             entities["Project Resource"] = project_resources
+
+            # Extract Localization Codes
+            localization_codes = re.findall(r'Localization Code: ([\w_]+)', content)
+            entities["Localization"] = localization_codes
+
+            # Extract Employee Codes
+            employee_codes = re.findall(r'Employee Code: ([\w-]+)', content)
+            entities["Employee"] = employee_codes
 
     except Exception as e:
         print(f"Warning: Could not parse ids.txt: {e}")
@@ -117,6 +127,10 @@ def get_service_name(test_name):
         return "Boundary"
     elif "test_mdms_service" in test_name_lower:
         return "MDMS"
+    elif "test_localization_service" in test_name_lower:
+        return "Localization"
+    elif "test_hrms_service" in test_name_lower:
+        return "HRMS"
     else:
         return "Other"
 
@@ -700,6 +714,8 @@ def generate_dashboard():
         "Project": "📋",
         "Boundary": "🗺️",
         "MDMS": "📊",
+        "Localization": "🌐",
+        "HRMS": "👔",
         "Other": "📁"
     }
 

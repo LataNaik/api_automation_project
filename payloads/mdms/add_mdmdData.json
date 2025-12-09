@@ -1,0 +1,33 @@
+{
+    "Mdms": {
+        "tenantId": "{{tenantId}}",
+        "schemaCode": "Test.Schema.4",
+        "uniqueIdentifier": null,
+        "data": {
+            "id":"1",
+            "hierarchyTypeCode": "MICROPLAN"
+        },
+        "isActive": true
+    },
+    "RequestInfo": {
+        "apiId": "asset-services",
+        "ver": null,
+        "ts": null,
+        "action": null,
+        "did": null,
+        "key": null,
+        "msgId": "search with from and to values",
+        "authToken": "{{authToken}}",
+        "correlationId": null,
+        "userInfo": {
+            "id": "1",
+            "userName": null,
+            "name": null,
+            "type": null,
+            "mobileNumber": null,
+            "emailId": null,
+            "roles": null,
+            "uuid": "db842ca9-25c5-4419-a72f-459443d38feb"
+        }
+    }
+}

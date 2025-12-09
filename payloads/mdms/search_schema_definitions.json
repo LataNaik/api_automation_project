@@ -1,0 +1,50 @@
+{
+    "SchemaDefCriteria": {
+        "tenantId": "mz",
+        "limit": 200,
+        "codes": [
+            "Test.Schema"
+        ]
+    },
+    "RequestInfo": {
+        "apiId": "Rainmaker",
+        "authToken": "cd7af777-8c05-413c-99bc-32ba3daf0ab2",
+        "userInfo": {
+            "id": 1079,
+            "uuid": "6a2ba2ac-6ca0-4f37-b6dc-bc32082686d2",
+            "userName": "CMUAT4",
+            "name": "CMUAT4",
+            "mobileNumber": "8998953532",
+            "emailId": null,
+            "locale": null,
+            "type": "EMPLOYEE",
+            "roles": [
+                {
+                    "name": "System Administrator",
+                    "code": "SYSTEM_ADMINISTRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Localisation admin",
+                    "code": "LOC_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "MDMS ADMIN",
+                    "code": "MDMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Campaign Managers",
+                    "code": "CAMPAIGN_MANAGER",
+                    "tenantId": "mz"
+                }
+            ],
+            "active": true,
+            "tenantId": "mz",
+            "permanentCity": null
+        },
+        "msgId": "1722323620550|en_IN",
+        "plainAccessRequest": {}
+    }
+}
