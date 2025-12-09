@@ -1,0 +1,49 @@
+{
+    "RequestInfo": {
+        "apiId": "asset-services",
+        "ver": null,
+        "ts": null,
+        "action": null,
+        "did": null,
+        "key": null,
+        "msgId": null,
+        "authToken": "{{authToken}}",
+        "correlationId": null,
+        "userInfo": {
+            "id": "1",
+            "userName": null,
+            "name": null,
+            "type": null,
+            "mobileNumber": null,
+            "emailId": null,
+            "roles": null,
+            "uuid": "2f5ff063-7d48-419d-9d9d-2c30ef66d199"
+        }
+    },
+    "SchemaDefinition": {
+        "tenantId": "{{tenantId}}",
+        "code": "Test.Schema",
+        "description": null,
+        "definition": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "title": "Generated schema for Root",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "hierarchyTypeCode": {
+                    "type": "string"
+                }
+            },
+            "x-unique": [
+                "id"
+            ],
+            "required": [
+                "id",
+                "hierarchyTypeCode"
+            ]
+        },
+        "isActive": true
+    }
+}

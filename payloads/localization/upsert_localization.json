@@ -1,0 +1,111 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}",
+        "userInfo": {
+            "id": 5139,
+            "uuid": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+            "userName": "LNMZ",
+            "name": "Health Facility",
+            "mobileNumber": "5689999992",
+            "emailId": null,
+            "locale": null,
+            "type": "EMPLOYEE",
+            "roles": [
+                {
+                    "name": "Field Supervisor",
+                    "code": "FIELD_SUPERVISOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "National Supervisor",
+                    "code": "NATIONAL_SUPERVISOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "MDMS Admin",
+                    "code": "MDMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HRMS Admin",
+                    "code": "HRMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HELPDESK USER",
+                    "code": "HELPDESK_USER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Registrar",
+                    "code": "REGISTRAR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "District Supervisor",
+                    "code": "DISTRICT_SUPERVISOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "System Administrator",
+                    "code": "SYSTEM_ADMINISTRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Health Facilty Worker",
+                    "code": "HEALTH_FACILITY_WORKER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Super User",
+                    "code": "SUPERUSER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Distributor",
+                    "code": "DISTRIBUTOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Warehouse Manager",
+                    "code": "WAREHOUSE_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "L2 Support",
+                    "code": "L2_SUPPORT",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "PGR Administrator",
+                    "code": "PGR-ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Campaign Manager",
+                    "code": "CAMPAIGN_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Provincial Supervisor",
+                    "code": "PROVINCIAL_SUPERVISOR",
+                    "tenantId": "mz"
+                }
+            ],
+            "active": true,
+            "tenantId": "mz",
+            "permanentCity": null
+        }
+    },
+    "tenantId": "mz",
+    "module": "hcm-test",
+    "locale": "en_MZ",
+    "messages": [
+        {
+            "code": "HCM_TEST_MODULE_MESSAGE",
+            "message": "Test message",
+            "module": "hcm-test",
+            "locale": "en_MZ"
+        }
+    ]
+}
