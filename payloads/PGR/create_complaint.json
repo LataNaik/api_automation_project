@@ -1,0 +1,52 @@
+{
+    "service": {
+        "active": true,
+        "tenantId": "mz",
+        "serviceCode": "SecurityIssues",
+        "description": "entered additional details ",
+        "applicationStatus": "CREATED",
+        "source": "web",
+        "user": {
+            "id": 17187,
+            "uuid": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+            "userName": "LN2",
+            "name": "Lata Naik",
+            "mobileNumber": "8887005247",
+            "emailId": "lata.naik@egovernments.org",
+            "locale": null,
+            "type": "EMPLOYEE",
+            "roles": [
+                {
+                    "name": "Campaign Manager",
+                    "code": "CAMPAIGN_MANAGER",
+                    "tenantId": "mz"
+                }
+            ],
+            "active": true,
+            "tenantId": "mz",
+            "permanentCity": null
+        },
+        "isDeleted": false,
+        "rowVersion": 1,
+        "address": {
+            "locality": {
+                "code": "MICROPLAN_MO.MICROPLAN_MO_15_KANO_STATE.MICROPLAN_MO_15_01_KANO.MICROPLAN_MO_15_01_01_AJINGI.MICROPLAN_MO_15_01_01_02_AJINGI_L.MICROPLAN_MO_15_01_01_02_02_FULATAN_HP"
+            },
+            "geoLocation": {}
+        },
+        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"boundaryCode\":\"MICROPLAN_MO.MICROPLAN_MO_15_KANO_STATE.MICROPLAN_MO_15_01_KANO.MICROPLAN_MO_15_01_01_AJINGI.MICROPLAN_MO_15_01_01_02_AJINGI_L.MICROPLAN_MO_15_01_01_02_02_FULATAN_HP\"}",
+        "auditDetails": {
+            "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+            "createdTime": 1767851070693,
+            "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+            "lastModifiedTime": 1767851070693
+        }
+    },
+    "workflow": {
+        "action": "CREATE",
+        "assignes": [],
+        "hrmsAssignes": [],
+        "comments": "",
+        "verificationDocuments": null
+    }
+}

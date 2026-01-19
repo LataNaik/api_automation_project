@@ -24,7 +24,8 @@ def parse_ids_file():
         "Referral": [],
         "HF Referral": [],
         "Localization": [],
-        "Employee": []
+        "Employee": [],
+        "PGR Complaint": []
     }
 
     try:
@@ -94,6 +95,10 @@ def parse_ids_file():
             # Extract Employee Codes
             employee_codes = re.findall(r'Employee Code: ([\w-]+)', content)
             entities["Employee"] = employee_codes
+
+            # Extract PGR Service Request IDs
+            pgr_complaints = re.findall(r'Service Request ID: (PB-PGR-[\d-]+)', content)
+            entities["PGR Complaint"] = pgr_complaints
 
     except Exception as e:
         print(f"Warning: Could not parse ids.txt: {e}")
@@ -168,6 +173,8 @@ def get_service_name(test_name):
         return "HRMS"
     elif "test_referralmanagement_service" in test_name_lower:
         return "Referral Management"
+    elif "test_pgr_service" in test_name_lower:
+        return "PGR"
     else:
         return "Other"
 
@@ -754,6 +761,7 @@ def generate_dashboard():
         "Localization": "🌐",
         "HRMS": "👔",
         "Referral Management": "🏥",
+        "PGR": "📢",
         "Other": "📁"
     }
 

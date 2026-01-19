@@ -1,3 +1,19 @@
 {
-  "houseStructureTypes": ["GLASS", "REEDS", "CLAY", "CEMENT", "METAL"]
+  "houseStructureTypes": [
+    "GLASS",
+    "REEDS",
+    "CLAY",
+    "CEMENT",
+    "METAL"
+  ],
+  "serviceCode": [
+    "NotEnoughStock",
+    "SyncNotWorking",
+    "TechnicalIssues",
+    "UserAccountIssues",
+    "DataIssues",
+    "SecurityIssues",
+    "PerformanceIssue",
+    "Other"
+  ]
 }
