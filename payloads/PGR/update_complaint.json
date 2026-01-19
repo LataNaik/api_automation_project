@@ -1,0 +1,98 @@
+{
+    "details": {
+        "CS_COMPLAINT_DETAILS_COMPLAINT_NO": "{{complaintNumber}}",
+        "CS_ADDCOMPLAINT_COMPLAINT_TYPE": "SERVICEDEFS.USERACCOUNTISSUES",
+        "CS_COMPLAINT_FILED_DATE": "18-Sep-2025",
+        "CS_COMPLAINT_DETAILS_AREA": "{{boundaryCode}}",
+        "CS_COMPLAINT_DETAILS_APPLICATION_STATUS": "CS_COMMON_PENDING_ASSIGNMENT",
+        "CS_CREATECOMPLAINT_LANDMARK": "",
+        "CS_COMPLAINT_ADDTIONAL_DETAILS": "Issue"
+    },
+    "workflow": {
+        "action": "RESOLVE",
+        "assignes": null,
+        "comments": "resolved",
+        "verificationDocuments": [],
+        "hrmsAssignes": null
+    },
+    "service": {
+        "active": true,
+        "user": {
+            "id": 16499,
+            "userName": "9689999992",
+            "name": "Lata",
+            "type": "EMPLOYEE",
+            "mobileNumber": "9689999992",
+            "emailId": null,
+            "roles": [
+                {
+                    "id": null,
+                    "name": "Citizen",
+                    "code": "CITIZEN",
+                    "tenantId": "{{tenantId}}"
+                }
+            ],
+            "tenantId": "{{tenantId}}",
+            "uuid": "{{useruuid}}",
+            "active": true
+        },
+        "id": "{{id}}",
+        "tenantId": "{{tenantId}}",
+        "serviceCode": "{{complaintTypePGR}}",
+        "serviceRequestId": "{{complaintNumber}}",
+        "description": "Issue",
+        "accountId": "{{accountId}}",
+        "rating": null,
+        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"otherComplaintDescription\":null}",
+        "applicationStatus": "PENDING_ASSIGNMENT",
+        "source": "web",
+        "address": {
+            "tenantId": "{{tenantId}}",
+            "doorNo": null,
+            "plotNo": null,
+            "id": "708c7425-8b86-475e-8464-eab86ee7a4a1",
+            "landmark": "",
+            "city": null,
+            "district": null,
+            "region": null,
+            "state": null,
+            "country": null,
+            "pincode": "",
+            "additionDetails": null,
+            "buildingName": "",
+            "street": "",
+            "locality": {
+                "code": "{{boundaryCode}}",
+                "name": null,
+                "label": null,
+                "latitude": null,
+                "longitude": null,
+                "children": null,
+                "materializedPath": null
+            },
+            "geoLocation": {
+                "latitude": 0,
+                "longitude": 0,
+                "additionalDetails": null
+            }
+        },
+        "auditDetails": {
+            "createdBy": "{{createdBy}}",
+            "createdTime": 1767950766578,
+            "lastModifiedBy": "{{createdBy}}",
+            "lastModifiedTime": 1767950766578
+        },
+        "selfComplaint": false
+    },
+    "audit": {
+        "details": {
+            "createdBy": "{{createdBy}}",
+            "createdTime": 1767950766578,
+            "lastModifiedBy": "{{createdBy}}",
+            "lastModifiedTime": 1767950766578
+        },
+        "source": "web",
+        "rating": null,
+        "serviceCode": "{{complaintTypePGR}}"
+    }
+}
