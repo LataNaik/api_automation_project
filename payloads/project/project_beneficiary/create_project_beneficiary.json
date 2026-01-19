@@ -1,0 +1,33 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}",
+        "userInfo": {
+            "id": 1121,
+            "uuid": "1e9fc9e2-6271-495f-9e38-001d75f8f2b4"
+        }
+    },
+    "ProjectBeneficiary": {
+        "clientReferenceId": "{{uuid2}}",
+        "tenantId": "mz",
+        "projectId": "{{IRSProjectID}}",
+        "beneficiaryId": "H-2024-08-30-000224",
+        "beneficiaryClientReferenceId": "a2565b24-f629-423f-9c0c-5088bc0802a1",
+        "dateOfRegistration": 1710158101634,
+        "additionalFields": {
+            "schema": "registration",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "key1",
+                    "value": "value1"
+                }
+            ]
+        },
+        "clientAuditDetails": {
+            "createdBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+            "lastModifiedBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+            "createdTime": 1710158102701,
+            "lastModifiedTime": 1710158102701
+        }
+    }
+}

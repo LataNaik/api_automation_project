@@ -16,6 +16,13 @@ def parse_ids_file():
         "Product Variant": [],
         "Project": [],
         "Project Resource": [],
+        "Project Staff": [],
+        "Project Facility": [],
+        "Project Beneficiary": [],
+        "Project Task": [],
+        "Side Effect": [],
+        "Referral": [],
+        "HF Referral": [],
         "Localization": [],
         "Employee": []
     }
@@ -48,9 +55,37 @@ def parse_ids_file():
             projects = re.findall(r'Project ID: ([a-f0-9-]{36})', content)
             entities["Project"] = projects
 
-            # Extract Project Resource IDs
-            project_resources = re.findall(r'Project Resource ID: (PR-[\d-]+)', content)
-            entities["Project Resource"] = project_resources
+            # Extract Project Resource IDs (deduplicate)
+            project_resources = re.findall(r'Project Resource ID(?: \d)?: (PR-[\d-]+)', content)
+            entities["Project Resource"] = list(dict.fromkeys(project_resources))
+
+            # Extract Project Staff IDs
+            project_staff = re.findall(r'Project Staff ID: (PTS-[\d-]+)', content)
+            entities["Project Staff"] = project_staff
+
+            # Extract Project Facility IDs (deduplicate)
+            project_facilities = re.findall(r'Project Facility ID(?: \d)?: (PF-[\d-]+)', content)
+            entities["Project Facility"] = list(dict.fromkeys(project_facilities))
+
+            # Extract Project Beneficiary IDs
+            project_beneficiaries = re.findall(r'Project Beneficiary ID: (PTB-[\d-]+)', content)
+            entities["Project Beneficiary"] = project_beneficiaries
+
+            # Extract Project Task IDs
+            project_tasks = re.findall(r'Project Task ID: (PT-[\d-]+)', content)
+            entities["Project Task"] = project_tasks
+
+            # Extract Side Effect IDs (UUID format)
+            side_effects = re.findall(r'Side Effect ID: ([a-f0-9-]{36})', content)
+            entities["Side Effect"] = side_effects
+
+            # Extract Referral IDs (UUID format)
+            referrals = re.findall(r'Referral ID: ([a-f0-9-]{36})', content)
+            entities["Referral"] = referrals
+
+            # Extract HF Referral IDs (UUID format)
+            hf_referrals = re.findall(r'HF Referral ID: ([a-f0-9-]{36})', content)
+            entities["HF Referral"] = hf_referrals
 
             # Extract Localization Codes
             localization_codes = re.findall(r'Localization Code: ([\w_]+)', content)
@@ -131,6 +166,8 @@ def get_service_name(test_name):
         return "Localization"
     elif "test_hrms_service" in test_name_lower:
         return "HRMS"
+    elif "test_referralmanagement_service" in test_name_lower:
+        return "Referral Management"
     else:
         return "Other"
 
@@ -476,9 +513,9 @@ def generate_dashboard():
         }}
 
         .service-tests {{
-            max-height: 1000px;
+            max-height: 5000px;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.5s ease-out;
         }}
 
         .service-tests.collapsed {{
@@ -716,6 +753,7 @@ def generate_dashboard():
         "MDMS": "📊",
         "Localization": "🌐",
         "HRMS": "👔",
+        "Referral Management": "🏥",
         "Other": "📁"
     }
 

@@ -1,0 +1,25 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "Referral": {
+        "tenantId": "{{tenantId}}",
+        "clientReferenceId": "{{uuid}}",
+        "taskId": "{{taskIdIndividual}}",
+        "taskClientReferenceId": "{{taskClientReferenceIdIndividual}}",
+        "projectBeneficiaryId": "{{projectBeneficiaryIdIndividual}}",
+        "projectBeneficiaryClientReferenceId": "{{projectBeneficiaryClientReferenceIdIndividual}}",
+        "recipientType": "{{recipientType}}",
+        "recipientId": "{{recipientId}}",
+        "reasons": [
+            "fever"
+        ],
+        "rowVersion": 1,
+        "clientAuditDetails": {
+            "createdBy": "{{createdBy}}",
+            "lastModifiedBy": "{{createdBy}}",
+            "createdTime": 1765785281097,
+            "lastModifiedTime": 1765785281097
+        }
+    }
+}

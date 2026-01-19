@@ -1,0 +1,21 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "ProjectFacility": {
+        "tenantId": "mz",
+        "facilityId": "F-2025-08-29-009030",
+        "projectId": "7eef87e8-fbee-47a4-983b-ab20672b85b6",
+        "additionalFields": {
+            "schema": "test_e37466be924cjhghjg",
+            "version": 8,
+            "fields": [
+                {
+                    "key": "test_12bc5f24692f",
+                    "value": "test_bf376bce4c01"
+                }
+            ]
+        },
+        "rowVersion": 0
+    }
+}

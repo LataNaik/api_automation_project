@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import extract_id_from_file
-from utils.config import mdms, tenantId
+from utils.config import mdms, tenantId, invalidTenantId
 
 
 # --- Test functions ---
@@ -172,6 +172,66 @@ def test_search_added_mdms_data():
 
     assert mdms_id in [r["id"] for r in mdms_records], "MDMS Data not found"
     print("MDMS Data found with ID:", mdms_id)
+
+
+@pytest.mark.negative
+def test_create_schema_definition_with_invalid_tenant_id():
+    """Negative test: Creating schema definition with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    payload = load_payload("mdms", "create_schema_definition.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SchemaDefinition"]["tenantId"] = invalidTenantId
+    payload["SchemaDefinition"]["code"] = "Test.Invalid.Schema"
+
+    url = f"/{mdms}/schema/v1/_create"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Create correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_schema_definition_with_invalid_tenant_id():
+    """Negative test: Searching schema definition with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    schema_code = extract_id_from_file("Schema Code:")
+    assert schema_code, "Schema Code not found in file"
+
+    payload = load_payload("mdms", "search_schema_definitions.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SchemaDefCriteria"]["tenantId"] = invalidTenantId
+    payload["SchemaDefCriteria"]["codes"] = [schema_code]
+
+    url = f"/{mdms}/schema/v1/_search"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_mdms_data_with_invalid_tenant_id():
+    """Negative test: Searching MDMS data with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    schema_code = extract_id_from_file("Schema Code:")
+    assert schema_code, "Schema Code not found in file"
+
+    payload = load_payload("mdms", "search_mdmsData.json")
+    payload["MdmsCriteria"]["schemaCode"] = schema_code
+    payload["MdmsCriteria"]["tenantId"] = invalidTenantId
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{mdms}/v2/_search"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
 
 
 # --- Helper functions ---

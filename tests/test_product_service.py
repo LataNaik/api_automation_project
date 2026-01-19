@@ -126,6 +126,54 @@ def test_create_product_variant_without_productId():
     print("Negative test passed: Creating product variant without productId returned 400")
 
 
+@pytest.mark.negative
+def test_search_product_with_invalid_tenant_id():
+    """Negative test: Searching product with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    product_id = extract_id_from_file("Product ID:")
+    if not product_id:
+        # Create a new product if ID not found
+        res = create_product(token, client)
+        assert res.status_code in [200, 202], f"Product creation failed: {res.text}"
+        product_id = res.json()["Product"][0]["id"]
+
+    payload = load_payload("product", "search_product.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Product"]["id"] = [product_id]
+
+    url = f"/product/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_product_variant_with_invalid_tenant_id():
+    """Negative test: Searching product variant with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    variant_id = extract_id_from_file("Variant ID:")
+    if not variant_id:
+        # Create a new product variant if ID not found
+        res = create_product_variant(token, client)
+        assert res.status_code in [200, 202], f"Product Variant creation failed: {res.text}"
+        variant_id = res.json()["ProductVariant"][0]["id"]
+
+    payload = load_payload("product", "search_productVariant.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProductVariant"]["id"] = [variant_id]
+
+    url = f"/product/variant/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
 # --- Reusable Functions ---
 
 def create_product(token, client, tenant_id=None):

@@ -64,6 +64,29 @@ def test_create_individual_with_invalid_tenant_id():
     print("Negative test passed: Creating individual with invalid tenantId returned 401")
 
 
+@pytest.mark.negative
+def test_search_individual_with_invalid_tenant_id():
+    """Negative test: Searching individual with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    individual_id = extract_id_from_file("Individual ID:")
+    if not individual_id:
+        # Create a new individual if ID not found
+        individual_id, _, _, status_code = create_individual(token, client)
+        assert status_code in [200, 202], f"Individual creation failed with status: {status_code}"
+
+    payload = load_payload("individual", "search_individual.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Individual"]["id"] = [individual_id]
+
+    url = f"/{individual}/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
 # --- Helper function (no assertion) ---
 def create_individual(token, client, tenant_id=None):
     """

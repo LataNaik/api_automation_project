@@ -1,0 +1,10 @@
+{
+    "Referral": {
+        "id": [
+            "602e4830-0895-44b8-a093-86ff12db9248"
+        ]
+    },
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    }
+}

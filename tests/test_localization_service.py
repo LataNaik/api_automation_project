@@ -4,7 +4,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import extract_id_from_file
-from utils.config import tenantId
+from utils.config import tenantId, invalidTenantId
 
 
 # --- Test functions ---
@@ -36,6 +36,39 @@ def test_search_localization():
 
     assert message_code in [m["code"] for m in messages], "Localization message not found"
     print("Localization message found with code:", message_code)
+
+
+@pytest.mark.negative
+def test_upsert_localization_with_invalid_tenant_id():
+    """Negative test: Upserting localization with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    payload = load_payload("localization", "upsert_localization.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["tenantId"] = invalidTenantId
+
+    url = "/localization/messages/v1/_upsert"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Upsert correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_localization_with_invalid_tenant_id():
+    """Negative test: Searching localization with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    payload = load_payload("localization", "search_localization.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/localization/messages/v1/_search?tenantId={invalidTenantId}&locale=en_MZ&module=hcm-test"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
 
 
 # --- Helper functions ---
