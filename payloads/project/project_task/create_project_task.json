@@ -1,0 +1,73 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "Task": {
+        "tenantId": "{{tenantId}}",
+        "projectId": "{{projectIdIndividual}}",
+        "projectBeneficiaryId":"{{projectBeneficiaryIdIndividual}}", 
+        "projectBeneficiaryClientReferenceId": "{{projectBeneficiaryClientReferenceIdIndividual}}",
+        "clientReferenceId": "{{uuid}}",
+        "resources": [
+            {
+                "tenantId": "{{tenantId}}",
+                "clientReferenceId": "{{uuid2}}",
+                "taskClientReferenceId": "{{uuid4}}",
+                "productVariantId": "{{resourceIndividual1}}",
+                "quantity": 1,
+                "isDelivered": false,
+                "deliveryComment": "SUCCESSFUL_DELIVERY"
+            }
+        ],
+        "plannedStartDate": 1675582245,
+        "plannedEndDate": 1707723045,
+        "actualStartDate": 1707550245,
+        "actualEndDate": 1707590245,
+        "createdBy": "56b5c31b-b843-426c-b8d5-64a4c80286aa",
+        "createdDate": 1707550245,
+        "address": {
+            "clientReferenceId": "{{uuid3}}",
+            "tenantId": "{{tenantId}}",
+            "doorNo": "test_4b2c5ad43e11",
+            "latitude": 12.938808,
+            "longitude": 77.6379754,
+            "locationAccuracy": 65.67,
+            "type": "PERMANENT",
+            "addressLine1": "test_2512bdc41cb2",
+            "addressLine2": "test_afa1eadcb4f0",
+            "landmark": "test_d7ee474cb6da",
+            "city": "test_932d23b00265",
+            "pincode": "test_637fa8890171",
+            "buildingName": "test_90f36fdaf51d",
+            "street": "test_105ae34b63c6",
+            "boundaryType": "Aldeia",
+            "locality": {
+                 "tenantId": "mz",
+                "code": "{{boundaryCode}}",
+                "name": "test_66187cb44cb7",
+                "label": "test_fd101b472626",
+                "latitude": "test_1b1c8cbc83c3",
+                "longitude": "test_f42b04a12d34",
+                "materializedPath": "test_e5388dd34db2"
+            }
+        },
+        "additionalFields": {
+            "schema": "test_5266efb5bcd9",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "test_b9aa6f50056e",
+                    "value": "test_dcfafb1be02f"
+                }
+            ]
+        },
+        "clientAuditDetails": {
+            "createdBy": "{{createdBy}}",
+            "lastModifiedBy": "{{createdBy}}",
+            "createdTime": 1765785281097,
+            "lastModifiedTime": 1765785281097
+        },
+        "rowVersion": 1,
+        "status": "ADMINISTRATION_SUCCESS"
+    }
+}

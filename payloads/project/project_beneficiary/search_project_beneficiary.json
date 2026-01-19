@@ -1,0 +1,10 @@
+{
+    "ProjectBeneficiary": {
+        "id": [
+            "PTB-2024-10-17-086972"
+        ]
+    },
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    }
+}

@@ -3,7 +3,7 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import hierarchyType
+from utils.config import hierarchyType, invalidTenantId
 
 
 @pytest.mark.positive
@@ -33,6 +33,27 @@ def test_search_boundary():
         f.write("--- Boundary Hierarchy ---\n")
         for b_type, code in boundary_info:
             f.write(f"{b_type}: {code}\n")
+
+
+@pytest.mark.negative
+def test_search_boundary_with_invalid_tenant_id():
+    """Negative test: Searching boundary with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    payload = load_payload("boundary", "search_boundary.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = (
+        f"/boundary-service/boundary-relationships/_search"
+        f"?tenantId={invalidTenantId}&includeChildren=true"
+        f"&boundaryType=COUNTRY&hierarchyType=MICROPLAN"
+    )
+
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
 
 
 def collect_boundary_info(boundaries, results=None):

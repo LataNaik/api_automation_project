@@ -60,6 +60,30 @@ def test_create_facility_with_invalid_tenant_id():
     print("Negative test passed: Creating facility with invalid tenantId returned 401")
 
 
+@pytest.mark.negative
+def test_search_facility_with_invalid_tenant_id():
+    """Negative test: Searching facility with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    facility_id = extract_id_from_file("Facility ID:")
+    if not facility_id:
+        # Create a new facility if ID not found
+        res = create_facility(token, client)
+        assert res.status_code in [200, 202], f"Facility creation failed: {res.text}"
+        facility_id = res.json()["Facility"]["id"]
+
+    payload = load_payload("facility", "search_facility.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Facility"]["id"] = [facility_id]
+
+    url = f"/facility/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
 # --- Reusable Functions ---
 
 def create_facility(token, client, tenant_id=None):

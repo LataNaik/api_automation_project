@@ -152,6 +152,53 @@ def test_create_householdMember_with_invalid_tenant_id():
     print("Negative test passed: Creating household member with invalid tenantId returned 401")
 
 
+@pytest.mark.negative
+def test_search_household_with_invalid_tenant_id():
+    """Negative test: Searching household with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    household_id = extract_id_from_file("Household ID:")
+    if not household_id:
+        # Create a new household if ID not found
+        household_id, _, status_code = create_household(token, client)
+        assert status_code in [200, 202], f"Household creation failed with status: {status_code}"
+
+    payload = load_payload("household", "search_household.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Household"]["id"] = [household_id]
+
+    url = f"/household/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_householdMember_with_invalid_tenant_id():
+    """Negative test: Searching household member with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    member_id = extract_id_from_file("Household Member ID:")
+    if not member_id:
+        # Create a new household member if ID not found
+        res = create_household_member(token, client)
+        assert res.status_code in [200, 202], f"Household Member creation failed: {res.text}"
+        member_id = res.json()["HouseholdMember"]["id"]
+
+    payload = load_payload("household", "search_householdMember.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HouseholdMember"]["id"] = [member_id]
+
+    url = f"/household/member/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
 # --- Helper function ---
 
 def create_household(token, client, tenant_id=None):
