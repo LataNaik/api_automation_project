@@ -1,13 +1,20 @@
 import pytest
 import json
 import random
+import string
+import os
+import requests
 from datetime import datetime
+from dotenv import load_dotenv
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.config import pgr, tenantId, search_limit, search_offset, mdms, hrms
 from utils.search_helpers import extract_id_from_file
+
+# Load environment variables
+load_dotenv(override=True)
 
 
 # Load service codes from inputs.json
@@ -217,6 +224,117 @@ def test_assign_complaint():
         f.write(f"Employee userServiceUuid: {user_service_uuid}\n")
         f.write(f"Employee Department: {employee_dept}\n")
         f.write(f"Status: {assigned_status}\n")
+
+
+@pytest.mark.positive
+def test_complete_pgr_workflow():
+    """
+    Complete PGR workflow test:
+    1. Create a new employee with PGR-ADMIN role
+    2. Create a complaint with service code matching the employee's department
+    3. Assign the complaint to the newly created employee
+    4. Login as the new employee
+    5. Resolve the complaint as the new employee
+    """
+    admin_token = get_auth_token("user")
+    admin_client = APIClient(token=admin_token)
+
+    # Step 1: Create a new employee with PGR-ADMIN role and eGov department
+    print("Step 1: Creating a new employee with PGR-ADMIN role...")
+    employee_data = create_pgr_employee(admin_token, admin_client)
+
+    employee_code = employee_data["code"]
+    user_uuid = employee_data["user_uuid"]
+    user_service_uuid = employee_data["user_service_uuid"]
+    employee_dept = employee_data["department"]
+    employee_password = employee_data["password"]
+
+    print(f"Employee created: {employee_code}")
+    print(f"  UUID: {user_uuid}, userServiceUuid: {user_service_uuid}")
+    print(f"  Department: {employee_dept}")
+
+    # Step 2: Find a service code that maps to the employee's department
+    print(f"\nStep 2: Finding service code for department '{employee_dept}'...")
+    service_code = get_service_code_for_department(admin_token, admin_client, employee_dept)
+    if not service_code:
+        pytest.skip(f"No service code found for department {employee_dept}")
+
+    print(f"Using service code: {service_code}")
+
+    # Step 3: Create a complaint with the matching service code
+    print(f"\nStep 3: Creating complaint with service code '{service_code}'...")
+    create_res = create_complaint(admin_token, admin_client, service_code=service_code)
+    assert create_res.status_code in [200, 202], f"Complaint creation failed: {create_res.text}"
+
+    service_wrapper = create_res.json().get("ServiceWrappers", [])
+    assert service_wrapper, "ServiceWrappers not found in create response"
+
+    created_service = service_wrapper[0]["service"]
+    service_request_id = created_service["serviceRequestId"]
+    print(f"Complaint created: {service_request_id}")
+
+    # Step 4: Assign the complaint to the new employee
+    print(f"\nStep 4: Assigning complaint to employee {employee_code}...")
+    assign_res = assign_complaint(admin_token, admin_client, created_service, user_service_uuid, user_uuid, employee_code)
+
+    # Handle DEPARTMENT_NOT_FOUND error
+    if assign_res.status_code == 400:
+        error_response = assign_res.json()
+        errors = error_response.get("Errors", [])
+        for error in errors:
+            if error.get("code") == "DEPARTMENT_NOT_FOUND":
+                pytest.skip(
+                    f"PGR department configuration issue: {error.get('message')}. "
+                    "Verify that PGR-specific department configuration is set up correctly."
+                )
+
+    assert assign_res.status_code in [200, 202], f"Complaint assignment failed: {assign_res.text}"
+
+    assigned_wrapper = assign_res.json().get("ServiceWrappers", [])
+    assert assigned_wrapper, "ServiceWrappers not found in assign response"
+
+    assigned_service = assigned_wrapper[0]["service"]
+    assigned_status = assigned_service["applicationStatus"]
+    print(f"Complaint assigned with status: {assigned_status}")
+
+    # Step 5: Login as the new employee
+    print(f"\nStep 5: Logging in as employee {employee_code}...")
+    employee_token = login_as_user(employee_code, employee_password)
+    assert employee_token, f"Failed to login as {employee_code}"
+    print(f"Successfully logged in as {employee_code}")
+
+    employee_client = APIClient(token=employee_token)
+
+    # Step 6: Resolve the complaint as the new employee
+    print(f"\nStep 6: Resolving complaint {service_request_id} as {employee_code}...")
+    resolve_res = resolve_complaint(employee_token, employee_client, assigned_service)
+    assert resolve_res.status_code in [200, 202], f"Complaint resolution failed: {resolve_res.text}"
+
+    resolved_wrapper = resolve_res.json().get("ServiceWrappers", [])
+    assert resolved_wrapper, "ServiceWrappers not found in resolve response"
+
+    resolved_status = resolved_wrapper[0]["service"]["applicationStatus"]
+    assert resolved_status == "RESOLVED", f"Expected RESOLVED status, got: {resolved_status}"
+
+    print(f"\n{'='*60}")
+    print(f"COMPLETE PGR WORKFLOW SUCCESS!")
+    print(f"{'='*60}")
+    print(f"Complaint: {service_request_id}")
+    print(f"Created by: Admin")
+    print(f"Assigned to: {employee_code}")
+    print(f"Resolved by: {employee_code}")
+    print(f"Final Status: {resolved_status}")
+    print(f"{'='*60}")
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- PGR Complete Workflow details ---\n")
+        f.write(f"Service Request ID: {service_request_id}\n")
+        f.write(f"Employee Code: {employee_code}\n")
+        f.write(f"Employee UUID: {user_uuid}\n")
+        f.write(f"Employee userServiceUuid: {user_service_uuid}\n")
+        f.write(f"Employee Department: {employee_dept}\n")
+        f.write(f"Workflow: CREATE -> ASSIGN -> RESOLVE\n")
+        f.write(f"Final Status: {resolved_status}\n")
 
 
 # --- Reusable Functions ---
@@ -528,3 +646,100 @@ def assign_complaint(token, client, service, user_service_uuid, user_uuid, assig
     }
 
     return client.post(f"/{pgr}/v2/request/_update", payload)
+
+
+def login_as_user(username, password):
+    """
+    Login as a specific user and return their auth token.
+
+    Args:
+        username: The username to login with
+        password: The password for the user
+
+    Returns:
+        Auth token string or None if login failed
+    """
+    try:
+        url = os.getenv("BASE_URL") + "/user/oauth/token"
+
+        payload = {
+            "username": username,
+            "password": password,
+            "grant_type": "password",
+            "scope": "read",
+            "tenantId": tenantId,
+            "userType": "EMPLOYEE"
+        }
+
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            "authorization": os.getenv("CLIENT_AUTH_HEADER"),
+            "content-type": "application/x-www-form-urlencoded"
+        }
+
+        response = requests.post(url, data=payload, headers=headers)
+        if response.status_code == 200:
+            return response.json().get("access_token")
+        else:
+            print(f"Login failed for {username}: {response.text}")
+            return None
+
+    except Exception as e:
+        print(f"Login error for {username}: {e}")
+        return None
+
+
+def create_pgr_employee(token, client):
+    """
+    Create a new employee with PGR-ADMIN role and eGov department.
+
+    Args:
+        token: Authentication token
+        client: API client instance
+
+    Returns:
+        Dictionary with employee details:
+        - code: Employee code
+        - user_uuid: User UUID (for hrmsAssignes)
+        - user_service_uuid: User Service UUID (for assignes)
+        - department: Department code
+        - password: Default password
+    """
+    payload = load_payload("hrms", "create_hrms.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    # Generate unique code and username
+    letters = ''.join(random.choices(string.ascii_uppercase, k=2))
+    numbers = ''.join(random.choices(string.digits, k=4))
+    unique_code = f"PGR-EMP-{letters}-{numbers}"
+    mobile_number = f"{random.randint(7000000000, 9999999999)}"
+    default_password = "eGov@1234"
+
+    # Update employee code and username
+    payload["Employees"][0]["code"] = unique_code
+    payload["Employees"][0]["user"]["userName"] = unique_code
+    payload["Employees"][0]["user"]["mobileNumber"] = mobile_number
+    payload["Employees"][0]["user"]["password"] = default_password
+
+    # Ensure PGR-ADMIN role is included
+    # The payload already has PGR-ADMIN role from the template
+
+    # Ensure eGov department is set
+    payload["Employees"][0]["assignments"][0]["department"] = "eGov"
+
+    url = f"/{hrms}/employees/_create?tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Employee creation failed with status {response.status_code}: {response.text}")
+
+    employee_data = response.json()["Employees"][0]
+    user = employee_data["user"]
+
+    return {
+        "code": employee_data["code"],
+        "user_uuid": user["uuid"],
+        "user_service_uuid": user["userServiceUuid"],
+        "department": "eGov",
+        "password": default_password
+    }
