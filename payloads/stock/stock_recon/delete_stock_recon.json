@@ -1,0 +1,42 @@
+{
+    "StockReconciliation": {
+        "id": "SR-2025-05-22-000008",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 3,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_d44a3a0ad57c",
+            "version": 43,
+            "fields": [
+                {
+                    "key": "test",
+                    "value": "test"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747916160801,
+            "lastModifiedTime": 1747916269060
+        },
+        "clientReferenceId": "6425f69a-065b-46e0-b599-2c5eeafc3f60",
+        "clientAuditDetails": {
+            "createdBy": null,
+            "lastModifiedBy": null,
+            "createdTime": 1692774209,
+            "lastModifiedTime": 1692774209
+        },
+        "facilityId": "F-2025-05-22-000024",
+        "productVariantId": "PVAR-2025-05-22-000020",
+        "referenceId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+        "referenceIdType": "test_7c5f581990e7",
+        "physicalCount": 100,
+        "calculatedCount": 110,
+        "commentsOnReconciliation": "test_252a4b0cfdfa",
+        "dateOfReconciliation": 21,
+        "isDeleted": true
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "HouseholdMember": {
+        "id": "d875ec71-f5fa-43d4-8626-727ae685219a",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 1,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_a3bf3e3ca4bc",
+            "version": 63,
+            "fields": [
+                {
+                    "key": "test_d1960b95a67c",
+                    "value": "test_8329c276a171"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747934597495,
+            "lastModifiedTime": 1747934597495
+        },
+        "clientReferenceId": "b6c06885-e024-4284-9248-ef5634e1124d",
+        "clientAuditDetails": {
+            "createdBy": null,
+            "lastModifiedBy": null,
+            "createdTime": 1692774209,
+            "lastModifiedTime": 1692774209
+        },
+        "householdId": "H-2025-05-22-000077",
+        "householdClientReferenceId": "90ce058c-c236-4bf0-a54d-c5f72a3cb2b3",
+        "individualId": "b3054444-a49b-4e16-8798-65a27937834a",
+        "individualClientReferenceId": "fcb32638-eb17-401d-b355-79002b03f166",
+        "isHeadOfHousehold": true,
+        "isDeleted": true
+    }
+}

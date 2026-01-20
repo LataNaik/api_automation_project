@@ -1,0 +1,447 @@
+{
+    "Projects": [
+        {
+            "id": "08c54bb4-254c-471c-92ce-100473485ff6",
+            "tenantId": "mz",
+            "projectNumber": "PJT-2025-08-25-096291",
+            "name": "MR-DN-August-Dec",
+            "projectType": "MR-DN",
+            "projectSubType": "MR-DN",
+            "department": "MALARIA",
+            "description": "Configuration for Multi Round Campaigns, disease MALARIA campaign created through Admin Console with Campaign Id as CMP-2025-08-25-001466",
+            "referenceID": "CMP-2025-08-25-001466",
+            "projectTypeId": "ea1bb2e7-06d8-4fe4-ba1e-f4a6363a21be",
+            "documents": null,
+            "address": {
+                "id": "b40ed426-82da-4f25-bf0b-c4c3b9e3d5f0",
+                "tenantId": "mz",
+                "clientReferenceId": null,
+                "doorNo": null,
+                "latitude": 0.0,
+                "longitude": 0.0,
+                "locationAccuracy": 0.0,
+                "type": null,
+                "addressLine1": null,
+                "addressLine2": null,
+                "landmark": null,
+                "city": null,
+                "pincode": null,
+                "buildingName": null,
+                "street": null,
+                "boundaryType": "COUNTRY",
+                "boundary": "MICROPLAN_MO",
+                "locality": null
+            },
+            "startDate": 1756060200000,
+            "endDate": 1767205799000,
+            "isTaskEnabled": false,
+            "parent": null,
+            "projectHierarchy": null,
+            "natureOfWork": null,
+            "ancestors": null,
+            "descendants": null,
+            "targets": [
+                {
+                    "id": "0b6ac91b-7d32-425e-bb6d-4df718f927c6",
+                    "beneficiaryType": "INDIVIDUAL",
+                    "totalNo": 0,
+                    "targetNo": 25270,
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "lastModifiedBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "createdTime": 1756113511585,
+                        "lastModifiedTime": 1756113511585
+                    }
+                },
+                {
+                    "id": "bba1ffd2-9611-4910-b59f-ee61d8aeb282",
+                    "beneficiaryType": "HOUSEHOLD",
+                    "totalNo": 0,
+                    "targetNo": 0,
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "lastModifiedBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "createdTime": 1756113511585,
+                        "lastModifiedTime": 1756113511585
+                    }
+                },
+                {
+                    "id": "20ca4596-da82-4091-894a-227d65e84fc1",
+                    "beneficiaryType": null,
+                    "totalNo": 0,
+                    "targetNo": 0,
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "lastModifiedBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                        "createdTime": 1756113511585,
+                        "lastModifiedTime": 1756113511585
+                    }
+                }
+            ],
+            "additionalDetails": {
+                "projectType": {
+                    "id": "ea1bb2e7-06d8-4fe4-ba1e-f4a6363a21be",
+                    "code": "MR-DN",
+                    "name": "Configuration for Multi Round Campaigns",
+                    "group": "MALARIA",
+                    "cycles": [
+                        {
+                            "id": 1,
+                            "endDate": 1759256999000,
+                            "startDate": 1756060200000,
+                            "deliveries": [
+                                {
+                                    "id": 1,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 250mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000134"
+                                                },
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 500mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000136"
+                                                },
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "DIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 2,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 3,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                }
+                            ],
+                            "mandatoryWaitSinceLastCycleInDays": null
+                        },
+                        {
+                            "id": 2,
+                            "endDate": 1761935399000,
+                            "startDate": 1759257000000,
+                            "deliveries": [
+                                {
+                                    "id": 1,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 250mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000134"
+                                                },
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 500mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000136"
+                                                },
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "DIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 2,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 3,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                }
+                            ],
+                            "mandatoryWaitSinceLastCycleInDays": null
+                        },
+                        {
+                            "id": 3,
+                            "endDate": 1767205799000,
+                            "startDate": 1761935400000,
+                            "deliveries": [
+                                {
+                                    "id": 1,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 250mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000134"
+                                                },
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "SP - 500mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000136"
+                                                },
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "DIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 2,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                },
+                                {
+                                    "id": 3,
+                                    "doseCriteria": [
+                                        {
+                                            "condition": "3<=ageandage<11",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 75mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000137"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "condition": "12<=ageandage<59",
+                                            "ProductVariants": [
+                                                {
+                                                    "name": "AQ - 150mg",
+                                                    "quantity": 1,
+                                                    "productVariantId": "PVAR-2025-07-30-000138"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "deliveryStrategy": "INDIRECT",
+                                    "mandatoryWaitSinceLastDeliveryInDays": null
+                                }
+                            ],
+                            "mandatoryWaitSinceLastCycleInDays": null
+                        }
+                    ],
+                    "resources": [
+                        {
+                            "name": "SP - 250mg",
+                            "quantity": 3,
+                            "productVariantId": "PVAR-2025-07-30-000134",
+                            "isBaseUnitVariant": false
+                        },
+                        {
+                            "name": "AQ - 75mg",
+                            "quantity": 9,
+                            "productVariantId": "PVAR-2025-07-30-000137",
+                            "isBaseUnitVariant": false
+                        },
+                        {
+                            "name": "SP - 500mg",
+                            "quantity": 3,
+                            "productVariantId": "PVAR-2025-07-30-000136",
+                            "isBaseUnitVariant": false
+                        },
+                        {
+                            "name": "AQ - 150mg",
+                            "quantity": 9,
+                            "productVariantId": "PVAR-2025-07-30-000138",
+                            "isBaseUnitVariant": false
+                        }
+                    ],
+                    "validMaxAge": 59,
+                    "validMinAge": 3,
+                    "dashboardUrls": {
+                        "DISTRICT_SUPERVISOR": "/digit-ui/employee/dss/dashboard/district-health-dashboard-smc",
+                        "NATIONAL_SUPERVISOR": "/digit-ui/employee/dss/landing/national-health-dashboard-smc",
+                        "PROVINCIAL_SUPERVISOR": "/digit-ui/employee/dss/dashboard/provincial-health-dashboard-smc"
+                    },
+                    "taskProcedure": [
+                        "1 bednet is to be distributed per 2 household members.",
+                        "If there are 4 household members, 2 bednets should be distributed.",
+                        "If there are 5 household members, 3 bednets should be distributed."
+                    ],
+                    "beneficiaryType": "INDIVIDUAL",
+                    "eligibilityCriteria": [
+                        "All households having members under the age of 18 are eligible.",
+                        "Prison inmates are eligible."
+                    ],
+                    "observationStrategy": "DOT1"
+                }
+            },
+            "isDeleted": false,
+            "rowVersion": 0,
+            "auditDetails": {
+                "createdBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                "lastModifiedBy": "a0fbe022-e962-4447-b6d7-7fe335adbf81",
+                "createdTime": 1756113511585,
+                "lastModifiedTime": 1756113511585
+            }
+        }
+    ],
+    "TotalCount": 1,
+    "apiOperation": "UPDATE"
+}

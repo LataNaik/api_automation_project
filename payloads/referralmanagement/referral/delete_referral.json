@@ -1,0 +1,35 @@
+{
+    "Referral": {
+        "id": "8e863764-1cc2-468f-97ec-c7260bc62f66",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": null,
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747925160093,
+            "lastModifiedTime": 1747926062471
+        },
+        "clientReferenceId": "d3c4433e-af28-4949-bea7-e095e1483ae0",
+        "clientAuditDetails": {
+            "createdBy": "7f833d44-5e9a-43e3-8dfe-8ac63449baf0",
+            "lastModifiedBy": "205e1019-02b6-497b-b9b2-c61379906123",
+            "createdTime": 1747925158346,
+            "lastModifiedTime": 1747925158346
+        },
+        "projectBeneficiaryId": "PTB-2025-05-22-000107",
+        "projectBeneficiaryClientReferenceId": "fa368d79-5592-4448-a83f-4f8bd85279de",
+        "referrerId": null,
+        "recipientType": "FACILITY",
+        "recipientId": "F-2025-05-22-000021",
+        "reasons": [
+            "fever"
+        ],
+        "referralCode": null,
+        "sideEffect": null,
+        "isDeleted": true
+    }
+}

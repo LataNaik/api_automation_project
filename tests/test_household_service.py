@@ -297,6 +297,68 @@ def test_update_household_member():
     print(f"Household Member updated successfully with 2 updates. Final isHeadOfHousehold: True")
 
 
+@pytest.mark.positive
+def test_delete_household():
+    """Test to delete a household. Creates household internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create household internally
+    print("Creating household for delete test...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data['id']
+    print(f"Household created with ID: {household_id}")
+
+    # Step 2: Delete the household
+    print("Deleting household...")
+    response = delete_household(token, client, household_data)
+    assert response.status_code in [200, 202], f"Household delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_household = response.json()["Household"]
+    assert deleted_household["isDeleted"] == True, f"Household not marked as deleted"
+    print(f"Household {household_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_household_member():
+    """Test to delete a household member. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create household
+    print("Creating household...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data['id']
+    household_client_ref_id = household_data['clientReferenceId']
+    print(f"Household created with ID: {household_id}")
+
+    # Step 2: Create individual
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    # Step 3: Create household member
+    print("Creating household member...")
+    member_data, member_status = create_household_member_full(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_status in [200, 202], f"Household Member creation failed with status: {member_status}"
+    member_id = member_data['id']
+    print(f"Household Member created with ID: {member_id}")
+
+    # Step 4: Delete the household member
+    print("Deleting household member...")
+    response = delete_household_member(token, client, member_data)
+    assert response.status_code in [200, 202], f"Household Member delete failed: {response.text}"
+
+    # Step 5: Verify deletion
+    deleted_member = response.json()["HouseholdMember"]
+    assert deleted_member["isDeleted"] == True, f"Household Member not marked as deleted"
+    print(f"Household Member {member_id} deleted successfully")
+
+
 # --- Helper function ---
 
 def create_household(token, client, tenant_id=None):
@@ -433,4 +495,106 @@ def update_household_member(token, client, member_data, new_is_head):
     payload["RequestInfo"] = get_request_info(token)
 
     response = client.post("/household/member/v1/_update", payload)
+    return response
+
+
+def create_household_full(token, client):
+    """
+    Create a household and return full data for delete operations.
+
+    Returns:
+        Tuple of (household_data, status_code)
+    """
+    payload = load_payload("household", "create_household.json")
+
+    # Inject dynamic values
+    payload["Household"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Household"]["address"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Household"]["address"]["locality"]["code"] = boundaryCode
+    selected_type = random.choice(structure_data["houseStructureTypes"])
+    payload["Household"]["additionalFields"]["fields"][0]["value"] = selected_type
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/v1/_create", payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Household"], response.status_code
+
+
+def delete_household(token, client, household_data):
+    """
+    Delete a household (soft delete by setting isDeleted=true).
+
+    Args:
+        household_data: Full household object from create response
+    """
+    payload = load_payload("household", "delete_household.json")
+
+    # Copy required fields from the created household
+    payload["Household"]["id"] = household_data["id"]
+    payload["Household"]["tenantId"] = household_data["tenantId"]
+    payload["Household"]["clientReferenceId"] = household_data["clientReferenceId"]
+    payload["Household"]["rowVersion"] = household_data["rowVersion"]
+    payload["Household"]["auditDetails"] = household_data["auditDetails"]
+    payload["Household"]["clientAuditDetails"] = household_data.get("clientAuditDetails")
+    payload["Household"]["address"] = household_data["address"]
+    payload["Household"]["memberCount"] = household_data.get("memberCount", 1)
+    payload["Household"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/v1/_delete", payload)
+    return response
+
+
+def create_household_member_full(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id):
+    """
+    Create a household member and return full data for delete operations.
+
+    Returns:
+        Tuple of (household_member_data, status_code)
+    """
+    payload = load_payload("household", "create_householdMember.json")
+    payload["HouseholdMember"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["HouseholdMember"]["householdId"] = household_id
+    payload["HouseholdMember"]["householdClientReferenceId"] = household_client_ref_id
+    payload["HouseholdMember"]["individualId"] = individual_id
+    payload["HouseholdMember"]["individualClientReferenceId"] = individual_client_ref_id
+    payload["HouseholdMember"]["isHeadOfHousehold"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/member/v1/_create", payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Member creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["HouseholdMember"], response.status_code
+
+
+def delete_household_member(token, client, member_data):
+    """
+    Delete a household member (soft delete by setting isDeleted=true).
+
+    Args:
+        member_data: Full household member object from create response
+    """
+    payload = load_payload("household", "delete_householdMember.json")
+
+    # Copy required fields from the created member
+    payload["HouseholdMember"]["id"] = member_data["id"]
+    payload["HouseholdMember"]["tenantId"] = member_data["tenantId"]
+    payload["HouseholdMember"]["clientReferenceId"] = member_data["clientReferenceId"]
+    payload["HouseholdMember"]["rowVersion"] = member_data["rowVersion"]
+    payload["HouseholdMember"]["auditDetails"] = member_data["auditDetails"]
+    payload["HouseholdMember"]["clientAuditDetails"] = member_data.get("clientAuditDetails")
+    payload["HouseholdMember"]["householdId"] = member_data["householdId"]
+    payload["HouseholdMember"]["householdClientReferenceId"] = member_data["householdClientReferenceId"]
+    payload["HouseholdMember"]["individualId"] = member_data["individualId"]
+    payload["HouseholdMember"]["individualClientReferenceId"] = member_data["individualClientReferenceId"]
+    payload["HouseholdMember"]["isHeadOfHousehold"] = member_data.get("isHeadOfHousehold", False)
+    payload["HouseholdMember"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/member/v1/_delete", payload)
     return response

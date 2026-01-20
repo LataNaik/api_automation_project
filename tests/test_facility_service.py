@@ -118,6 +118,30 @@ def test_update_facility():
     print(f"Facility updated successfully. Name changed from '{original_name}' to '{new_name}'")
 
 
+@pytest.mark.positive
+def test_delete_facility():
+    """Test to delete a facility. Creates facility internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create facility internally
+    print("Creating facility for delete test...")
+    facility_data, facility_status = create_facility_full(token, client)
+    assert facility_status in [200, 202], f"Facility creation failed with status: {facility_status}"
+    facility_id = facility_data['id']
+    print(f"Facility created with ID: {facility_id}")
+
+    # Step 2: Delete the facility
+    print("Deleting facility...")
+    response = delete_facility(token, client, facility_data)
+    assert response.status_code in [200, 202], f"Facility delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_facility = response.json()["Facility"]
+    assert deleted_facility["isDeleted"] == True, f"Facility not marked as deleted"
+    print(f"Facility {facility_id} deleted successfully")
+
+
 # --- Reusable Functions ---
 
 def create_facility(token, client, tenant_id=None):
@@ -183,5 +207,33 @@ def update_facility(token, client, facility_data, new_name):
     payload["RequestInfo"] = get_request_info(token)
 
     response = client.post("/facility/v1/_update", payload)
+    return response
+
+
+def delete_facility(token, client, facility_data):
+    """
+    Delete a facility (soft delete by setting isDeleted=true).
+
+    Args:
+        facility_data: Full facility object from create response
+    """
+    payload = load_payload("facility", "delete_facility.json")
+
+    # Copy required fields from the created facility
+    payload["Facility"]["id"] = facility_data["id"]
+    payload["Facility"]["tenantId"] = facility_data["tenantId"]
+    payload["Facility"]["clientReferenceId"] = facility_data["clientReferenceId"]
+    payload["Facility"]["rowVersion"] = facility_data["rowVersion"]
+    payload["Facility"]["auditDetails"] = facility_data["auditDetails"]
+    payload["Facility"]["clientAuditDetails"] = facility_data.get("clientAuditDetails")
+    payload["Facility"]["isPermanent"] = facility_data.get("isPermanent", True)
+    payload["Facility"]["name"] = facility_data.get("name")
+    payload["Facility"]["usage"] = facility_data.get("usage")
+    payload["Facility"]["storageCapacity"] = facility_data.get("storageCapacity")
+    payload["Facility"]["address"] = facility_data.get("address")
+    payload["Facility"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/facility/v1/_delete", payload)
     return response
 

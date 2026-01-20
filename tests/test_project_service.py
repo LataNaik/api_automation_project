@@ -841,6 +841,42 @@ def test_update_project_task():
 
 
 @pytest.mark.positive
+def test_update_project():
+    """Test to update a project. Creates project internally first, then updates the description."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create project internally
+    print("Creating product variants...")
+    variant_response_1 = create_product_variant(token, client)
+    assert variant_response_1.status_code in [200, 202], f"Product Variant 1 creation failed"
+    variant_id_1 = variant_response_1.json()["ProductVariant"][0]["id"]
+
+    variant_response_2 = create_product_variant(token, client)
+    assert variant_response_2.status_code in [200, 202], f"Product Variant 2 creation failed"
+    variant_id_2 = variant_response_2.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_data, project_status = create_individual_project_full(token, client, boundaryType, boundaryCode, variant_id_1, variant_id_2)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_data['id']}")
+
+    # Step 2: Use create response data directly
+    original_description = project_data.get("description", "")
+    print(f"Original description: {original_description}")
+
+    # Step 3: Update the project (change description)
+    new_description = f"Updated description via automated test - {str(uuid.uuid4())[:8]}"
+    response = update_project(token, client, project_data, new_description)
+    assert response.status_code in [200, 202], f"Project update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_project = response.json()["Project"][0]
+    assert updated_project["description"] == new_description, f"Description not updated. Expected {new_description}, got {updated_project.get('description')}"
+    print(f"Project updated successfully. Description changed from '{original_description}' to '{new_description}'")
+
+
+@pytest.mark.positive
 def test_update_project_staff():
     """Test to update a project staff. Creates all dependencies internally first, then updates the endDate."""
     token = get_auth_token("user")
@@ -957,6 +993,205 @@ def test_update_project_facility():
     updated_facility = response.json()["ProjectFacility"]
     assert updated_facility.get("additionalFields", {}).get("schema") == "updated_schema", f"AdditionalFields not updated correctly"
     print(f"Project Facility updated successfully. AdditionalFields updated.")
+
+
+@pytest.mark.positive
+def test_delete_project_facility():
+    """Test to delete a project facility. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+    print(f"Facility created with ID: {facility_id}")
+
+    print("Creating project facility...")
+    project_facility_data, project_facility_status = create_project_facility_full(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility creation failed with status: {project_facility_status}"
+    project_facility_id = project_facility_data['id']
+    print(f"Project Facility created with ID: {project_facility_id}")
+
+    # Step 2: Delete the project facility
+    print("Deleting project facility...")
+    response = delete_project_facility(token, client, project_facility_data)
+    assert response.status_code in [200, 202], f"Project Facility delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_facility = response.json()["ProjectFacility"]
+    assert deleted_facility["isDeleted"] == True, f"Project Facility not marked as deleted"
+    print(f"Project Facility {project_facility_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_project_resource():
+    """Test to delete a project resource. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource...")
+    resource_data, resource_status = create_project_resource_full(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed with status: {resource_status}"
+    resource_id = resource_data['id']
+    print(f"Project Resource created with ID: {resource_id}")
+
+    # Step 2: Delete the project resource
+    print("Deleting project resource...")
+    response = delete_project_resource(token, client, resource_data)
+    assert response.status_code in [200, 202], f"Project Resource delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_resource = response.json()["ProjectResource"]
+    assert deleted_resource["isDeleted"] == True, f"Project Resource not marked as deleted"
+    print(f"Project Resource {resource_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_project_staff():
+    """Test to delete a project staff. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating employee...")
+    from tests.test_hrms_service import create_employee
+    _, _, _, userservice_uuid, employee_status = create_employee(token, client)
+    assert employee_status in [200, 202], f"Employee creation failed"
+    print(f"Employee created with userServiceUuid: {userservice_uuid}")
+
+    print("Creating project staff...")
+    staff_data, staff_status = create_project_staff_full(token, client, project_id, userservice_uuid)
+    assert staff_status in [200, 202], f"Project Staff creation failed with status: {staff_status}"
+    staff_id = staff_data['id']
+    print(f"Project Staff created with ID: {staff_id}")
+
+    # Step 2: Delete the project staff
+    print("Deleting project staff...")
+    response = delete_project_staff(token, client, staff_data)
+    assert response.status_code in [200, 202], f"Project Staff delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_staff = response.json()["ProjectStaff"]
+    assert deleted_staff["isDeleted"] == True, f"Project Staff not marked as deleted"
+    print(f"Project Staff {staff_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_project_beneficiary():
+    """Test to delete a project beneficiary. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_data, beneficiary_status = create_project_beneficiary_full(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed with status: {beneficiary_status}"
+    beneficiary_id = beneficiary_data['id']
+    print(f"Project Beneficiary created with ID: {beneficiary_id}")
+
+    # Step 2: Delete the project beneficiary
+    print("Deleting project beneficiary...")
+    response = delete_project_beneficiary(token, client, beneficiary_data)
+    assert response.status_code in [200, 202], f"Project Beneficiary delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_beneficiary = response.json()["ProjectBeneficiary"]
+    assert deleted_beneficiary["isDeleted"] == True, f"Project Beneficiary not marked as deleted"
+    print(f"Project Beneficiary {beneficiary_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_project_task():
+    """Test to delete a project task. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource...")
+    resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_data, task_status = create_project_task_full(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed with status: {task_status}"
+    task_id = task_data['id']
+    print(f"Project Task created with ID: {task_id}")
+
+    # Step 2: Delete the project task
+    print("Deleting project task...")
+    response = delete_project_task(token, client, task_data)
+    assert response.status_code in [200, 202], f"Project Task delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_task = response.json()["Task"]
+    assert deleted_task["isDeleted"] == True, f"Project Task not marked as deleted"
+    print(f"Project Task {task_id} deleted successfully")
 
 
 # --- Helper functions ---
@@ -1345,5 +1580,276 @@ def update_project_facility(token, client, facility_data, new_additional_fields)
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/{project}/facility/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def create_individual_project_full(token, client, boundaryType, boundaryCode, variant_id_1=None, variant_id_2=None):
+    """
+    Create a project and return full data for update operations.
+
+    Returns:
+        Tuple of (project_data, status_code)
+    """
+    projectTypeId = extract_id_from_file("MR-DN:")
+    payload = load_payload("project", "create_individual_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    payload["Projects"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["endDate"] = 1787670131000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["endDate"] = 1787670131000
+
+    # Set product variant IDs if provided
+    if variant_id_1 is not None and variant_id_2 is not None:
+        # Update resources
+        payload["Projects"][0]["additionalDetails"]["projectType"]["resources"][0]["productVariantId"] = variant_id_1
+        payload["Projects"][0]["additionalDetails"]["projectType"]["resources"][1]["productVariantId"] = variant_id_2
+
+        # Update product variants in cycles' deliveries' doseCriteria
+        for cycle in payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"]:
+            for delivery in cycle.get("deliveries", []):
+                for dose in delivery.get("doseCriteria", []):
+                    for i, pv in enumerate(dose.get("ProductVariants", [])):
+                        if i == 0:
+                            pv["productVariantId"] = variant_id_1
+                        elif i == 1:
+                            pv["productVariantId"] = variant_id_2
+
+    url = f"/{project}/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Project"][0], response.status_code
+
+
+def update_project(token, client, project_data, new_description):
+    """
+    Update a project's description.
+
+    Args:
+        project_data: Full project object from create response
+        new_description: New description value to set
+    """
+    payload = load_payload("project", "update_project.json")
+
+    # Copy required fields from the created project
+    payload["Projects"][0]["id"] = project_data["id"]
+    payload["Projects"][0]["tenantId"] = project_data["tenantId"]
+    payload["Projects"][0]["projectNumber"] = project_data.get("projectNumber")
+    payload["Projects"][0]["name"] = project_data.get("name")
+    payload["Projects"][0]["projectType"] = project_data.get("projectType")
+    payload["Projects"][0]["projectSubType"] = project_data.get("projectSubType")
+    payload["Projects"][0]["department"] = project_data.get("department")
+    payload["Projects"][0]["description"] = new_description
+    payload["Projects"][0]["referenceID"] = project_data.get("referenceID")
+    payload["Projects"][0]["projectTypeId"] = project_data.get("projectTypeId")
+    payload["Projects"][0]["address"] = project_data.get("address")
+    payload["Projects"][0]["startDate"] = project_data.get("startDate")
+    payload["Projects"][0]["endDate"] = project_data.get("endDate")
+    payload["Projects"][0]["isTaskEnabled"] = project_data.get("isTaskEnabled", False)
+    payload["Projects"][0]["targets"] = project_data.get("targets", [])
+    payload["Projects"][0]["additionalDetails"] = project_data.get("additionalDetails")
+    payload["Projects"][0]["rowVersion"] = project_data.get("rowVersion", 0)
+    payload["Projects"][0]["auditDetails"] = project_data.get("auditDetails")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_facility(token, client, facility_data):
+    """
+    Delete a project facility (soft delete by setting isDeleted=true).
+
+    Args:
+        facility_data: Full project facility object from create response
+    """
+    payload = load_payload("project/project_facility", "delete_project_facility.json")
+
+    # Copy required fields from the created facility
+    payload["ProjectFacility"]["id"] = facility_data["id"]
+    payload["ProjectFacility"]["tenantId"] = facility_data["tenantId"]
+    payload["ProjectFacility"]["rowVersion"] = facility_data["rowVersion"]
+    payload["ProjectFacility"]["auditDetails"] = facility_data["auditDetails"]
+    payload["ProjectFacility"]["facilityId"] = facility_data["facilityId"]
+    payload["ProjectFacility"]["projectId"] = facility_data["projectId"]
+    payload["ProjectFacility"]["additionalFields"] = facility_data.get("additionalFields")
+    payload["ProjectFacility"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/facility/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_resource(token, client, resource_data):
+    """
+    Delete a project resource (soft delete by setting isDeleted=true).
+
+    Args:
+        resource_data: Full project resource object from create response
+    """
+    payload = load_payload("project/project_resource", "delete_project_resource.json")
+
+    # Copy required fields from the created resource
+    payload["ProjectResource"]["id"] = resource_data["id"]
+    payload["ProjectResource"]["tenantId"] = resource_data["tenantId"]
+    payload["ProjectResource"]["rowVersion"] = resource_data["rowVersion"]
+    payload["ProjectResource"]["auditDetails"] = resource_data["auditDetails"]
+    payload["ProjectResource"]["projectId"] = resource_data["projectId"]
+    payload["ProjectResource"]["resource"] = resource_data["resource"]
+    payload["ProjectResource"]["startDate"] = resource_data.get("startDate")
+    payload["ProjectResource"]["endDate"] = resource_data.get("endDate")
+    payload["ProjectResource"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/resource/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_staff(token, client, staff_data):
+    """
+    Delete a project staff (soft delete by setting isDeleted=true).
+
+    Args:
+        staff_data: Full project staff object from create response
+    """
+    payload = load_payload("project/project_staff", "delete_project_staff.json")
+
+    # Copy required fields from the created staff
+    payload["ProjectStaff"]["id"] = staff_data["id"]
+    payload["ProjectStaff"]["tenantId"] = staff_data["tenantId"]
+    payload["ProjectStaff"]["rowVersion"] = staff_data["rowVersion"]
+    payload["ProjectStaff"]["auditDetails"] = staff_data["auditDetails"]
+    payload["ProjectStaff"]["userId"] = staff_data["userId"]
+    payload["ProjectStaff"]["projectId"] = staff_data["projectId"]
+    payload["ProjectStaff"]["startDate"] = staff_data.get("startDate")
+    payload["ProjectStaff"]["endDate"] = staff_data.get("endDate")
+    payload["ProjectStaff"]["additionalFields"] = staff_data.get("additionalFields")
+    payload["ProjectStaff"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/staff/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def create_project_beneficiary_full(token, client, project_id, individual_id, individual_client_ref_id):
+    """
+    Create a project beneficiary and return full data for delete operations.
+
+    Returns:
+        Tuple of (beneficiary_data, status_code)
+    """
+    payload = load_payload("project/project_beneficiary", "create_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectBeneficiary"]["tenantId"] = tenantId
+    payload["ProjectBeneficiary"]["projectId"] = project_id
+    payload["ProjectBeneficiary"]["beneficiaryId"] = individual_id
+    payload["ProjectBeneficiary"]["beneficiaryClientReferenceId"] = individual_client_ref_id
+    payload["ProjectBeneficiary"]["clientReferenceId"] = str(uuid.uuid4())
+
+    url = f"/{project}/beneficiary/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Beneficiary creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["ProjectBeneficiary"], response.status_code
+
+
+def create_project_task_full(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id):
+    """
+    Create a project task and return full data for delete operations.
+
+    Returns:
+        Tuple of (task_data, status_code)
+    """
+    payload = load_payload("project/project_task", "create_project_task.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Task"]["tenantId"] = tenantId
+    payload["Task"]["projectId"] = project_id
+    payload["Task"]["projectBeneficiaryId"] = beneficiary_id
+    payload["Task"]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["Task"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Task"]["address"]["tenantId"] = tenantId
+    payload["Task"]["address"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Task"]["address"]["locality"]["code"] = boundaryCode
+    payload["Task"]["resources"][0]["tenantId"] = tenantId
+    payload["Task"]["resources"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Task"]["resources"][0]["taskClientReferenceId"] = payload["Task"]["clientReferenceId"]
+    payload["Task"]["resources"][0]["productVariantId"] = variant_id
+
+    url = f"/{project}/task/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Task creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Task"], response.status_code
+
+
+def delete_project_beneficiary(token, client, beneficiary_data):
+    """
+    Delete a project beneficiary (soft delete by setting isDeleted=true).
+
+    Args:
+        beneficiary_data: Full project beneficiary object from create response
+    """
+    payload = load_payload("project/project_beneficiary", "delete_project_beneficiary.json")
+
+    # Copy required fields from the created beneficiary
+    payload["ProjectBeneficiary"]["id"] = beneficiary_data["id"]
+    payload["ProjectBeneficiary"]["tenantId"] = beneficiary_data["tenantId"]
+    payload["ProjectBeneficiary"]["clientReferenceId"] = beneficiary_data["clientReferenceId"]
+    payload["ProjectBeneficiary"]["rowVersion"] = beneficiary_data["rowVersion"]
+    payload["ProjectBeneficiary"]["auditDetails"] = beneficiary_data["auditDetails"]
+    payload["ProjectBeneficiary"]["clientAuditDetails"] = beneficiary_data.get("clientAuditDetails")
+    payload["ProjectBeneficiary"]["projectId"] = beneficiary_data["projectId"]
+    payload["ProjectBeneficiary"]["beneficiaryId"] = beneficiary_data["beneficiaryId"]
+    payload["ProjectBeneficiary"]["beneficiaryClientReferenceId"] = beneficiary_data["beneficiaryClientReferenceId"]
+    payload["ProjectBeneficiary"]["dateOfRegistration"] = beneficiary_data.get("dateOfRegistration")
+    payload["ProjectBeneficiary"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/beneficiary/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_task(token, client, task_data):
+    """
+    Delete a project task (soft delete by setting isDeleted=true).
+
+    Args:
+        task_data: Full project task object from create response
+    """
+    payload = load_payload("project/project_task", "delete_project_task.json")
+
+    # Copy required fields from the created task
+    payload["Task"]["id"] = task_data["id"]
+    payload["Task"]["tenantId"] = task_data["tenantId"]
+    payload["Task"]["clientReferenceId"] = task_data["clientReferenceId"]
+    payload["Task"]["rowVersion"] = task_data["rowVersion"]
+    payload["Task"]["auditDetails"] = task_data["auditDetails"]
+    payload["Task"]["clientAuditDetails"] = task_data.get("clientAuditDetails")
+    payload["Task"]["projectId"] = task_data["projectId"]
+    payload["Task"]["projectBeneficiaryId"] = task_data["projectBeneficiaryId"]
+    payload["Task"]["projectBeneficiaryClientReferenceId"] = task_data.get("projectBeneficiaryClientReferenceId")
+    payload["Task"]["resources"] = task_data.get("resources", [])
+    payload["Task"]["address"] = task_data.get("address")
+    payload["Task"]["status"] = task_data.get("status")
+    payload["Task"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/task/v1/_delete"
     response = client.post(url, payload)
     return response
