@@ -56,11 +56,17 @@ def test_create_householdMember():
 
 @pytest.mark.positive
 def test_search_household():
+    """Test to search for a household by ID. Creates household if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     householdId = extract_id_from_file("Household ID:")
-    assert householdId, "Household ID not found in file"
+    if not householdId:
+        # Create household internally if ID not found
+        print("Household ID not found in file, creating new household...")
+        householdId, _, status_code = create_household(token, client)
+        assert status_code in [200, 202], f"Household creation failed with status: {status_code}"
+        print(f"Household created with ID: {householdId}")
 
     households = search_entity(
         entity_type="household",
@@ -78,11 +84,18 @@ def test_search_household():
 
 @pytest.mark.positive
 def test_search_householdMember_by_id():
+    """Test to search for a household member by ID. Creates household member if ID not found in file."""
     token = get_auth_token("user")
-    client = APIClient(token=token)  # Use the token once
+    client = APIClient(token=token)
 
     memberId = extract_id_from_file("Household Member ID:")
-    assert memberId, "Household Member not found in file"
+    if not memberId:
+        # Create household member internally if ID not found
+        print("Household Member ID not found in file, creating new household member...")
+        res = create_household_member(token, client)
+        assert res.status_code in [200, 202], f"Household Member creation failed: {res.text}"
+        memberId = res.json()["HouseholdMember"]["id"]
+        print(f"Household Member created with ID: {memberId}")
 
     members = search_entity(
         entity_type="household",

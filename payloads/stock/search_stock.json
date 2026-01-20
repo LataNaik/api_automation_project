@@ -1,0 +1,10 @@
+{
+    "Stock": {
+        "id": [
+            "S-2025-05-22-000081"
+        ]
+    },
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    }
+}

@@ -29,11 +29,18 @@ def test_create_facility():
 
 @pytest.mark.positive
 def test_search_facility():
+    """Test to search for a facility by ID. Creates facility if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     facilityId = extract_id_from_file("Facility ID:")
-    assert facilityId, "Facility ID not found in file"
+    if not facilityId:
+        # Create facility internally if ID not found
+        print("Facility ID not found in file, creating new facility...")
+        res = create_facility(token, client)
+        assert res.status_code in [200, 202], f"Facility creation failed: {res.text}"
+        facilityId = res.json()["Facility"]["id"]
+        print(f"Facility created with ID: {facilityId}")
 
     facilitys = search_entity(
         entity_type="facility",

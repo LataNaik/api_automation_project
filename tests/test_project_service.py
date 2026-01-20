@@ -75,11 +75,17 @@ def test_create_project():
 
 @pytest.mark.positive
 def test_search_project():
+    """Test to search for a project by ID. Creates project if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     project_id = extract_id_from_file("Project ID:")
-    assert project_id, "Project ID not found in file"
+    if not project_id:
+        # Create project internally if ID not found
+        print("Project ID not found in file, creating new project...")
+        project_id, status_code = create_individual_project(token, client, boundaryType, boundaryCode)
+        assert status_code in [200, 202], f"Project creation failed with status: {status_code}"
+        print(f"Project created with ID: {project_id}")
 
     projects = search_entity(
         entity_type="project",
@@ -118,14 +124,24 @@ def test_create_project_resource():
 
 @pytest.mark.positive
 def test_search_project_resource():
+    """Test to search for a project resource by ID. Creates project and resource if not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     project_id = extract_id_from_file("Project ID:")
     resource_id = extract_id_from_file("Project Resource ID 1:")
 
-    assert project_id, "Project ID not found in file"
-    assert resource_id, "Project Resource ID not found in file"
+    if not project_id or not resource_id:
+        # Create project and resource internally if not found
+        print("Project/Resource ID not found in file, creating new project with resource...")
+        variant_response = create_product_variant(token, client)
+        assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+        variant_id = variant_response.json()["ProductVariant"][0]["id"]
+        project_id, status_code = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+        assert status_code in [200, 202], f"Project creation failed with status: {status_code}"
+        resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+        assert resource_status in [200, 202], f"Project Resource creation failed with status: {resource_status}"
+        print(f"Project created with ID: {project_id}, Resource ID: {resource_id}")
 
     resources = search_project_resource(token, client, project_id)
 
@@ -156,11 +172,24 @@ def test_create_project_staff():
 
 @pytest.mark.positive
 def test_search_project_staff():
+    """Test to search for a project staff by ID. Creates project staff if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     staff_id = extract_id_from_file("Project Staff ID:")
-    assert staff_id, "Project Staff ID not found in file"
+    if not staff_id:
+        # Create project staff internally if not found
+        print("Project Staff ID not found in file, creating new project staff...")
+        project_id = extract_id_from_file("Project ID:")
+        userservice_uuid = extract_id_from_file("Employee UserService UUID:")
+        if not project_id:
+            project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+        if not userservice_uuid:
+            from tests.test_hrms_service import create_employee
+            _, _, _, userservice_uuid, _ = create_employee(token, client)
+        staff_id, staff_status = create_project_staff(token, client, project_id, userservice_uuid)
+        assert staff_status in [200, 202], f"Project Staff creation failed with status: {staff_status}"
+        print(f"Project Staff created with ID: {staff_id}")
 
     staff_list = search_entity(
         entity_type="project/project_staff",
@@ -199,11 +228,25 @@ def test_create_project_facility():
 
 @pytest.mark.positive
 def test_search_project_facility():
+    """Test to search for a project facility by ID. Creates project facility if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     project_facility_id = extract_id_from_file("Project Facility ID:")
-    assert project_facility_id, "Project Facility ID not found in file"
+    if not project_facility_id:
+        # Create project facility internally if not found
+        print("Project Facility ID not found in file, creating new project facility...")
+        project_id = extract_id_from_file("Project ID:")
+        facility_id = extract_id_from_file("Facility ID:")
+        if not project_id:
+            project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+        if not facility_id:
+            facility_response = create_facility(token, client)
+            assert facility_response.status_code in [200, 202], f"Facility creation failed"
+            facility_id = facility_response.json()["Facility"]["id"]
+        project_facility_id, status = create_project_facility(token, client, project_id, facility_id)
+        assert status in [200, 202], f"Project Facility creation failed with status: {status}"
+        print(f"Project Facility created with ID: {project_facility_id}")
 
     facilities = search_entity(
         entity_type="project/project_facility",
@@ -276,11 +319,21 @@ def test_create_project_beneficiary():
 
 @pytest.mark.positive
 def test_search_project_beneficiary():
+    """Test to search for a project beneficiary by ID. Creates project beneficiary if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     project_beneficiary_id = extract_id_from_file("Project Beneficiary ID:")
-    assert project_beneficiary_id, "Project Beneficiary ID not found in file"
+    if not project_beneficiary_id:
+        # Create project beneficiary internally if not found
+        print("Project Beneficiary ID not found in file, creating new project beneficiary...")
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+        household_id, household_client_ref_id, _ = create_household(token, client)
+        individual_id, individual_client_ref_id, _, _ = create_individual(token, client)
+        create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+        project_beneficiary_id, _, status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+        assert status in [200, 202], f"Project Beneficiary creation failed with status: {status}"
+        print(f"Project Beneficiary created with ID: {project_beneficiary_id}")
 
     beneficiaries = search_entity(
         entity_type="project/project_beneficiary",
@@ -344,11 +397,26 @@ def test_create_project_task():
 
 @pytest.mark.positive
 def test_search_project_task():
+    """Test to search for a project task by ID. Creates project task if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     project_task_id = extract_id_from_file("Project Task ID:")
-    assert project_task_id, "Project Task ID not found in file"
+    if not project_task_id:
+        # Create project task with all dependencies if not found
+        print("Project Task ID not found in file, creating project task with dependencies...")
+        variant_response = create_product_variant(token, client)
+        assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+        variant_id = variant_response.json()["ProductVariant"][0]["id"]
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+        create_project_resource(token, client, project_id, variant_id)
+        household_id, household_client_ref_id, _ = create_household(token, client)
+        individual_id, individual_client_ref_id, _, _ = create_individual(token, client)
+        create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+        beneficiary_id, beneficiary_client_ref_id, _ = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+        project_task_id, _, status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+        assert status in [200, 202], f"Project Task creation failed with status: {status}"
+        print(f"Project Task created with ID: {project_task_id}")
 
     tasks = search_entity(
         entity_type="project/project_task",

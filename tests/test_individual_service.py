@@ -31,11 +31,17 @@ def test_create_individual():
 
 @pytest.mark.positive
 def test_search_individual():
+    """Test to search for an individual by ID. Creates individual if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     individualId = extract_id_from_file("Individual ID:")
-    assert individualId, "Individual ID not found in file"
+    if not individualId:
+        # Create individual internally if ID not found
+        print("Individual ID not found in file, creating new individual...")
+        individualId, _, _, status_code = create_individual(token, client)
+        assert status_code in [200, 202], f"Individual creation failed with status: {status_code}"
+        print(f"Individual created with ID: {individualId}")
 
     individuals = search_entity(
         entity_type="individual",

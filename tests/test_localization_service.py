@@ -26,11 +26,17 @@ def test_upsert_localization():
 
 @pytest.mark.positive
 def test_search_localization():
+    """Test to search for a localization message by code. Creates message if code not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     message_code = extract_id_from_file("Localization Code:")
-    assert message_code, "Localization Code not found in file"
+    if not message_code:
+        # Create localization message internally if code not found
+        print("Localization Code not found in file, creating new localization message...")
+        message_code, status_code = upsert_localization(token, client)
+        assert status_code in [200, 202], f"Localization upsert failed with status: {status_code}"
+        print(f"Localization message created with code: {message_code}")
 
     messages = search_localization(token, client, "hcm-test", "en_MZ")
 

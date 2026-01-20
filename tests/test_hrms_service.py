@@ -34,11 +34,17 @@ def test_create_employee():
 
 @pytest.mark.positive
 def test_search_employee():
+    """Test to search for an employee by code. Creates employee if code not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     employee_code = extract_id_from_file("Employee Code:")
-    assert employee_code, "Employee Code not found in file"
+    if not employee_code:
+        # Create employee internally if code not found
+        print("Employee Code not found in file, creating new employee...")
+        employee_code, _, _, _, status_code = create_employee(token, client)
+        assert status_code in [200, 202], f"Employee creation failed with status: {status_code}"
+        print(f"Employee created with code: {employee_code}")
 
     employees = search_employee(token, client, employee_code)
 

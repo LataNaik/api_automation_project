@@ -45,11 +45,18 @@ def test_create_product_variant():
 
 @pytest.mark.positive
 def test_search_product():
+    """Test to search for a product by ID. Creates product if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     productId = extract_id_from_file("Product ID:")
-    assert productId, "Product ID not found in file"
+    if not productId:
+        # Create product internally if ID not found
+        print("Product ID not found in file, creating new product...")
+        res = create_product(token, client)
+        assert res.status_code in [200, 202], f"Product creation failed: {res.text}"
+        productId = res.json()["Product"][0]["id"]
+        print(f"Product created with ID: {productId}")
 
     products = search_entity(
         entity_type="product",
@@ -67,11 +74,18 @@ def test_search_product():
 
 @pytest.mark.positive
 def test_search_product_variant():
+    """Test to search for a product variant by ID. Creates variant if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     variantId = extract_id_from_file("Variant ID:")
-    assert variantId, "Variant ID not found in file"
+    if not variantId:
+        # Create product variant internally if ID not found
+        print("Variant ID not found in file, creating new product variant...")
+        variant_res = create_product_variant(token, client)
+        assert variant_res.status_code in [200, 202], f"Variant creation failed: {variant_res.text}"
+        variantId = variant_res.json()["ProductVariant"][0]["id"]
+        print(f"Product Variant created with ID: {variantId}")
 
     variants = search_entity(
         entity_type="product",
