@@ -1,0 +1,25 @@
+{
+    "details": {
+        "CS_COMPLAINT_DETAILS_COMPLAINT_NO": "{{complaintNumber}}",
+        "CS_ADDCOMPLAINT_COMPLAINT_TYPE": "SERVICEDEFS.{{serviceCode}}",
+        "CS_COMPLAINT_FILED_DATE": "{{filedDate}}",
+        "CS_COMPLAINT_DETAILS_AREA": "{{boundaryCode}}",
+        "CS_COMPLAINT_DETAILS_APPLICATION_STATUS": "CS_COMMON_{{applicationStatus}}",
+        "CS_CREATECOMPLAINT_LANDMARK": "",
+        "CS_COMPLAINT_ADDTIONAL_DETAILS": "{{description}}"
+    },
+    "service": "{{service object from create response}}",
+    "workflow": {
+        "action": "ASSIGN",
+        "comments": "Assigned via automated test",
+        "assignes": ["{{userServiceUuid}}"],
+        "hrmsAssignes": ["{{uuid}}"],
+        "verificationDocuments": []
+    },
+    "audit": {
+        "details": "{{auditDetails}}",
+        "source": "web",
+        "rating": null,
+        "serviceCode": "{{serviceCode}}"
+    }
+}
