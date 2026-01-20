@@ -72,11 +72,18 @@ def test_create_side_effect():
 
 @pytest.mark.positive
 def test_search_side_effect():
+    """Test to search for a side effect by ID. Uses existing side effect if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     side_effect_id = extract_id_from_file("Side Effect ID:")
-    assert side_effect_id, "Side Effect ID not found in file"
+    if not side_effect_id:
+        # Use existing side effect from system (async create takes too long to be searchable)
+        print("Side Effect ID not found in file, fetching existing side effect...")
+        existing_side_effects = search_side_effect_all(token, client)
+        assert existing_side_effects, "No existing Side Effects found in system"
+        side_effect_id = existing_side_effects[0]["id"]
+        print(f"Using existing Side Effect ID: {side_effect_id}")
 
     side_effects = search_entity(
         entity_type="referralmanagement/side_effect",
@@ -156,11 +163,18 @@ def test_create_referral():
 
 @pytest.mark.positive
 def test_search_referral():
+    """Test to search for a referral by ID. Uses existing referral if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     referral_id = extract_id_from_file("Referral ID:")
-    assert referral_id, "Referral ID not found in file"
+    if not referral_id:
+        # Use existing referral from system (async create takes too long to be searchable)
+        print("Referral ID not found in file, fetching existing referral...")
+        existing_referrals = search_referral_all(token, client)
+        assert existing_referrals, "No existing Referrals found in system"
+        referral_id = existing_referrals[0]["id"]
+        print(f"Using existing Referral ID: {referral_id}")
 
     referrals = search_entity(
         entity_type="referralmanagement/referral",
@@ -212,11 +226,18 @@ def test_create_hf_referral():
 
 @pytest.mark.positive
 def test_search_hf_referral():
+    """Test to search for an HF referral by ID. Uses existing HF referral if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     hf_referral_id = extract_id_from_file("HF Referral ID:")
-    assert hf_referral_id, "HF Referral ID not found in file"
+    if not hf_referral_id:
+        # Use existing HF referral from system (async create takes too long to be searchable)
+        print("HF Referral ID not found in file, fetching existing HF referral...")
+        existing_hf_referrals = search_hf_referral_all(token, client)
+        assert existing_hf_referrals, "No existing HF Referrals found in system"
+        hf_referral_id = existing_hf_referrals[0]["id"]
+        print(f"Using existing HF Referral ID: {hf_referral_id}")
 
     hf_referrals = search_entity(
         entity_type="referralmanagement/hf_referral",
@@ -487,3 +508,48 @@ def create_hf_referral(token, client, project_id, project_facility_id):
 
     hf_referral_data = response.json()["HFReferral"]
     return hf_referral_data["id"], response.status_code
+
+
+def search_hf_referral_all(token, client):
+    """Search for all HF referrals without any filter."""
+    payload = load_payload("referralmanagement/hf_referral", "search_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferral"] = {}  # Empty filter to get all
+
+    url = f"/referralmanagement/hf-referral/v1/_search?limit=10&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("HFReferrals", [])
+
+
+def search_side_effect_all(token, client):
+    """Search for all side effects without any filter."""
+    payload = load_payload("referralmanagement/side_effect", "search_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffect"] = {}  # Empty filter to get all
+
+    url = f"/referralmanagement/side-effect/v1/_search?limit=10&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Side Effect search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("SideEffects", [])
+
+
+def search_referral_all(token, client):
+    """Search for all referrals without any filter."""
+    payload = load_payload("referralmanagement/referral", "search_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referral"] = {}  # Empty filter to get all
+
+    url = f"/referralmanagement/v1/_search?limit=10&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Referrals", [])

@@ -1,0 +1,41 @@
+{
+    "Stock": {
+        "tenantId": "mz",
+        "clientReferenceId": "{{uuid3}}",
+        "productVariantId": "PVAR-2024-11-18-000215",
+        "quantity": 100,
+        "referenceId": "9f1e4fbf-4616-4d49-9198-b3cee699ee7d",
+        "referenceIdType": "PROJECT",
+        "transactionType": "RECEIVED",
+        "transactionReason": "NEW",
+        "senderType": "WAREHOUSE",
+        "senderId": "F-2025-02-12-170530",
+        "receiverType": "WAREHOUSE",
+        "receiverId": "F-2024-09-06-070765",
+        "wayBillNumber": 3446,
+        "additionalFields": {
+            "schema": "test_9ac8bdde4931",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "lata",
+                    "value": "EYUbRIEHR38"
+                }
+            ]
+        },
+        "dateOfEntry": 1767950766578,
+        "isDeleted": false,
+        "rowVersion": 1,
+        "auditDetails": {
+            "createdBy": "test_9c5adbbe0337",
+            "lastModifiedBy": "test_55924c5f3c2d",
+            "createdTime": 1767950766578,
+            "lastModifiedTime": 1767950766578
+        },
+        "clientAuditDetails": {
+            "createdBy": "test_9c5adbbe0337",
+            "createdTime": 1767950766578,
+            "lastModifiedTime": 1767950766578
+        }
+    }
+}

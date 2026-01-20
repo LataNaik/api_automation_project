@@ -1,0 +1,10 @@
+{
+    "StockReconciliation": {
+        "id": [
+            "SR-2025-05-22-000008"
+        ]
+    },
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    }
+}

@@ -113,13 +113,20 @@ def test_resolve_complaint():
 
 @pytest.mark.positive
 def test_search_complaint():
-    """Test to search for a complaint by service request ID"""
+    """Test to search for a complaint by service request ID. Creates complaint if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     # Get service request ID from file
     service_request_id = extract_id_from_file("Service Request ID:")
-    assert service_request_id, "Service Request ID not found in file"
+    if not service_request_id:
+        # Create complaint internally if ID not found
+        print("Service Request ID not found in file, creating new complaint...")
+        res = create_complaint(token, client)
+        assert res.status_code in [200, 202], f"Complaint creation failed: {res.text}"
+        service_wrapper = res.json().get("ServiceWrappers", [])
+        service_request_id = service_wrapper[0]["service"]["serviceRequestId"]
+        print(f"Complaint created with Service Request ID: {service_request_id}")
 
     # Search for the complaint
     complaints = search_complaint(token, client, service_request_id)

@@ -69,7 +69,7 @@ def test_app_config():
 
 
 @pytest.mark.positive
-def test_backend_nterface():
+def test_backend_interface():
     token = get_auth_token("user")
     client = APIClient(token=token)
     response = search_mdms_data(token, client, "HCM.BACKEND_INTERFACE")
@@ -128,11 +128,17 @@ def test_create_schema_definition():
 
 @pytest.mark.positive
 def test_search_schema_definition():
+    """Test to search for a schema definition by code. Creates schema if code not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     schema_code = extract_id_from_file("Schema Code:")
-    assert schema_code, "Schema Code not found in file"
+    if not schema_code:
+        # Create schema definition internally if code not found
+        print("Schema Code not found in file, creating new schema definition...")
+        schema_code, status_code = create_schema_definition(token, client)
+        assert status_code in [200, 202], f"Schema Definition creation failed with status: {status_code}"
+        print(f"Schema Definition created with code: {schema_code}")
 
     schemas = search_schema_definition(token, client, schema_code)
 
@@ -159,14 +165,25 @@ def test_add_mdms_data():
 
 @pytest.mark.positive
 def test_search_added_mdms_data():
+    """Test to search for MDMS data by ID. Creates schema and data if not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
     schema_code = extract_id_from_file("Schema Code:")
     mdms_id = extract_id_from_file("MDMS Data ID:")
 
-    assert schema_code, "Schema Code not found in file"
-    assert mdms_id, "MDMS Data ID not found in file"
+    if not schema_code or not mdms_id:
+        # Create schema definition and MDMS data internally if not found
+        if not schema_code:
+            print("Schema Code not found in file, creating new schema definition...")
+            schema_code, status_code = create_schema_definition(token, client)
+            assert status_code in [200, 202], f"Schema Definition creation failed with status: {status_code}"
+            print(f"Schema Definition created with code: {schema_code}")
+
+        print("MDMS Data ID not found in file, creating new MDMS data...")
+        mdms_id, status_code = add_mdms_data(token, client, schema_code)
+        assert status_code in [200, 202], f"MDMS Data creation failed with status: {status_code}"
+        print(f"MDMS Data created with ID: {mdms_id}")
 
     mdms_records = search_mdms_by_schema(token, client, schema_code)
 

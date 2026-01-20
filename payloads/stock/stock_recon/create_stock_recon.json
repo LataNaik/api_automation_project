@@ -1,0 +1,36 @@
+{
+    "StockReconciliation": {
+        "tenantId": "{{tenantId}}",
+        "clientReferenceId": "{{uuid3}}",
+        "facilityId": "F-2025-05-22-000024",
+        "productVariantId": "PVAR-2025-05-22-000020",
+        "referenceId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+        "referenceIdType": "test_7c5f581990e7",
+        "physicalCount": 100,
+        "calculatedCount": 110,
+        "commentsOnReconciliation": "test_252a4b0cfdfa",
+        "dateOfReconciliation": 21,
+        "additionalFields": {
+            "schema": "test_d44a3a0ad57c",
+            "version": 43,
+            "fields": [
+                {
+                    "key": "test_3669187fadc3",
+                    "value": "test_1be812d1a579"
+                }
+            ]
+        },
+        "isDeleted": false,
+        "rowVersion": 1,
+        "auditDetails": {
+            "createdBy": "test_b76c171595db",
+            "lastModifiedBy": "test_9090d5c29f61",
+            "createdTime": 37,
+            "lastModifiedTime": 82
+        },
+        "clientAuditDetails": {
+            "createdTime": 1692774209,
+            "lastModifiedTime": 1692774209
+        }
+    }
+}
