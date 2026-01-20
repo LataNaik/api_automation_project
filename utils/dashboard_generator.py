@@ -659,8 +659,8 @@ def generate_dashboard():
                 <div class="stat-label">Entities Created</div>
             </div>
             <div class="stat-card info">
-                <div class="stat-number">{len(entity_counts)}</div>
-                <div class="stat-label">Service Types</div>
+                <div class="stat-number">{len(service_breakdown)}</div>
+                <div class="stat-label">Services Tested</div>
             </div>
         </div>
 
@@ -717,37 +717,7 @@ def generate_dashboard():
             </table>
         </div>
 
-        <!-- Entities Table -->
-        <div class="data-table">
-            <h2>🔖 Created Entities</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Service</th>
-                        <th>Entity ID</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-"""
-
-    # Add entity rows
-    for service, ids in entities.items():
-        for entity_id in ids:
-            html_content += f"""
-                    <tr>
-                        <td><span class="badge badge-info">{service}</span></td>
-                        <td><span class="entity-id">{entity_id}</span></td>
-                        <td><span class="badge badge-success">✓ Created</span></td>
-                    </tr>
-"""
-
-    html_content += """
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Test Details Table (Grouped by Service) -->
+        <!-- Test Details Table (Grouped by Service) - Moved above Created Entities -->
         <div class="data-table">
             <div class="collapsible-header collapsed" onclick="toggleSection('testDetails')">
                 <h2>📝 Test Execution Details (by Service)</h2>
@@ -869,6 +839,41 @@ def generate_dashboard():
 """
 
     html_content += """
+            </div>
+        </div>
+
+        <!-- Entities Table (Collapsible) -->
+        <div class="data-table">
+            <div class="collapsible-header collapsed" onclick="toggleSection('createdEntities')">
+                <h2>🔖 Created Entities</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div id="createdEntities" class="collapsible-content collapsed">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Entity ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+"""
+
+    # Add entity rows
+    for service, ids in entities.items():
+        for entity_id in ids:
+            html_content += f"""
+                        <tr>
+                            <td><span class="badge badge-info">{service}</span></td>
+                            <td><span class="entity-id">{entity_id}</span></td>
+                            <td><span class="badge badge-success">✓ Created</span></td>
+                        </tr>
+"""
+
+    html_content += """
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

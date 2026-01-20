@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import extract_id_from_file
-from utils.config import tenantId, boundaryType, boundaryCode, search_limit, search_offset
+from utils.config import tenantId, boundaryType, boundaryCode, search_limit, search_offset, invalidTenantId
 from tests.test_project_service import create_individual_project, create_project_resource, create_project_facility, create_project_staff
 from tests.test_product_service import create_product_variant
 from tests.test_facility_service import create_facility
@@ -375,6 +375,243 @@ def test_search_stock():
     print(f"Stock found with ID: {stock_id}")
 
 
+@pytest.mark.positive
+def test_create_stock_reconciliation():
+    """
+    Test to create a stock reconciliation record.
+    Internally creates: facility, product variant, project, project resource, project facility, stock
+    Then uses those details for stock reconciliation creation.
+    """
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Setup stock prerequisites
+    print("Setting up prerequisites for stock reconciliation...")
+    prerequisites = setup_stock_prerequisites(token, client)
+
+    # Create stock RECEIVED transaction first
+    print("Creating stock RECEIVED transaction...")
+    stock_id, stock_client_ref_id, stock_status = create_stock(
+        token, client,
+        product_variant_id=prerequisites["variant_id_1"],
+        project_id=prerequisites["project_id"],
+        sender_facility_id=prerequisites["sender_facility_id"],
+        receiver_facility_id=prerequisites["receiver_facility_id"],
+        transaction_type="RECEIVED",
+        quantity=1000
+    )
+    assert stock_status in [200, 202], f"Stock creation failed with status: {stock_status}"
+    print(f"Stock created with ID: {stock_id}")
+
+    # Create stock reconciliation
+    print("Creating stock reconciliation...")
+    recon_id, recon_client_ref_id, recon_status = create_stock_reconciliation(
+        token, client,
+        facility_id=prerequisites["receiver_facility_id"],
+        product_variant_id=prerequisites["variant_id_1"],
+        reference_id=prerequisites["project_id"],
+        physical_count=950,
+        calculated_count=1000
+    )
+    assert recon_status in [200, 202], f"Stock Reconciliation creation failed with status: {recon_status}"
+
+    print(f"Stock Reconciliation created with ID: {recon_id}")
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Stock Reconciliation details ---\n")
+        f.write(f"Stock Reconciliation ID: {recon_id}\n")
+        f.write(f"Stock Reconciliation Client Reference ID: {recon_client_ref_id}\n")
+        f.write(f"Facility ID: {prerequisites['receiver_facility_id']}\n")
+        f.write(f"Product Variant ID: {prerequisites['variant_id_1']}\n")
+        f.write(f"Project ID: {prerequisites['project_id']}\n")
+        f.write(f"Physical Count: 950\n")
+        f.write(f"Calculated Count: 1000\n")
+        f.write(f"Related Stock ID: {stock_id}\n")
+
+
+@pytest.mark.positive
+def test_search_stock_reconciliation():
+    """Test to search for a stock reconciliation by ID. Creates stock reconciliation if ID not found in file."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    recon_id = extract_id_from_file("Stock Reconciliation ID:")
+    if not recon_id:
+        # Create stock reconciliation internally if ID not found
+        print("Stock Reconciliation ID not found in file, creating new stock reconciliation...")
+        prerequisites = setup_stock_prerequisites(token, client)
+
+        # Create stock first
+        create_stock(
+            token, client,
+            product_variant_id=prerequisites["variant_id_1"],
+            project_id=prerequisites["project_id"],
+            sender_facility_id=prerequisites["sender_facility_id"],
+            receiver_facility_id=prerequisites["receiver_facility_id"],
+            transaction_type="RECEIVED",
+            quantity=1000
+        )
+
+        # Create stock reconciliation
+        recon_id, _, _ = create_stock_reconciliation(
+            token, client,
+            facility_id=prerequisites["receiver_facility_id"],
+            product_variant_id=prerequisites["variant_id_1"],
+            reference_id=prerequisites["project_id"],
+            physical_count=950,
+            calculated_count=1000
+        )
+        print(f"Stock Reconciliation created with ID: {recon_id}")
+
+    recons = search_stock_reconciliation(token, client, recon_id)
+    assert recons, "No stock reconciliations found in search response"
+
+    found_ids = [r["id"] for r in recons]
+    assert recon_id in found_ids, f"Stock Reconciliation {recon_id} not found in search results"
+    print(f"Stock Reconciliation found with ID: {recon_id}")
+
+
+# --- Negative Tests ---
+
+@pytest.mark.negative
+def test_create_stock_with_invalid_tenant_id():
+    """Negative test: Creating stock with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Get valid IDs from file or use dummy values
+    variant_id = extract_id_from_file("Variant ID:") or "PVAR-dummy"
+    project_id = extract_id_from_file("Project ID:") or "project-dummy"
+    facility_id = extract_id_from_file("Facility ID:") or "F-dummy"
+
+    payload = load_payload("stock", "create_stock.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Stock"]["tenantId"] = invalidTenantId
+    payload["Stock"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Stock"]["productVariantId"] = variant_id
+    payload["Stock"]["quantity"] = 100
+    payload["Stock"]["referenceId"] = project_id
+    payload["Stock"]["referenceIdType"] = "PROJECT"
+    payload["Stock"]["transactionType"] = "RECEIVED"
+    payload["Stock"]["transactionReason"] = "NEW"
+    payload["Stock"]["senderType"] = "WAREHOUSE"
+    payload["Stock"]["senderId"] = facility_id
+    payload["Stock"]["receiverType"] = "WAREHOUSE"
+    payload["Stock"]["receiverId"] = facility_id
+
+    url = f"/{STOCK_SERVICE}/v1/_create"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Create stock correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_stock_with_invalid_tenant_id():
+    """Negative test: Searching stock with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    stock_id = extract_id_from_file("Stock ID:")
+    if not stock_id:
+        # Create a new stock if ID not found
+        prerequisites = setup_stock_prerequisites(token, client)
+        stock_id, _, _ = create_stock(
+            token, client,
+            product_variant_id=prerequisites["variant_id_1"],
+            project_id=prerequisites["project_id"],
+            sender_facility_id=prerequisites["sender_facility_id"],
+            receiver_facility_id=prerequisites["receiver_facility_id"],
+            transaction_type="RECEIVED"
+        )
+
+    payload = load_payload("stock", "search_stock.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Stock"]["id"] = [stock_id]
+
+    url = f"/{STOCK_SERVICE}/v1/_search?limit={search_limit}&offset={search_offset}&tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search stock correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_create_stock_reconciliation_with_invalid_tenant_id():
+    """Negative test: Creating stock reconciliation with invalid tenantId should fail"""
+    import time
+
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Get valid IDs from file or use dummy values
+    facility_id = extract_id_from_file("Facility ID:") or "F-dummy"
+    variant_id = extract_id_from_file("Variant ID:") or "PVAR-dummy"
+    project_id = extract_id_from_file("Project ID:") or "project-dummy"
+
+    payload = load_payload("stock/stock_recon", "create_stock_recon.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["StockReconciliation"]["tenantId"] = invalidTenantId
+    payload["StockReconciliation"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["StockReconciliation"]["facilityId"] = facility_id
+    payload["StockReconciliation"]["productVariantId"] = variant_id
+    payload["StockReconciliation"]["referenceId"] = project_id
+    payload["StockReconciliation"]["referenceIdType"] = "PROJECT"
+    payload["StockReconciliation"]["physicalCount"] = 100
+    payload["StockReconciliation"]["calculatedCount"] = 100
+    payload["StockReconciliation"]["commentsOnReconciliation"] = "Negative test"
+    payload["StockReconciliation"]["dateOfReconciliation"] = int(time.time() * 1000)
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_create"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Create stock reconciliation correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_stock_reconciliation_with_invalid_tenant_id():
+    """Negative test: Searching stock reconciliation with invalid tenantId should fail"""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    recon_id = extract_id_from_file("Stock Reconciliation ID:")
+    if not recon_id:
+        # Create a new stock reconciliation if ID not found
+        prerequisites = setup_stock_prerequisites(token, client)
+
+        # Create stock first
+        create_stock(
+            token, client,
+            product_variant_id=prerequisites["variant_id_1"],
+            project_id=prerequisites["project_id"],
+            sender_facility_id=prerequisites["sender_facility_id"],
+            receiver_facility_id=prerequisites["receiver_facility_id"],
+            transaction_type="RECEIVED",
+            quantity=1000
+        )
+
+        # Create stock reconciliation
+        recon_id, _, _ = create_stock_reconciliation(
+            token, client,
+            facility_id=prerequisites["receiver_facility_id"],
+            product_variant_id=prerequisites["variant_id_1"],
+            reference_id=prerequisites["project_id"],
+            physical_count=950,
+            calculated_count=1000
+        )
+
+    payload = load_payload("stock/stock_recon", "search_stock_recon.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["StockReconciliation"]["id"] = [recon_id]
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_search?limit={search_limit}&offset={search_offset}&tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search stock reconciliation correctly rejected with status: {response.status_code}")
+
+
 # --- Reusable Functions ---
 
 # --- Helper Functions for Setup ---
@@ -670,3 +907,75 @@ def search_stock(token, client, stock_id):
         raise Exception(f"Stock search failed with status {response.status_code}: {response.text}")
 
     return response.json().get("Stock", [])
+
+
+def create_stock_reconciliation(token, client, facility_id, product_variant_id, reference_id,
+                                 physical_count=100, calculated_count=110):
+    """
+    Create a stock reconciliation record.
+
+    Args:
+        token: Authentication token
+        client: API client instance
+        facility_id: Facility ID for reconciliation
+        product_variant_id: Product variant ID
+        reference_id: Reference ID (typically project ID)
+        physical_count: Physical count of stock (default: 100)
+        calculated_count: Calculated/expected count of stock (default: 110)
+
+    Returns:
+        Tuple of (reconciliation_id, client_reference_id, status_code)
+    """
+    import time
+
+    payload = load_payload("stock/stock_recon", "create_stock_recon.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    # Generate unique client reference ID
+    client_reference_id = str(uuid.uuid4())
+
+    # Update stock reconciliation details
+    payload["StockReconciliation"]["tenantId"] = tenantId
+    payload["StockReconciliation"]["clientReferenceId"] = client_reference_id
+    payload["StockReconciliation"]["facilityId"] = facility_id
+    payload["StockReconciliation"]["productVariantId"] = product_variant_id
+    payload["StockReconciliation"]["referenceId"] = reference_id
+    payload["StockReconciliation"]["referenceIdType"] = "PROJECT"
+    payload["StockReconciliation"]["physicalCount"] = physical_count
+    payload["StockReconciliation"]["calculatedCount"] = calculated_count
+    payload["StockReconciliation"]["commentsOnReconciliation"] = "Automated test reconciliation"
+    payload["StockReconciliation"]["dateOfReconciliation"] = int(time.time() * 1000)
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Stock Reconciliation creation failed with status {response.status_code}: {response.text}")
+
+    recon_data = response.json()["StockReconciliation"]
+    return recon_data["id"], recon_data["clientReferenceId"], response.status_code
+
+
+def search_stock_reconciliation(token, client, recon_id):
+    """
+    Search for a stock reconciliation by ID.
+
+    Args:
+        token: Authentication token
+        client: API client instance
+        recon_id: Stock Reconciliation ID to search for
+
+    Returns:
+        List of stock reconciliations found
+    """
+    payload = load_payload("stock/stock_recon", "search_stock_recon.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["StockReconciliation"]["id"] = [recon_id]
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_search?limit={search_limit}&offset={search_offset}&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code != 200:
+        raise Exception(f"Stock Reconciliation search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("StockReconciliation", [])
