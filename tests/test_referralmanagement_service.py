@@ -442,6 +442,185 @@ def test_search_hf_referral_with_invalid_tenant_id():
     print(f"Search correctly rejected with status: {response.status_code}")
 
 
+@pytest.mark.positive
+def test_update_side_effect():
+    """Test to update a side effect. Creates all dependencies internally first, then updates symptoms."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_data, side_effect_status = create_side_effect_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+    print(f"Side Effect created with ID: {side_effect_data['id']}")
+
+    # Step 2: Use create response data directly (async APIs may not be immediately searchable)
+    original_symptoms = side_effect_data.get("symptoms", [])
+    print(f"Original symptoms: {original_symptoms}")
+
+    # Step 3: Update the side effect (change symptoms)
+    new_symptoms = ["HEADACHE", "NAUSEA", "DIZZINESS"]
+    response = update_side_effect(token, client, side_effect_data, new_symptoms)
+    assert response.status_code in [200, 202], f"Side Effect update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_side_effect = response.json()["SideEffect"]
+    assert updated_side_effect["symptoms"] == new_symptoms, f"Symptoms not updated. Expected {new_symptoms}, got {updated_side_effect.get('symptoms')}"
+    print(f"Side Effect updated successfully. Symptoms changed from {original_symptoms} to {new_symptoms}")
+
+
+@pytest.mark.positive
+def test_update_referral():
+    """Test to update a referral. Creates all dependencies internally first, then updates reasons."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    _, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_id, side_effect_client_ref_id, side_effect_status = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+
+    print("Creating referral...")
+    referral_data, referral_status = create_referral_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id)
+    assert referral_status in [200, 202], f"Referral creation failed"
+    print(f"Referral created with ID: {referral_data['id']}")
+
+    # Step 2: Use create response data directly (async APIs may not be immediately searchable)
+    original_reasons = referral_data.get("reasons", [])
+    print(f"Original reasons: {original_reasons}")
+
+    # Step 3: Update the referral (change reasons)
+    new_reasons = ["VOMITING", "DIARRHEA"]
+    response = update_referral(token, client, referral_data, new_reasons)
+    assert response.status_code in [200, 202], f"Referral update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_referral = response.json()["Referral"]
+    assert updated_referral["reasons"] == new_reasons, f"Reasons not updated. Expected {new_reasons}, got {updated_referral.get('reasons')}"
+    print(f"Referral updated successfully. Reasons changed from {original_reasons} to {new_reasons}")
+
+
+@pytest.mark.positive
+def test_update_hf_referral():
+    """Test to update an HF referral. Creates all dependencies internally first, then updates symptom."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    project_facility_id, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating HF referral...")
+    hf_referral_data, hf_referral_status = create_hf_referral_full(token, client, project_id, project_facility_id)
+    assert hf_referral_status in [200, 202], f"HF Referral creation failed"
+    print(f"HF Referral created with ID: {hf_referral_data['id']}")
+
+    # Step 2: Use create response data directly (async APIs may not be immediately searchable)
+    original_symptom = hf_referral_data.get("symptom", "")
+    print(f"Original symptom: {original_symptom}")
+
+    # Step 3: Update the HF referral (change symptom)
+    new_symptom = "malaria"
+    response = update_hf_referral(token, client, hf_referral_data, new_symptom)
+    assert response.status_code in [200, 202], f"HF Referral update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_hf_referral = response.json()["HFReferral"]
+    assert updated_hf_referral["symptom"] == new_symptom, f"Symptom not updated. Expected {new_symptom}, got {updated_hf_referral.get('symptom')}"
+    print(f"HF Referral updated successfully. Symptom changed from '{original_symptom}' to '{new_symptom}'")
+
+
 # --- Helper functions ---
 
 def create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id):
@@ -553,3 +732,247 @@ def search_referral_all(token, client):
         raise Exception(f"Referral search failed with status {response.status_code}: {response.text}")
 
     return response.json().get("Referrals", [])
+
+
+def search_side_effect_by_id(token, client, side_effect_id):
+    """Search for a side effect by ID and return full data."""
+    payload = load_payload("referralmanagement/side_effect", "search_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffect"]["id"] = [side_effect_id]
+
+    url = f"/referralmanagement/side-effect/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Side Effect search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("SideEffects", [])
+
+
+def search_referral_by_id(token, client, referral_id):
+    """Search for a referral by ID and return full data."""
+    payload = load_payload("referralmanagement/referral", "search_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referral"]["id"] = [referral_id]
+
+    url = f"/referralmanagement/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Referrals", [])
+
+
+def search_hf_referral_by_id(token, client, hf_referral_id):
+    """Search for an HF referral by ID and return full data."""
+    payload = load_payload("referralmanagement/hf_referral", "search_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferral"]["id"] = [hf_referral_id]
+
+    url = f"/referralmanagement/hf-referral/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("HFReferrals", [])
+
+
+def create_referral_with_client_ref(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id):
+    """Create a referral and return id, clientReferenceId, and status_code."""
+    payload = load_payload("referralmanagement/referral", "create_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referral"]["tenantId"] = tenantId
+    payload["Referral"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Referral"]["taskId"] = task_id
+    payload["Referral"]["taskClientReferenceId"] = task_client_ref_id
+    payload["Referral"]["projectBeneficiaryId"] = beneficiary_id
+    payload["Referral"]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["Referral"]["sideEffectId"] = side_effect_id
+    payload["Referral"]["sideEffectClientReferenceId"] = side_effect_client_ref_id
+    payload["Referral"]["recipientType"] = "FACILITY"
+    payload["Referral"]["recipientId"] = facility_id
+    payload["Referral"]["reasons"] = ["FEVER"]
+
+    url = f"/referralmanagement/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral creation failed with status {response.status_code}: {response.text}")
+
+    referral_data = response.json()["Referral"]
+    return referral_data["id"], referral_data["clientReferenceId"], response.status_code
+
+
+def create_hf_referral_with_client_ref(token, client, project_id, project_facility_id):
+    """Create an HF referral and return id, clientReferenceId, and status_code."""
+    payload = load_payload("referralmanagement/hf_referral", "create_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferral"]["tenantId"] = tenantId
+    payload["HFReferral"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["HFReferral"]["projectId"] = project_id
+    payload["HFReferral"]["projectFacilityId"] = project_facility_id
+    payload["HFReferral"]["symptom"] = "fever"
+    payload["HFReferral"]["symptomSurveyId"] = str(uuid.uuid4())
+
+    url = f"/referralmanagement/hf-referral/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral creation failed with status {response.status_code}: {response.text}")
+
+    hf_referral_data = response.json()["HFReferral"]
+    return hf_referral_data["id"], hf_referral_data["clientReferenceId"], response.status_code
+
+
+def create_side_effect_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id):
+    """Create a side effect and return full data and status_code for update operations."""
+    payload = load_payload("referralmanagement/side_effect", "create_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffect"]["tenantId"] = tenantId
+    payload["SideEffect"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["SideEffect"]["taskId"] = task_id
+    payload["SideEffect"]["taskClientReferenceId"] = task_client_ref_id
+    payload["SideEffect"]["projectBeneficiaryId"] = beneficiary_id
+    payload["SideEffect"]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["SideEffect"]["symptoms"] = ["FEVER", "VOMITING"]
+
+    url = f"/referralmanagement/side-effect/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Side Effect creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["SideEffect"], response.status_code
+
+
+def create_referral_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id):
+    """Create a referral and return full data and status_code for update operations."""
+    payload = load_payload("referralmanagement/referral", "create_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referral"]["tenantId"] = tenantId
+    payload["Referral"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Referral"]["taskId"] = task_id
+    payload["Referral"]["taskClientReferenceId"] = task_client_ref_id
+    payload["Referral"]["projectBeneficiaryId"] = beneficiary_id
+    payload["Referral"]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["Referral"]["sideEffectId"] = side_effect_id
+    payload["Referral"]["sideEffectClientReferenceId"] = side_effect_client_ref_id
+    payload["Referral"]["recipientType"] = "FACILITY"
+    payload["Referral"]["recipientId"] = facility_id
+    payload["Referral"]["reasons"] = ["FEVER"]
+
+    url = f"/referralmanagement/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Referral"], response.status_code
+
+
+def create_hf_referral_full(token, client, project_id, project_facility_id):
+    """Create an HF referral and return full data and status_code for update operations."""
+    payload = load_payload("referralmanagement/hf_referral", "create_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferral"]["tenantId"] = tenantId
+    payload["HFReferral"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["HFReferral"]["projectId"] = project_id
+    payload["HFReferral"]["projectFacilityId"] = project_facility_id
+    payload["HFReferral"]["symptom"] = "fever"
+    payload["HFReferral"]["symptomSurveyId"] = str(uuid.uuid4())
+
+    url = f"/referralmanagement/hf-referral/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["HFReferral"], response.status_code
+
+
+def update_side_effect(token, client, side_effect_data, new_symptoms):
+    """
+    Update a side effect's symptoms.
+
+    Args:
+        side_effect_data: Full side effect object from search
+        new_symptoms: New symptoms list to set
+    """
+    payload = load_payload("referralmanagement/side_effect", "update_side_effect.json")
+
+    # Copy required fields from the searched side effect
+    payload["SideEffect"]["id"] = side_effect_data["id"]
+    payload["SideEffect"]["tenantId"] = side_effect_data["tenantId"]
+    payload["SideEffect"]["clientReferenceId"] = side_effect_data["clientReferenceId"]
+    payload["SideEffect"]["rowVersion"] = side_effect_data["rowVersion"]
+    payload["SideEffect"]["auditDetails"] = side_effect_data["auditDetails"]
+    payload["SideEffect"]["clientAuditDetails"] = side_effect_data.get("clientAuditDetails")
+    payload["SideEffect"]["taskId"] = side_effect_data["taskId"]
+    payload["SideEffect"]["taskClientReferenceId"] = side_effect_data.get("taskClientReferenceId")
+    payload["SideEffect"]["projectBeneficiaryId"] = side_effect_data["projectBeneficiaryId"]
+    payload["SideEffect"]["projectBeneficiaryClientReferenceId"] = side_effect_data.get("projectBeneficiaryClientReferenceId")
+    payload["SideEffect"]["symptoms"] = new_symptoms
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/side-effect/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def update_referral(token, client, referral_data, new_reasons):
+    """
+    Update a referral's reasons.
+
+    Args:
+        referral_data: Full referral object from search
+        new_reasons: New reasons list to set
+    """
+    payload = load_payload("referralmanagement/referral", "update_referral.json")
+
+    # Copy required fields from the searched referral
+    payload["Referral"]["id"] = referral_data["id"]
+    payload["Referral"]["tenantId"] = referral_data["tenantId"]
+    payload["Referral"]["clientReferenceId"] = referral_data["clientReferenceId"]
+    payload["Referral"]["rowVersion"] = referral_data["rowVersion"]
+    payload["Referral"]["auditDetails"] = referral_data["auditDetails"]
+    payload["Referral"]["clientAuditDetails"] = referral_data.get("clientAuditDetails")
+    payload["Referral"]["projectBeneficiaryId"] = referral_data["projectBeneficiaryId"]
+    payload["Referral"]["projectBeneficiaryClientReferenceId"] = referral_data.get("projectBeneficiaryClientReferenceId")
+    payload["Referral"]["recipientType"] = referral_data.get("recipientType")
+    payload["Referral"]["recipientId"] = referral_data.get("recipientId")
+    payload["Referral"]["reasons"] = new_reasons
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def update_hf_referral(token, client, hf_referral_data, new_symptom):
+    """
+    Update an HF referral's symptom.
+
+    Args:
+        hf_referral_data: Full HF referral object from search
+        new_symptom: New symptom value to set
+    """
+    payload = load_payload("referralmanagement/hf_referral", "update_hf_referral.json")
+
+    # Copy required fields from the searched HF referral
+    payload["HFReferral"]["id"] = hf_referral_data["id"]
+    payload["HFReferral"]["tenantId"] = hf_referral_data["tenantId"]
+    payload["HFReferral"]["clientReferenceId"] = hf_referral_data["clientReferenceId"]
+    payload["HFReferral"]["rowVersion"] = hf_referral_data["rowVersion"]
+    payload["HFReferral"]["auditDetails"] = hf_referral_data["auditDetails"]
+    payload["HFReferral"]["clientAuditDetails"] = hf_referral_data.get("clientAuditDetails")
+    payload["HFReferral"]["projectId"] = hf_referral_data["projectId"]
+    payload["HFReferral"]["projectFacilityId"] = hf_referral_data.get("projectFacilityId")
+    payload["HFReferral"]["symptom"] = new_symptom
+    payload["HFReferral"]["symptomSurveyId"] = hf_referral_data.get("symptomSurveyId")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/hf-referral/v1/_update"
+    response = client.post(url, payload)
+    return response

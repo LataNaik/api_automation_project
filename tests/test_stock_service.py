@@ -612,6 +612,97 @@ def test_search_stock_reconciliation_with_invalid_tenant_id():
     print(f"Search stock reconciliation correctly rejected with status: {response.status_code}")
 
 
+@pytest.mark.positive
+def test_update_stock():
+    """Test to update a stock transaction. Creates all dependencies internally first, then updates quantity."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Setting up prerequisites for stock update test...")
+    prerequisites = setup_stock_prerequisites(token, client)
+
+    # Step 2: Create stock RECEIVED transaction
+    print("Creating stock RECEIVED transaction...")
+    stock_data, stock_status = create_stock_full(
+        token, client,
+        product_variant_id=prerequisites["variant_id_1"],
+        project_id=prerequisites["project_id"],
+        sender_facility_id=prerequisites["sender_facility_id"],
+        receiver_facility_id=prerequisites["receiver_facility_id"],
+        transaction_type="RECEIVED",
+        quantity=500
+    )
+    assert stock_status in [200, 202], f"Stock creation failed with status: {stock_status}"
+    print(f"Stock created with ID: {stock_data['id']}")
+
+    # Step 3: Use create response data directly (async APIs may not be immediately searchable)
+    original_quantity = stock_data.get("quantity", 0)
+    print(f"Original quantity: {original_quantity}")
+
+    # Step 4: Update the stock (change quantity)
+    new_quantity = 750
+    response = update_stock(token, client, stock_data, new_quantity)
+    assert response.status_code in [200, 202], f"Stock update failed: {response.text}"
+
+    # Step 5: Verify update
+    updated_stock = response.json()["Stock"]
+    assert updated_stock["quantity"] == new_quantity, f"Quantity not updated. Expected {new_quantity}, got {updated_stock.get('quantity')}"
+    print(f"Stock updated successfully. Quantity changed from {original_quantity} to {new_quantity}")
+
+
+@pytest.mark.positive
+def test_update_stock_reconciliation():
+    """Test to update a stock reconciliation. Creates all dependencies internally first, then updates physicalCount."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Setting up prerequisites for stock reconciliation update test...")
+    prerequisites = setup_stock_prerequisites(token, client)
+
+    # Step 2: Create stock RECEIVED transaction first
+    print("Creating stock RECEIVED transaction...")
+    stock_id, stock_client_ref_id, stock_status = create_stock(
+        token, client,
+        product_variant_id=prerequisites["variant_id_1"],
+        project_id=prerequisites["project_id"],
+        sender_facility_id=prerequisites["sender_facility_id"],
+        receiver_facility_id=prerequisites["receiver_facility_id"],
+        transaction_type="RECEIVED",
+        quantity=1000
+    )
+    assert stock_status in [200, 202], f"Stock creation failed with status: {stock_status}"
+    print(f"Stock created with ID: {stock_id}")
+
+    # Step 3: Create stock reconciliation
+    print("Creating stock reconciliation...")
+    recon_data, recon_status = create_stock_reconciliation_full(
+        token, client,
+        facility_id=prerequisites["receiver_facility_id"],
+        product_variant_id=prerequisites["variant_id_1"],
+        reference_id=prerequisites["project_id"],
+        physical_count=950,
+        calculated_count=1000
+    )
+    assert recon_status in [200, 202], f"Stock Reconciliation creation failed with status: {recon_status}"
+    print(f"Stock Reconciliation created with ID: {recon_data['id']}")
+
+    # Step 4: Use create response data directly (async APIs may not be immediately searchable)
+    original_physical_count = recon_data.get("physicalCount", 0)
+    print(f"Original physical count: {original_physical_count}")
+
+    # Step 5: Update the stock reconciliation (change physicalCount)
+    new_physical_count = 980
+    response = update_stock_reconciliation(token, client, recon_data, new_physical_count)
+    assert response.status_code in [200, 202], f"Stock Reconciliation update failed: {response.text}"
+
+    # Step 6: Verify update
+    updated_recon = response.json()["StockReconciliation"]
+    assert updated_recon["physicalCount"] == new_physical_count, f"Physical count not updated. Expected {new_physical_count}, got {updated_recon.get('physicalCount')}"
+    print(f"Stock Reconciliation updated successfully. Physical count changed from {original_physical_count} to {new_physical_count}")
+
+
 # --- Reusable Functions ---
 
 # --- Helper Functions for Setup ---
@@ -979,3 +1070,145 @@ def search_stock_reconciliation(token, client, recon_id):
         raise Exception(f"Stock Reconciliation search failed with status {response.status_code}: {response.text}")
 
     return response.json().get("StockReconciliation", [])
+
+
+def create_stock_full(token, client, product_variant_id, project_id, sender_facility_id, receiver_facility_id,
+                      quantity=1000, transaction_type="RECEIVED", transaction_reason="NEW"):
+    """
+    Create a stock transaction and return full data for update operations.
+
+    Returns:
+        Tuple of (stock_data, status_code)
+    """
+    payload = load_payload("stock", "create_stock.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    # Generate unique client reference ID
+    client_reference_id = str(uuid.uuid4())
+
+    # Update stock details
+    payload["Stock"]["tenantId"] = tenantId
+    payload["Stock"]["clientReferenceId"] = client_reference_id
+    payload["Stock"]["productVariantId"] = product_variant_id
+    payload["Stock"]["quantity"] = quantity
+    payload["Stock"]["referenceId"] = project_id
+    payload["Stock"]["referenceIdType"] = "PROJECT"
+    payload["Stock"]["transactionType"] = transaction_type
+    payload["Stock"]["transactionReason"] = transaction_reason
+    payload["Stock"]["senderType"] = "WAREHOUSE"
+    payload["Stock"]["senderId"] = sender_facility_id
+    payload["Stock"]["receiverType"] = "WAREHOUSE"
+    payload["Stock"]["receiverId"] = receiver_facility_id
+
+    url = f"/{STOCK_SERVICE}/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Stock creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Stock"], response.status_code
+
+
+def create_stock_reconciliation_full(token, client, facility_id, product_variant_id, reference_id,
+                                      physical_count=100, calculated_count=110):
+    """
+    Create a stock reconciliation and return full data for update operations.
+
+    Returns:
+        Tuple of (reconciliation_data, status_code)
+    """
+    import time
+
+    payload = load_payload("stock/stock_recon", "create_stock_recon.json")
+    payload["RequestInfo"] = get_request_info(token)
+
+    # Generate unique client reference ID
+    client_reference_id = str(uuid.uuid4())
+
+    # Update stock reconciliation details
+    payload["StockReconciliation"]["tenantId"] = tenantId
+    payload["StockReconciliation"]["clientReferenceId"] = client_reference_id
+    payload["StockReconciliation"]["facilityId"] = facility_id
+    payload["StockReconciliation"]["productVariantId"] = product_variant_id
+    payload["StockReconciliation"]["referenceId"] = reference_id
+    payload["StockReconciliation"]["referenceIdType"] = "PROJECT"
+    payload["StockReconciliation"]["physicalCount"] = physical_count
+    payload["StockReconciliation"]["calculatedCount"] = calculated_count
+    payload["StockReconciliation"]["commentsOnReconciliation"] = "Automated test reconciliation"
+    payload["StockReconciliation"]["dateOfReconciliation"] = int(time.time() * 1000)
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Stock Reconciliation creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["StockReconciliation"], response.status_code
+
+
+def update_stock(token, client, stock_data, new_quantity):
+    """
+    Update a stock transaction's quantity.
+
+    Args:
+        stock_data: Full stock object from create response
+        new_quantity: New quantity value to set
+    """
+    payload = load_payload("stock", "update_stock.json")
+
+    # Copy required fields from the created stock
+    payload["Stock"]["id"] = stock_data["id"]
+    payload["Stock"]["tenantId"] = stock_data["tenantId"]
+    payload["Stock"]["clientReferenceId"] = stock_data["clientReferenceId"]
+    payload["Stock"]["rowVersion"] = stock_data["rowVersion"]
+    payload["Stock"]["auditDetails"] = stock_data["auditDetails"]
+    payload["Stock"]["clientAuditDetails"] = stock_data.get("clientAuditDetails")
+    payload["Stock"]["productVariantId"] = stock_data["productVariantId"]
+    payload["Stock"]["referenceId"] = stock_data["referenceId"]
+    payload["Stock"]["referenceIdType"] = stock_data["referenceIdType"]
+    payload["Stock"]["transactionType"] = stock_data["transactionType"]
+    payload["Stock"]["transactionReason"] = stock_data.get("transactionReason")
+    payload["Stock"]["senderId"] = stock_data["senderId"]
+    payload["Stock"]["senderType"] = stock_data["senderType"]
+    payload["Stock"]["receiverId"] = stock_data["receiverId"]
+    payload["Stock"]["receiverType"] = stock_data["receiverType"]
+    payload["Stock"]["quantity"] = new_quantity
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{STOCK_SERVICE}/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def update_stock_reconciliation(token, client, recon_data, new_physical_count):
+    """
+    Update a stock reconciliation's physical count.
+
+    Args:
+        recon_data: Full stock reconciliation object from create response
+        new_physical_count: New physical count value to set
+    """
+    import time
+
+    payload = load_payload("stock/stock_recon", "update_stock_recon.json")
+
+    # Copy required fields from the created reconciliation
+    payload["StockReconciliation"]["id"] = recon_data["id"]
+    payload["StockReconciliation"]["tenantId"] = recon_data["tenantId"]
+    payload["StockReconciliation"]["clientReferenceId"] = recon_data["clientReferenceId"]
+    payload["StockReconciliation"]["rowVersion"] = recon_data["rowVersion"]
+    payload["StockReconciliation"]["auditDetails"] = recon_data["auditDetails"]
+    payload["StockReconciliation"]["clientAuditDetails"] = recon_data.get("clientAuditDetails")
+    payload["StockReconciliation"]["facilityId"] = recon_data["facilityId"]
+    payload["StockReconciliation"]["productVariantId"] = recon_data["productVariantId"]
+    payload["StockReconciliation"]["referenceId"] = recon_data["referenceId"]
+    payload["StockReconciliation"]["referenceIdType"] = recon_data["referenceIdType"]
+    payload["StockReconciliation"]["calculatedCount"] = recon_data["calculatedCount"]
+    payload["StockReconciliation"]["physicalCount"] = new_physical_count
+    payload["StockReconciliation"]["commentsOnReconciliation"] = "Updated via automated test"
+    payload["StockReconciliation"]["dateOfReconciliation"] = int(time.time() * 1000)
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_update"
+    response = client.post(url, payload)
+    return response

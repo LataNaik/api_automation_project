@@ -1,0 +1,120 @@
+{
+    "Employees": [
+        {
+            "id": 2444560953608195637,
+            "uuid": "21ecd33c-479b-4e35-8754-c92d2a4ab266",
+            "code": "QA-PS-GJR-4273",
+            "employeeStatus": "EMPLOYED",
+            "employeeType": "PERMANENT",
+            "dateOfAppointment": 1765529738503,
+            "jurisdictions": [
+                {
+                    "id": "436be54b-550d-408f-9523-c570436a2661",
+                    "hierarchy": "MICROPLAN",
+                    "boundary": "MICROPLAN_MO_01_01_MOSSURILEE",
+                    "boundaryType": "DISTRICT",
+                    "tenantId": "mz",
+                    "auditDetails": {
+                        "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "createdDate": 1765529745340,
+                        "lastModifiedBy": null,
+                        "lastModifiedDate": 0
+                    },
+                    "isActive": true
+                }
+            ],
+            "assignments": [
+                {
+                    "id": "371b4664-5cd3-425d-bc54-6f18b0223164",
+                    "position": 6324,
+                    "designation": "DESIG_01",
+                    "department": "eGov",
+                    "fromDate": 1765529738503,
+                    "toDate": null,
+                    "govtOrderNumber": null,
+                    "tenantid": "mz",
+                    "reportingTo": null,
+                    "auditDetails": {
+                        "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "createdDate": 1765529745340,
+                        "lastModifiedBy": null,
+                        "lastModifiedDate": 0
+                    },
+                    "isHOD": false,
+                    "isCurrentAssignment": true
+                }
+            ],
+            "serviceHistory": [],
+            "education": [],
+            "tests": [],
+            "tenantId": "mz",
+            "documents": [],
+            "deactivationDetails": [],
+            "reactivationDetails": [],
+            "auditDetails": {
+                "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                "createdDate": 1765529745340,
+                "lastModifiedBy": null,
+                "lastModifiedDate": 0
+            },
+            "reActivateEmployee": false,
+            "user": {
+                "id": 35364,
+                "uuid": "21ecd33c-479b-4e35-8754-c92d2a4ab266",
+                "userServiceUuid": "0c2ac7e4-24e3-43b5-8e68-fefb6d5e0671",
+                "userName": "QA-PS-GJR-4273",
+                "password": null,
+                "salutation": null,
+                "name": "Mike Moore",
+                "gender": "MALE",
+                "mobileNumber": "7563759591",
+                "emailId": "qa-ps-gjr-4273@test.com",
+                "altContactNumber": null,
+                "pan": null,
+                "aadhaarNumber": null,
+                "permanentAddress": null,
+                "permanentCity": null,
+                "permanentPinCode": null,
+                "correspondenceCity": null,
+                "correspondencePinCode": null,
+                "correspondenceAddress": "dg",
+                "active": true,
+                "dob": 1136592000000,
+                "pwdExpiryDate": null,
+                "locale": null,
+                "type": "EMPLOYEE",
+                "signature": null,
+                "accountLocked": null,
+                "roles": [
+                    {
+                        "name": "Proximity Supervisor",
+                        "code": "PROXIMITY_SUPERVISOR",
+                        "description": null,
+                        "tenantId": "mz"
+                    },
+                    {
+                        "name": "HRMS Admin",
+                        "code": "HRMS_ADMIN",
+                        "description": null,
+                        "tenantId": "mz"
+                    }
+                ],
+                "fatherOrHusbandName": null,
+                "relationship": null,
+                "bloodGroup": null,
+                "identificationMark": null,
+                "photo": null,
+                "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                "createdDate": 1765529745370,
+                "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                "lastModifiedDate": 1765529745370,
+                "otpReference": null,
+                "tenantId": "mz",
+                "rowVersion": 1
+            },
+            "isActive": true
+        }
+    ],
+    "key": "UPDATE",
+    "action": "UPDATE"
+}

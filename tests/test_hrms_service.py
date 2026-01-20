@@ -120,6 +120,36 @@ def test_search_employee_with_invalid_tenant_id():
         print(f"Search returned empty/filtered results as expected for invalid tenant ID")
 
 
+@pytest.mark.positive
+def test_update_employee():
+    """Test to update an employee. Creates employee internally first, then updates the name."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create employee internally
+    print("Creating employee for update test...")
+    employee_code, username, user_uuid, userservice_uuid, status_code = create_employee(token, client)
+    assert status_code in [200, 202], f"Employee creation failed with status: {status_code}"
+    print(f"Employee created with code: {employee_code}")
+
+    # Step 2: Search for the employee to get full data for update
+    employees = search_employee(token, client, employee_code)
+    assert len(employees) > 0, "Could not find created employee"
+    employee_data = employees[0]
+    original_name = employee_data["user"]["name"]
+    print(f"Original employee name: {original_name}")
+
+    # Step 3: Update the employee (change name)
+    new_name = f"Updated-{original_name}"
+    response = update_employee(token, client, employee_data, new_name)
+    assert response.status_code in [200, 202], f"Employee update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_employee = response.json()["Employees"][0]
+    assert updated_employee["user"]["name"] == new_name, f"Name not updated. Expected {new_name}, got {updated_employee['user']['name']}"
+    print(f"Employee updated successfully. Name changed from '{original_name}' to '{new_name}'")
+
+
 # --- Helper functions ---
 
 def generate_unique_code():
@@ -170,3 +200,23 @@ def search_employee(token, client, employee_code):
         raise Exception(f"Employee search failed with status {response.status_code}: {response.text}")
 
     return response.json().get("Employees", [])
+
+
+def update_employee(token, client, employee_data, new_name):
+    """
+    Update an employee's name.
+
+    Args:
+        employee_data: Full employee object from search
+        new_name: New name value to set
+    """
+    payload = load_payload("hrms", "update_hrms.json")
+
+    # Copy full employee data and update the name
+    payload["Employees"][0] = employee_data.copy()
+    payload["Employees"][0]["user"]["name"] = new_name
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{hrms}/employees/_update?tenantId={tenantId}"
+    response = client.post(url, payload)
+    return response

@@ -93,6 +93,43 @@ def test_search_individual_with_invalid_tenant_id():
     print(f"Search correctly rejected with status: {response.status_code}")
 
 
+@pytest.mark.positive
+def test_update_individual():
+    """Test to update an individual. Creates individual internally first, then updates the name."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create individual internally
+    print("Creating individual for update test...")
+    individualId, individualClientReferenceId, individualIndId, status_code = create_individual(token, client)
+    assert status_code in [200, 202], f"Individual creation failed with status: {status_code}"
+    print(f"Individual created with ID: {individualId}")
+
+    # Step 2: Search for the individual to get full data for update
+    individuals = search_entity(
+        entity_type="individual",
+        token=token,
+        client=client,
+        entity_id=individualId,
+        payload_file="search_individual.json",
+        endpoint=f"/{individual}/v1/_search",
+        response_key="Individual"
+    )
+    assert len(individuals) > 0, "Could not find created individual"
+    individual_data = individuals[0]
+
+    # Step 3: Update the individual (change givenName)
+    original_name = individual_data["name"]["givenName"]
+    new_given_name = f"Updated-{original_name}"
+    response = update_individual(token, client, individual_data, new_given_name)
+    assert response.status_code in [200, 202], f"Individual update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_individual = response.json()["Individual"]
+    assert updated_individual["name"]["givenName"] == new_given_name, f"givenName not updated. Expected {new_given_name}, got {updated_individual['name']['givenName']}"
+    print(f"Individual updated successfully. givenName changed from '{original_name}' to '{new_given_name}'")
+
+
 # --- Helper function (no assertion) ---
 def create_individual(token, client, tenant_id=None):
     """
@@ -134,4 +171,42 @@ def create_individual(token, client, tenant_id=None):
 
     # Return all desired values including status_code
     return individual_id, individual_client_reference_id, individual_ind_id, response.status_code
+
+
+def update_individual(token, client, individual_data, new_given_name):
+    """
+    Update an individual's givenName.
+
+    Args:
+        individual_data: Full individual object from search
+        new_given_name: New givenName value to set
+    """
+    payload = load_payload("individual", "update_individual.json")
+
+    # Copy required fields from the searched individual
+    payload["Individual"]["id"] = individual_data["id"]
+    payload["Individual"]["tenantId"] = individual_data["tenantId"]
+    payload["Individual"]["clientReferenceId"] = individual_data["clientReferenceId"]
+    payload["Individual"]["rowVersion"] = individual_data["rowVersion"]
+    payload["Individual"]["individualId"] = individual_data["individualId"]
+    payload["Individual"]["auditDetails"] = individual_data["auditDetails"]
+    payload["Individual"]["clientAuditDetails"] = individual_data.get("clientAuditDetails")
+
+    # Copy and update name
+    payload["Individual"]["name"] = individual_data["name"].copy()
+    payload["Individual"]["name"]["givenName"] = new_given_name
+
+    # Copy other required fields
+    payload["Individual"]["gender"] = individual_data.get("gender")
+    payload["Individual"]["dateOfBirth"] = individual_data.get("dateOfBirth")
+    payload["Individual"]["mobileNumber"] = individual_data.get("mobileNumber")
+    payload["Individual"]["address"] = individual_data.get("address", [])
+    payload["Individual"]["identifiers"] = individual_data.get("identifiers", [])
+    payload["Individual"]["skills"] = individual_data.get("skills", [])
+
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{individual}/v1/_update"
+    response = client.post(url, payload)
+    return response
 

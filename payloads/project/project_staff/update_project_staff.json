@@ -1,0 +1,32 @@
+{
+    "ProjectStaff": {
+        "id": "PTS-2025-05-22-000052",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "registration",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "key",
+                    "value": "uuoi"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747916859295,
+            "lastModifiedTime": 1747916904151
+        },
+        "userId": "75aec479-1008-4e0a-86b4-b474905b7973",
+        "projectId": "0735db42-6423-4722-9006-12ef81fafe25",
+        "startDate": 1983874101527,
+        "endDate": 9983874101527,
+        "channel": null,
+        "isDeleted": false
+    }
+}
