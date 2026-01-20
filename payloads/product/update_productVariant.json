@@ -1,0 +1,33 @@
+{
+    "ProductVariant": [
+        {
+            "id": "PVAR-2025-05-22-000022",
+            "tenantId": "oy",
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "test",
+                "version": 2,
+                "fields": [
+                    {
+                        "key": "weight",
+                        "value": "15mg"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "createdTime": 1747909162878,
+                "lastModifiedTime": 1747909162878
+            },
+            "productId": "P-2025-05-22-000023",
+            "sku": "Bednet",
+            "variation": "Bednet",
+            "isDeleted": false
+        }
+    ],
+    "apiOperation": "UPDATE"
+}

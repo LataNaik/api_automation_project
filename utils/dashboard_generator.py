@@ -464,13 +464,14 @@ def generate_dashboard():
         }}
 
         .collapsible-content {{
-            max-height: 2000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            max-height: 50000px;
+            overflow: visible;
+            transition: max-height 0.5s ease-out;
         }}
 
         .collapsible-content.collapsed {{
             max-height: 0;
+            overflow: hidden;
         }}
 
         .service-section {{
@@ -527,13 +528,14 @@ def generate_dashboard():
         }}
 
         .service-tests {{
-            max-height: 5000px;
-            overflow: hidden;
+            max-height: 100000px;
+            overflow: visible;
             transition: max-height 0.5s ease-out;
         }}
 
         .service-tests.collapsed {{
             max-height: 0;
+            overflow: hidden;
         }}
 
         .service-tests table {{
@@ -978,6 +980,7 @@ def generate_dashboard():
 
         // Toggle collapsible section
         function toggleSection(sectionId) {{
+            event.stopPropagation();
             const content = document.getElementById(sectionId);
             const header = content.previousElementSibling;
 
@@ -987,6 +990,7 @@ def generate_dashboard():
 
         // Toggle service section
         function toggleService(serviceId) {{
+            event.stopPropagation();
             const content = document.getElementById(serviceId);
             const header = content.previousElementSibling;
 
@@ -996,6 +1000,7 @@ def generate_dashboard():
 
         // Toggle test details
         function toggleTestDetails(testId) {{
+            event.stopPropagation();
             const detailsRow = document.getElementById(testId);
             detailsRow.classList.toggle('show');
         }}

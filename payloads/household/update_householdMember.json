@@ -1,0 +1,40 @@
+{
+    "HouseholdMember": {
+        "id": "{{householdMemberId}}",
+        "tenantId": "{{tenantId}}",
+        "status": null,
+        "source": null,
+        "rowVersion": 1,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_a3bf3e3ca4bc",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "test_d1960b95a67c",
+                    "value": "test_8329c276a171"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+            "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+            "createdTime": 1768895893250,
+            "lastModifiedTime": 1768895893250
+        },
+        "clientReferenceId": "{{householdMemberClientReferenceId}}",
+        "clientAuditDetails": {
+            "createdBy": null,
+            "lastModifiedBy": null,
+            "createdTime": 1768895893250,
+            "lastModifiedTime": 1768895893250
+        },
+        "householdId": "{{householdId}}",
+        "householdClientReferenceId": "{{householdClientReferenceId}}",
+        "individualId": "{{individualId}}",
+        "individualClientReferenceId": "{{individualClientReferenceId}}",
+        "isHeadOfHousehold": false,
+        "isDeleted": false
+    }
+}

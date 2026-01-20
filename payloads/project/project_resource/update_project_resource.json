@@ -1,0 +1,26 @@
+{
+    "ProjectResource": {
+        "id": "PR-2025-05-22-000055",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": null,
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747911693214,
+            "lastModifiedTime": 1747911760972
+        },
+        "projectId": "4516ad4f-8970-4670-817f-bd807e7a991f",
+        "resource": {
+            "productVariantId": "PVAR-2025-05-22-000020",
+            "type": "DRUG",
+            "isBaseUnitVariant": false
+        },
+        "isDeleted": false,
+        "startDate": 1707935400000,
+        "endDate": 1708367400000
+    }
+}

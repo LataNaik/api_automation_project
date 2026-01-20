@@ -212,6 +212,91 @@ def test_search_householdMember_with_invalid_tenant_id():
     print(f"Search correctly rejected with status: {response.status_code}")
 
 
+@pytest.mark.positive
+def test_update_household():
+    """Test to update a household. Creates household internally first, then updates memberCount."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create household internally
+    print("Creating household for update test...")
+    householdId, householdClientReferenceId, status_code = create_household(token, client)
+    assert status_code in [200, 202], f"Household creation failed with status: {status_code}"
+    print(f"Household created with ID: {householdId}")
+
+    # Step 2: Search for the household to get full data for update
+    households = search_entity(
+        entity_type="household",
+        token=token,
+        client=client,
+        entity_id=householdId,
+        payload_file="search_household.json",
+        endpoint="/household/v1/_search",
+        response_key="Households"
+    )
+    assert len(households) > 0, "Could not find created household"
+    household_data = households[0]
+
+    # Step 3: Update the household (change memberCount)
+    original_member_count = household_data.get("memberCount", 1)
+    new_member_count = original_member_count + 3
+    response = update_household(token, client, household_data, new_member_count)
+    assert response.status_code in [200, 202], f"Household update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_household = response.json()["Household"]
+    assert updated_household["memberCount"] == new_member_count, f"memberCount not updated. Expected {new_member_count}, got {updated_household['memberCount']}"
+    print(f"Household updated successfully. memberCount changed from {original_member_count} to {new_member_count}")
+
+
+@pytest.mark.positive
+def test_update_household_member():
+    """Test to update a household member twice. Creates household, individual, and member internally first, then updates isHeadOfHousehold twice ending with true."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create household member (which internally creates household and individual)
+    print("Creating household member for update test...")
+    res = create_household_member(token, client)
+    assert res.status_code in [200, 202], f"Household Member creation failed: {res.text}"
+    member_data = res.json()["HouseholdMember"]
+    member_id = member_data["id"]
+    print(f"Household Member created with ID: {member_id}")
+
+    # Step 2: Search for the member to get full data for update
+    members = search_entity(
+        entity_type="household",
+        token=token,
+        client=client,
+        entity_id=member_id,
+        payload_file="search_householdMember.json",
+        endpoint="/household/member/v1/_search",
+        response_key="HouseholdMembers"
+    )
+    assert len(members) > 0, "Could not find created household member"
+    member_full_data = members[0]
+    original_is_head = member_full_data.get("isHeadOfHousehold", False)
+    print(f"Original isHeadOfHousehold: {original_is_head}")
+
+    # Step 3: First update - set isHeadOfHousehold to False
+    print("First update: Setting isHeadOfHousehold to False...")
+    response1 = update_household_member(token, client, member_full_data, False)
+    assert response1.status_code in [200, 202], f"First update failed: {response1.text}"
+    updated_member1 = response1.json()["HouseholdMember"]
+    assert updated_member1["isHeadOfHousehold"] == False, f"First update failed. Expected False, got {updated_member1['isHeadOfHousehold']}"
+    print(f"First update successful. isHeadOfHousehold is now False")
+
+    # Step 4: Second update - set isHeadOfHousehold to True
+    print("Second update: Setting isHeadOfHousehold to True...")
+    response2 = update_household_member(token, client, updated_member1, True)
+    assert response2.status_code in [200, 202], f"Second update failed: {response2.text}"
+    updated_member2 = response2.json()["HouseholdMember"]
+    assert updated_member2["isHeadOfHousehold"] == True, f"Second update failed. Expected True, got {updated_member2['isHeadOfHousehold']}"
+    print(f"Second update successful. isHeadOfHousehold is now True")
+
+    print(f"Household Member updated successfully with 2 updates. Final isHeadOfHousehold: True")
+
+
 # --- Helper function ---
 
 def create_household(token, client, tenant_id=None):
@@ -296,3 +381,56 @@ def create_household_member(token, client, household_id="create", household_clie
 
     res = client.post("/household/member/v1/_create", payload)
     return res
+
+
+def update_household(token, client, household_data, new_member_count):
+    """
+    Update a household's memberCount.
+
+    Args:
+        household_data: Full household object from search
+        new_member_count: New memberCount value to set
+    """
+    payload = load_payload("household", "update_household.json")
+
+    # Copy required fields from the searched household
+    payload["Household"]["id"] = household_data["id"]
+    payload["Household"]["tenantId"] = household_data["tenantId"]
+    payload["Household"]["clientReferenceId"] = household_data["clientReferenceId"]
+    payload["Household"]["rowVersion"] = household_data["rowVersion"]
+    payload["Household"]["auditDetails"] = household_data["auditDetails"]
+    payload["Household"]["clientAuditDetails"] = household_data.get("clientAuditDetails")
+    payload["Household"]["address"] = household_data["address"]
+    payload["Household"]["memberCount"] = new_member_count
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/v1/_update", payload)
+    return response
+
+
+def update_household_member(token, client, member_data, new_is_head):
+    """
+    Update a household member's isHeadOfHousehold status.
+
+    Args:
+        member_data: Full household member object from search
+        new_is_head: New isHeadOfHousehold value to set
+    """
+    payload = load_payload("household", "update_householdMember.json")
+
+    # Copy required fields from the searched member
+    payload["HouseholdMember"]["id"] = member_data["id"]
+    payload["HouseholdMember"]["tenantId"] = member_data["tenantId"]
+    payload["HouseholdMember"]["clientReferenceId"] = member_data["clientReferenceId"]
+    payload["HouseholdMember"]["rowVersion"] = member_data["rowVersion"]
+    payload["HouseholdMember"]["auditDetails"] = member_data["auditDetails"]
+    payload["HouseholdMember"]["clientAuditDetails"] = member_data.get("clientAuditDetails")
+    payload["HouseholdMember"]["householdId"] = member_data["householdId"]
+    payload["HouseholdMember"]["householdClientReferenceId"] = member_data["householdClientReferenceId"]
+    payload["HouseholdMember"]["individualId"] = member_data["individualId"]
+    payload["HouseholdMember"]["individualClientReferenceId"] = member_data["individualClientReferenceId"]
+    payload["HouseholdMember"]["isHeadOfHousehold"] = new_is_head
+    payload["RequestInfo"] = get_request_info(token)
+
+    response = client.post("/household/member/v1/_update", payload)
+    return response

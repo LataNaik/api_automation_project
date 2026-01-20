@@ -1,0 +1,29 @@
+{
+    "ProjectFacility": {
+        "id": "PF-2025-05-22-000037",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_e37466be924cjhghjg",
+            "version": 8,
+            "fields": [
+                {
+                    "key": "test",
+                    "value": "test"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747912192605,
+            "lastModifiedTime": 1747912243486
+        },
+        "facilityId": "F-2025-05-22-000026",
+        "projectId": "4516ad4f-8970-4670-817f-bd807e7a991f",
+        "isDeleted": false
+    }
+}
