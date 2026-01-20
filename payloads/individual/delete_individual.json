@@ -1,0 +1,124 @@
+{
+    "Individual": {
+        "id": "b3054444-a49b-4e16-8798-65a27937834a",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_f76b4cca6bff",
+            "version": 23,
+            "fields": [
+                {
+                    "key": "test_80f7fb8d8a45",
+                    "value": "test_38bfd0dc223b"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747934581853,
+            "lastModifiedTime": 1747934715461
+        },
+        "clientReferenceId": "fcb32638-eb17-401d-b355-79002b03f166",
+        "clientAuditDetails": {
+            "createdBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+            "lastModifiedBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+            "createdTime": 1747934581381,
+            "lastModifiedTime": 1747934581381
+        },
+        "individualId": "IND-2025-05-22-000192",
+        "userId": null,
+        "userUuid": null,
+        "name": {
+            "givenName": "Lata",
+            "familyName": " Naik",
+            "otherNames": "Dadasmg2mfyiwc"
+        },
+        "dateOfBirth": "13/08/2022",
+        "gender": "MALE",
+        "bloodGroup": "O+",
+        "mobileNumber": "8908098919",
+        "altContactNumber": "9999999999",
+        "email": "souravganguly_dada@gmail.com",
+        "address": [
+            {
+                "id": "7e6c1e24-658c-429f-9185-ae46b0048978",
+                "clientReferenceId": "1769da36-6c20-4101-b0c0-f02e0220c6ef",
+                "individualId": "b3054444-a49b-4e16-8798-65a27937834a",
+                "tenantId": "oy",
+                "doorNo": "123",
+                "latitude": 12.932699,
+                "longitude": 77.602425,
+                "locationAccuracy": 14.27,
+                "type": "PERMANENT",
+                "addressLine1": "Apartment",
+                "addressLine2": "2nd Floor",
+                "landmark": "Near Juhu Beach",
+                "city": "Mumbai",
+                "pincode": "123456",
+                "buildingName": "Apartment",
+                "street": "Necklace Road",
+                "locality": {
+                    "id": null,
+                    "tenantId": null,
+                    "code": "STATE_CODE_COMMUNITY",
+                    "geometry": null,
+                    "auditDetails": null,
+                    "additionalDetails": null
+                },
+                "ward": null,
+                "isDeleted": false,
+                "auditDetails": {
+                    "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "createdTime": 1747934581853,
+                    "lastModifiedTime": 1747934715461
+                }
+            }
+        ],
+        "fatherName": "Ganguly Sr",
+        "husbandName": null,
+        "relationship": null,
+        "identifiers": [
+            {
+                "id": "4a4c1733-e89f-4c58-9fb6-b647bf99d4c1",
+                "clientReferenceId": "aaf75173-1f81-4b94-b26e-a9ee82cc125e",
+                "individualId": "b3054444-a49b-4e16-8798-65a27937834a",
+                "identifierType": "SYSTEM_GENERATED",
+                "identifierId": "06befc3b-f083-4403-8e45-692735503694",
+                "isDeleted": false,
+                "auditDetails": {
+                    "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "createdTime": 1747934581853,
+                    "lastModifiedTime": 1747934715461
+                }
+            }
+        ],
+        "skills": [
+            {
+                "id": "ca6cbc5f-4209-4250-b1b7-6d650308152d",
+                "clientReferenceId": "fa621be2-578d-4993-8dd2-2eaec9f30fb4",
+                "individualId": "b3054444-a49b-4e16-8798-65a27937834a",
+                "type": "Computer",
+                "level": "Learner",
+                "experience": "10+ Years",
+                "isDeleted": false,
+                "auditDetails": {
+                    "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                    "createdTime": 1747934581853,
+                    "lastModifiedTime": 1747934715461
+                }
+            }
+        ],
+        "photo": "test_35bd4e8545d8",
+        "isDeleted": true,
+        "isSystemUser": false,
+        "isSystemUserActive": true,
+        "userDetails": null
+    }
+}

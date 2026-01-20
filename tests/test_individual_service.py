@@ -130,6 +130,30 @@ def test_update_individual():
     print(f"Individual updated successfully. givenName changed from '{original_name}' to '{new_given_name}'")
 
 
+@pytest.mark.positive
+def test_delete_individual():
+    """Test to delete an individual. Creates individual internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create individual internally
+    print("Creating individual for delete test...")
+    individual_data, individual_status = create_individual_full(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    individual_id = individual_data['id']
+    print(f"Individual created with ID: {individual_id}")
+
+    # Step 2: Delete the individual
+    print("Deleting individual...")
+    response = delete_individual(token, client, individual_data)
+    assert response.status_code in [200, 202], f"Individual delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_individual = response.json()["Individual"]
+    assert deleted_individual["isDeleted"] == True, f"Individual not marked as deleted"
+    print(f"Individual {individual_id} deleted successfully")
+
+
 # --- Helper function (no assertion) ---
 def create_individual(token, client, tenant_id=None):
     """
@@ -207,6 +231,64 @@ def update_individual(token, client, individual_data, new_given_name):
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/{individual}/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def create_individual_full(token, client):
+    """
+    Create an individual and return full data for delete operations.
+
+    Returns:
+        Tuple of (individual_data, status_code)
+    """
+    payload = load_payload("individual", "create_individual.json")
+
+    # Inject dynamic values
+    payload["Individual"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["address"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["address"][0]["locality"]["code"] = boundaryCode
+    payload["Individual"]["identifiers"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{individual}/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Individual creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Individual"], response.status_code
+
+
+def delete_individual(token, client, individual_data):
+    """
+    Delete an individual (soft delete by setting isDeleted=true).
+
+    Args:
+        individual_data: Full individual object from create response
+    """
+    payload = load_payload("individual", "delete_individual.json")
+
+    # Copy required fields from the created individual
+    payload["Individual"]["id"] = individual_data["id"]
+    payload["Individual"]["tenantId"] = individual_data["tenantId"]
+    payload["Individual"]["clientReferenceId"] = individual_data["clientReferenceId"]
+    payload["Individual"]["rowVersion"] = individual_data["rowVersion"]
+    payload["Individual"]["auditDetails"] = individual_data["auditDetails"]
+    payload["Individual"]["clientAuditDetails"] = individual_data.get("clientAuditDetails")
+    payload["Individual"]["individualId"] = individual_data["individualId"]
+    payload["Individual"]["name"] = individual_data["name"]
+    payload["Individual"]["gender"] = individual_data.get("gender")
+    payload["Individual"]["dateOfBirth"] = individual_data.get("dateOfBirth")
+    payload["Individual"]["mobileNumber"] = individual_data.get("mobileNumber")
+    payload["Individual"]["address"] = individual_data.get("address", [])
+    payload["Individual"]["identifiers"] = individual_data.get("identifiers", [])
+    payload["Individual"]["skills"] = individual_data.get("skills", [])
+    payload["Individual"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{individual}/v1/_delete"
     response = client.post(url, payload)
     return response
 

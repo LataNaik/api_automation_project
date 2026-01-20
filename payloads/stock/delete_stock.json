@@ -1,0 +1,46 @@
+{
+    "Stock": {
+        "id": "S-2025-05-22-000081",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 3,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "test_9ac8bdde4931",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "lata",
+                    "value": "iouiyi"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747916462281,
+            "lastModifiedTime": 1747916632373
+        },
+        "clientReferenceId": "9b2d6fa9-f74a-4c4f-9092-861e07064f2d",
+        "clientAuditDetails": {
+            "createdBy": "test_9c5adbbe0337",
+            "lastModifiedBy": null,
+            "createdTime": 1747916460306,
+            "lastModifiedTime": 1747916460306
+        },
+        "productVariantId": "PVAR-2025-05-22-000020",
+        "quantity": 100,
+        "referenceId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+        "referenceIdType": "PROJECT",
+        "transactionType": "RECEIVED",
+        "transactionReason": null,
+        "senderId": "89d082fe-2739-4f69-8ac6-38166b46e037",
+        "senderType": "STAFF",
+        "receiverId": "55840b33-609e-460c-96ef-154c4a15fb28",
+        "receiverType": "STAFF",
+        "wayBillNumber": "3446",
+        "isDeleted": true,
+        "dateOfEntry": 1747916460306
+    }
+}

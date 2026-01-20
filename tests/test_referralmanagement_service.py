@@ -621,6 +621,176 @@ def test_update_hf_referral():
     print(f"HF Referral updated successfully. Symptom changed from '{original_symptom}' to '{new_symptom}'")
 
 
+@pytest.mark.positive
+def test_delete_side_effect():
+    """Test to delete a side effect. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_data, side_effect_status = create_side_effect_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+    side_effect_id = side_effect_data['id']
+    print(f"Side Effect created with ID: {side_effect_id}")
+
+    # Step 2: Delete the side effect
+    print("Deleting side effect...")
+    response = delete_side_effect(token, client, side_effect_data)
+    assert response.status_code in [200, 202], f"Side Effect delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_side_effect = response.json()["SideEffect"]
+    assert deleted_side_effect["isDeleted"] == True, f"Side Effect not marked as deleted"
+    print(f"Side Effect {side_effect_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_referral():
+    """Test to delete a referral. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    _, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_id, side_effect_client_ref_id, side_effect_status = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+
+    print("Creating referral...")
+    referral_data, referral_status = create_referral_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id)
+    assert referral_status in [200, 202], f"Referral creation failed"
+    referral_id = referral_data['id']
+    print(f"Referral created with ID: {referral_id}")
+
+    # Step 2: Delete the referral
+    print("Deleting referral...")
+    response = delete_referral(token, client, referral_data)
+    assert response.status_code in [200, 202], f"Referral delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_referral = response.json()["Referral"]
+    assert deleted_referral["isDeleted"] == True, f"Referral not marked as deleted"
+    print(f"Referral {referral_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_hf_referral():
+    """Test to delete an HF referral. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    project_facility_id, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating HF referral...")
+    hf_referral_data, hf_referral_status = create_hf_referral_full(token, client, project_id, project_facility_id)
+    assert hf_referral_status in [200, 202], f"HF Referral creation failed"
+    hf_referral_id = hf_referral_data['id']
+    print(f"HF Referral created with ID: {hf_referral_id}")
+
+    # Step 2: Delete the HF referral
+    print("Deleting HF referral...")
+    response = delete_hf_referral(token, client, hf_referral_data)
+    assert response.status_code in [200, 202], f"HF Referral delete failed: {response.text}"
+
+    # Step 3: Verify deletion
+    deleted_hf_referral = response.json()["HFReferral"]
+    assert deleted_hf_referral["isDeleted"] == True, f"HF Referral not marked as deleted"
+    print(f"HF Referral {hf_referral_id} deleted successfully")
+
+
 # --- Helper functions ---
 
 def create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id):
@@ -974,5 +1144,91 @@ def update_hf_referral(token, client, hf_referral_data, new_symptom):
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/referralmanagement/hf-referral/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_side_effect(token, client, side_effect_data):
+    """
+    Delete a side effect (soft delete by setting isDeleted=true).
+
+    Args:
+        side_effect_data: Full side effect object from create response
+    """
+    payload = load_payload("referralmanagement/side_effect", "delete_side_effect.json")
+
+    # Copy required fields from the created side effect
+    payload["SideEffect"]["id"] = side_effect_data["id"]
+    payload["SideEffect"]["tenantId"] = side_effect_data["tenantId"]
+    payload["SideEffect"]["clientReferenceId"] = side_effect_data["clientReferenceId"]
+    payload["SideEffect"]["rowVersion"] = side_effect_data["rowVersion"]
+    payload["SideEffect"]["auditDetails"] = side_effect_data["auditDetails"]
+    payload["SideEffect"]["clientAuditDetails"] = side_effect_data.get("clientAuditDetails")
+    payload["SideEffect"]["taskId"] = side_effect_data["taskId"]
+    payload["SideEffect"]["taskClientReferenceId"] = side_effect_data.get("taskClientReferenceId")
+    payload["SideEffect"]["projectBeneficiaryId"] = side_effect_data["projectBeneficiaryId"]
+    payload["SideEffect"]["projectBeneficiaryClientReferenceId"] = side_effect_data.get("projectBeneficiaryClientReferenceId")
+    payload["SideEffect"]["symptoms"] = side_effect_data.get("symptoms", [])
+    payload["SideEffect"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/side-effect/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_referral(token, client, referral_data):
+    """
+    Delete a referral (soft delete by setting isDeleted=true).
+
+    Args:
+        referral_data: Full referral object from create response
+    """
+    payload = load_payload("referralmanagement/referral", "delete_referral.json")
+
+    # Copy required fields from the created referral
+    payload["Referral"]["id"] = referral_data["id"]
+    payload["Referral"]["tenantId"] = referral_data["tenantId"]
+    payload["Referral"]["clientReferenceId"] = referral_data["clientReferenceId"]
+    payload["Referral"]["rowVersion"] = referral_data["rowVersion"]
+    payload["Referral"]["auditDetails"] = referral_data["auditDetails"]
+    payload["Referral"]["clientAuditDetails"] = referral_data.get("clientAuditDetails")
+    payload["Referral"]["projectBeneficiaryId"] = referral_data["projectBeneficiaryId"]
+    payload["Referral"]["projectBeneficiaryClientReferenceId"] = referral_data.get("projectBeneficiaryClientReferenceId")
+    payload["Referral"]["recipientType"] = referral_data.get("recipientType")
+    payload["Referral"]["recipientId"] = referral_data.get("recipientId")
+    payload["Referral"]["reasons"] = referral_data.get("reasons", [])
+    payload["Referral"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_hf_referral(token, client, hf_referral_data):
+    """
+    Delete an HF referral (soft delete by setting isDeleted=true).
+
+    Args:
+        hf_referral_data: Full HF referral object from create response
+    """
+    payload = load_payload("referralmanagement/hf_referral", "delete_hf_referral.json")
+
+    # Copy required fields from the created HF referral
+    payload["HFReferral"]["id"] = hf_referral_data["id"]
+    payload["HFReferral"]["tenantId"] = hf_referral_data["tenantId"]
+    payload["HFReferral"]["clientReferenceId"] = hf_referral_data["clientReferenceId"]
+    payload["HFReferral"]["rowVersion"] = hf_referral_data["rowVersion"]
+    payload["HFReferral"]["auditDetails"] = hf_referral_data["auditDetails"]
+    payload["HFReferral"]["clientAuditDetails"] = hf_referral_data.get("clientAuditDetails")
+    payload["HFReferral"]["projectId"] = hf_referral_data["projectId"]
+    payload["HFReferral"]["projectFacilityId"] = hf_referral_data.get("projectFacilityId")
+    payload["HFReferral"]["symptom"] = hf_referral_data.get("symptom")
+    payload["HFReferral"]["symptomSurveyId"] = hf_referral_data.get("symptomSurveyId")
+    payload["HFReferral"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/referralmanagement/hf-referral/v1/_delete"
     response = client.post(url, payload)
     return response

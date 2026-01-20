@@ -1,0 +1,39 @@
+{
+    "ProjectBeneficiary": {
+        "id": "PTB-2025-05-22-000111",
+        "tenantId": "oy",
+        "source": null,
+        "rowVersion": 2,
+        "applicationId": null,
+        "hasErrors": false,
+        "additionalFields": {
+            "schema": "registration",
+            "version": 1,
+            "fields": [
+                {
+                    "key": "key1",
+                    "value": "value1"
+                }
+            ]
+        },
+        "auditDetails": {
+            "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+            "createdTime": 1747932744322,
+            "lastModifiedTime": 1747933541860
+        },
+        "clientReferenceId": "d99a8e71-0183-409f-ac86-d6fee06edc44",
+        "clientAuditDetails": {
+            "createdBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+            "lastModifiedBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+            "createdTime": 1710158102701,
+            "lastModifiedTime": 1710158102701
+        },
+        "projectId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+        "beneficiaryId": "0306a274-d5b2-4ec1-9012-cdd631900fc9",
+        "dateOfRegistration": 1710158101634,
+        "beneficiaryClientReferenceId": "c96c18d6-171a-42ca-a6b1-c4dfa594aec5",
+        "isDeleted": true,
+        "tag": null
+    }
+}

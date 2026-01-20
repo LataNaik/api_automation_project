@@ -703,6 +703,91 @@ def test_update_stock_reconciliation():
     print(f"Stock Reconciliation updated successfully. Physical count changed from {original_physical_count} to {new_physical_count}")
 
 
+@pytest.mark.positive
+def test_delete_stock():
+    """Test to delete a stock transaction. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Setting up prerequisites for stock delete test...")
+    prerequisites = setup_stock_prerequisites(token, client)
+
+    # Step 2: Create stock RECEIVED transaction
+    print("Creating stock RECEIVED transaction...")
+    stock_data, stock_status = create_stock_full(
+        token, client,
+        product_variant_id=prerequisites["variant_id_1"],
+        project_id=prerequisites["project_id"],
+        sender_facility_id=prerequisites["sender_facility_id"],
+        receiver_facility_id=prerequisites["receiver_facility_id"],
+        transaction_type="RECEIVED",
+        quantity=500
+    )
+    assert stock_status in [200, 202], f"Stock creation failed with status: {stock_status}"
+    stock_id = stock_data['id']
+    print(f"Stock created with ID: {stock_id}")
+
+    # Step 3: Delete the stock
+    print("Deleting stock...")
+    response = delete_stock(token, client, stock_data)
+    assert response.status_code in [200, 202], f"Stock delete failed: {response.text}"
+
+    # Step 4: Verify deletion
+    deleted_stock = response.json()["Stock"]
+    assert deleted_stock["isDeleted"] == True, f"Stock not marked as deleted"
+    print(f"Stock {stock_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_delete_stock_reconciliation():
+    """Test to delete a stock reconciliation. Creates all dependencies internally first, then deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Setting up prerequisites for stock reconciliation delete test...")
+    prerequisites = setup_stock_prerequisites(token, client)
+
+    # Step 2: Create stock RECEIVED transaction first
+    print("Creating stock RECEIVED transaction...")
+    stock_id, stock_client_ref_id, stock_status = create_stock(
+        token, client,
+        product_variant_id=prerequisites["variant_id_1"],
+        project_id=prerequisites["project_id"],
+        sender_facility_id=prerequisites["sender_facility_id"],
+        receiver_facility_id=prerequisites["receiver_facility_id"],
+        transaction_type="RECEIVED",
+        quantity=1000
+    )
+    assert stock_status in [200, 202], f"Stock creation failed with status: {stock_status}"
+    print(f"Stock created with ID: {stock_id}")
+
+    # Step 3: Create stock reconciliation
+    print("Creating stock reconciliation...")
+    recon_data, recon_status = create_stock_reconciliation_full(
+        token, client,
+        facility_id=prerequisites["receiver_facility_id"],
+        product_variant_id=prerequisites["variant_id_1"],
+        reference_id=prerequisites["project_id"],
+        physical_count=950,
+        calculated_count=1000
+    )
+    assert recon_status in [200, 202], f"Stock Reconciliation creation failed with status: {recon_status}"
+    recon_id = recon_data['id']
+    print(f"Stock Reconciliation created with ID: {recon_id}")
+
+    # Step 4: Delete the stock reconciliation
+    print("Deleting stock reconciliation...")
+    response = delete_stock_reconciliation(token, client, recon_data)
+    assert response.status_code in [200, 202], f"Stock Reconciliation delete failed: {response.text}"
+
+    # Step 5: Verify deletion
+    deleted_recon = response.json()["StockReconciliation"]
+    assert deleted_recon["isDeleted"] == True, f"Stock Reconciliation not marked as deleted"
+    print(f"Stock Reconciliation {recon_id} deleted successfully")
+
+
 # --- Reusable Functions ---
 
 # --- Helper Functions for Setup ---
@@ -1210,5 +1295,71 @@ def update_stock_reconciliation(token, client, recon_data, new_physical_count):
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/{STOCK_SERVICE}/reconciliation/v1/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_stock(token, client, stock_data):
+    """
+    Delete a stock transaction (soft delete by setting isDeleted=true).
+
+    Args:
+        stock_data: Full stock object from create response
+    """
+    payload = load_payload("stock", "delete_stock.json")
+
+    # Copy required fields from the created stock
+    payload["Stock"]["id"] = stock_data["id"]
+    payload["Stock"]["tenantId"] = stock_data["tenantId"]
+    payload["Stock"]["clientReferenceId"] = stock_data["clientReferenceId"]
+    payload["Stock"]["rowVersion"] = stock_data["rowVersion"]
+    payload["Stock"]["auditDetails"] = stock_data["auditDetails"]
+    payload["Stock"]["clientAuditDetails"] = stock_data.get("clientAuditDetails")
+    payload["Stock"]["productVariantId"] = stock_data["productVariantId"]
+    payload["Stock"]["referenceId"] = stock_data["referenceId"]
+    payload["Stock"]["referenceIdType"] = stock_data["referenceIdType"]
+    payload["Stock"]["transactionType"] = stock_data["transactionType"]
+    payload["Stock"]["transactionReason"] = stock_data.get("transactionReason")
+    payload["Stock"]["senderId"] = stock_data["senderId"]
+    payload["Stock"]["senderType"] = stock_data["senderType"]
+    payload["Stock"]["receiverId"] = stock_data["receiverId"]
+    payload["Stock"]["receiverType"] = stock_data["receiverType"]
+    payload["Stock"]["quantity"] = stock_data["quantity"]
+    payload["Stock"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{STOCK_SERVICE}/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_stock_reconciliation(token, client, recon_data):
+    """
+    Delete a stock reconciliation (soft delete by setting isDeleted=true).
+
+    Args:
+        recon_data: Full stock reconciliation object from create response
+    """
+    payload = load_payload("stock/stock_recon", "delete_stock_recon.json")
+
+    # Copy required fields from the created reconciliation
+    payload["StockReconciliation"]["id"] = recon_data["id"]
+    payload["StockReconciliation"]["tenantId"] = recon_data["tenantId"]
+    payload["StockReconciliation"]["clientReferenceId"] = recon_data["clientReferenceId"]
+    payload["StockReconciliation"]["rowVersion"] = recon_data["rowVersion"]
+    payload["StockReconciliation"]["auditDetails"] = recon_data["auditDetails"]
+    payload["StockReconciliation"]["clientAuditDetails"] = recon_data.get("clientAuditDetails")
+    payload["StockReconciliation"]["facilityId"] = recon_data["facilityId"]
+    payload["StockReconciliation"]["productVariantId"] = recon_data["productVariantId"]
+    payload["StockReconciliation"]["referenceId"] = recon_data["referenceId"]
+    payload["StockReconciliation"]["referenceIdType"] = recon_data["referenceIdType"]
+    payload["StockReconciliation"]["calculatedCount"] = recon_data["calculatedCount"]
+    payload["StockReconciliation"]["physicalCount"] = recon_data["physicalCount"]
+    payload["StockReconciliation"]["commentsOnReconciliation"] = recon_data.get("commentsOnReconciliation")
+    payload["StockReconciliation"]["dateOfReconciliation"] = recon_data.get("dateOfReconciliation")
+    payload["StockReconciliation"]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{STOCK_SERVICE}/reconciliation/v1/_delete"
     response = client.post(url, payload)
     return response
