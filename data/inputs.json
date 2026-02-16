@@ -7,13 +7,11 @@
     "METAL"
   ],
   "serviceCode": [
-    "NotEnoughStock",
-    "SyncNotWorking",
-    "TechnicalIssues",
-    "UserAccountIssues",
-    "DataIssues",
-    "SecurityIssues",
+    "Other",
     "PerformanceIssue",
-    "Other"
+    "SecurityIssues",
+    "DataIssues",
+    "UserAccountIssues",
+    "TechnicalIssues"
   ]
 }

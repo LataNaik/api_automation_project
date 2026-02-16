@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Automation Test Cases</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .summary {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .summary-card {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .summary-card h3 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .summary-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .filters {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filters label {
+            font-weight: bold;
+            color: #333;
+        }
+        .filters select, .filters input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .filters select:focus, .filters input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+        }
+        th:hover {
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover {
+            background-color: #f8f9ff;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        tr:nth-child(even):hover {
+            background-color: #f0f1ff;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .badge-positive {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-negative {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .badge-create {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .badge-search {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-update {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-delete {
+            background-color: #f5c6cb;
+            color: #721c24;
+        }
+        .badge-upsert {
+            background-color: #e2d5f1;
+            color: #5a3d7a;
+        }
+        .badge-workflow {
+            background-color: #c3e6cb;
+            color: #155724;
+        }
+        .endpoint {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background-color: #f4f4f4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #333;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .count-display {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 18px;
+        }
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+            }
+            .filters select, .filters input {
+                width: 100%;
+            }
+            th, td {
+                padding: 8px 6px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>API Automation Test Cases</h1>
+
+        <div class="summary">
+            <div class="summary-card">
+                <h3 id="total-count">113</h3>
+                <p>Total Tests</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="positive-count">76</h3>
+                <p>Positive Tests</p>
+            </div>
+            <div class="summary-card">
+                <h3 id="negative-count">37</h3>
+                <p>Negative Tests</p>
+            </div>
+            <div class="summary-card">
+                <h3>17</h3>
+                <p>Services</p>
+            </div>
+        </div>
+
+        <div class="filters">
+            <label>Search:</label>
+            <input type="text" id="searchInput" placeholder="Search test cases..." onkeyup="filterTable()">
+
+            <label>Service:</label>
+            <select id="serviceFilter" onchange="filterTable()">
+                <option value="">All Services</option>
+            </select>
+
+            <label>Operation:</label>
+            <select id="operationFilter" onchange="filterTable()">
+                <option value="">All Operations</option>
+                <option value="Create">Create</option>
+                <option value="Search">Search</option>
+                <option value="Update">Update</option>
+                <option value="Delete">Delete</option>
+                <option value="Upsert">Upsert</option>
+                <option value="Workflow">Workflow</option>
+            </select>
+
+            <label>Test Type:</label>
+            <select id="typeFilter" onchange="filterTable()">
+                <option value="">All Types</option>
+                <option value="Positive">Positive</option>
+                <option value="Negative">Negative</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table id="testCasesTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">#</th>
+                        <th onclick="sortTable(1)">Service</th>
+                        <th onclick="sortTable(2)">Operation</th>
+                        <th onclick="sortTable(3)">Endpoint</th>
+                        <th onclick="sortTable(4)">Test Case Name</th>
+                        <th onclick="sortTable(5)">Description</th>
+                        <th onclick="sortTable(6)">Test Type</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="count-display" id="countDisplay">Showing all 113 test cases</div>
+        </div>
+    </div>
+
+    <script>
+        const testCases = [
+            {service: "Boundary", operation: "Search", endpoint: "/boundary-service/boundary/_search", name: "test_search_boundary", description: "Search for boundary by code", type: "Positive"},
+            {service: "Boundary", operation: "Search", endpoint: "/boundary-service/boundary/_search", name: "test_search_boundary_with_invalid_tenant_id", description: "Search boundary with invalid tenantId should fail", type: "Negative"},
+            {service: "Facility", operation: "Create", endpoint: "/facility/v1/_create", name: "test_create_facility", description: "Create a new facility", type: "Positive"},
+            {service: "Facility", operation: "Search", endpoint: "/facility/v1/_search", name: "test_search_facility", description: "Search for a facility by ID", type: "Positive"},
+            {service: "Facility", operation: "Create", endpoint: "/facility/v1/_create", name: "test_create_facility_with_invalid_tenant_id", description: "Create facility with invalid tenantId should fail", type: "Negative"},
+            {service: "Facility", operation: "Search", endpoint: "/facility/v1/_search", name: "test_search_facility_with_invalid_tenant_id", description: "Search facility with invalid tenantId should fail", type: "Negative"},
+            {service: "Facility", operation: "Update", endpoint: "/facility/v1/_update", name: "test_update_facility", description: "Update facility name (creates facility internally)", type: "Positive"},
+            {service: "Facility", operation: "Delete", endpoint: "/facility/v1/_delete", name: "test_delete_facility", description: "Delete facility (soft delete)", type: "Positive"},
+            {service: "Household", operation: "Create", endpoint: "/household/v1/_create", name: "test_create_household", description: "Create a new household", type: "Positive"},
+            {service: "Household", operation: "Create", endpoint: "/household/member/v1/_create", name: "test_create_householdMember", description: "Create a new household member", type: "Positive"},
+            {service: "Household", operation: "Search", endpoint: "/household/v1/_search", name: "test_search_household", description: "Search for a household by ID", type: "Positive"},
+            {service: "Household", operation: "Search", endpoint: "/household/member/v1/_search", name: "test_search_householdMember_by_id", description: "Search for a household member by ID", type: "Positive"},
+            {service: "Household", operation: "Create", endpoint: "/household/member/v1/_create", name: "test_create_householdMember_without_householdId", description: "Create household member without householdId should fail", type: "Negative"},
+            {service: "Household", operation: "Create", endpoint: "/household/member/v1/_create", name: "test_create_householdMember_without_individualId", description: "Create household member without individualId should fail", type: "Negative"},
+            {service: "Household", operation: "Create", endpoint: "/household/v1/_create", name: "test_create_household_with_invalid_tenant_id", description: "Create household with invalid tenantId should fail", type: "Negative"},
+            {service: "Household", operation: "Create", endpoint: "/household/member/v1/_create", name: "test_create_householdMember_with_invalid_tenant_id", description: "Create household member with invalid tenantId should fail", type: "Negative"},
+            {service: "Household", operation: "Search", endpoint: "/household/v1/_search", name: "test_search_household_with_invalid_tenant_id", description: "Search household with invalid tenantId should fail", type: "Negative"},
+            {service: "Household", operation: "Search", endpoint: "/household/member/v1/_search", name: "test_search_householdMember_with_invalid_tenant_id", description: "Search household member with invalid tenantId should fail", type: "Negative"},
+            {service: "Household", operation: "Update", endpoint: "/household/v1/_update", name: "test_update_household", description: "Update household memberCount", type: "Positive"},
+            {service: "Household", operation: "Update", endpoint: "/household/member/v1/_update", name: "test_update_household_member", description: "Update household member isHeadOfHousehold with 2 updates", type: "Positive"},
+            {service: "Household", operation: "Delete", endpoint: "/household/v1/_delete", name: "test_delete_household", description: "Delete household (soft delete)", type: "Positive"},
+            {service: "Household", operation: "Delete", endpoint: "/household/member/v1/_delete", name: "test_delete_household_member", description: "Delete household member (soft delete)", type: "Positive"},
+            {service: "Individual", operation: "Create", endpoint: "/individual/v1/_create", name: "test_create_individual", description: "Create a new individual", type: "Positive"},
+            {service: "Individual", operation: "Search", endpoint: "/individual/v1/_search", name: "test_search_individual", description: "Search for an individual by ID", type: "Positive"},
+            {service: "Individual", operation: "Create", endpoint: "/individual/v1/_create", name: "test_create_individual_with_invalid_tenant_id", description: "Create individual with invalid tenantId should fail", type: "Negative"},
+            {service: "Individual", operation: "Search", endpoint: "/individual/v1/_search", name: "test_search_individual_with_invalid_tenant_id", description: "Search individual with invalid tenantId should fail", type: "Negative"},
+            {service: "Individual", operation: "Update", endpoint: "/individual/v1/_update", name: "test_update_individual", description: "Update individual givenName", type: "Positive"},
+            {service: "Individual", operation: "Delete", endpoint: "/individual/v1/_delete", name: "test_delete_individual", description: "Delete individual (soft delete)", type: "Positive"},
+            {service: "HRMS", operation: "Create", endpoint: "/egov-hrms/employees/_create", name: "test_create_employee", description: "Create a new employee", type: "Positive"},
+            {service: "HRMS", operation: "Search", endpoint: "/egov-hrms/employees/_search", name: "test_search_employee", description: "Search for an employee by code", type: "Positive"},
+            {service: "HRMS", operation: "Create", endpoint: "/egov-hrms/employees/_create", name: "test_create_hrms_with_invalid_tenant_id", description: "Create employee with invalid tenantId should fail", type: "Negative"},
+            {service: "HRMS", operation: "Search", endpoint: "/egov-hrms/employees/_search", name: "test_search_employee_with_invalid_tenant_id", description: "Search employee with invalid tenantId should fail", type: "Negative"},
+            {service: "HRMS", operation: "Update", endpoint: "/egov-hrms/employees/_update", name: "test_update_employee", description: "Update employee designation", type: "Positive"},
+            {service: "Localization", operation: "Upsert", endpoint: "/localization/messages/v1/_upsert", name: "test_upsert_localization", description: "Upsert a localization message", type: "Positive"},
+            {service: "Localization", operation: "Search", endpoint: "/localization/messages/v1/_search", name: "test_search_localization", description: "Search for a localization message by code", type: "Positive"},
+            {service: "Localization", operation: "Upsert", endpoint: "/localization/messages/v1/_upsert", name: "test_upsert_localization_with_invalid_tenant_id", description: "Upsert localization with invalid tenantId should fail", type: "Negative"},
+            {service: "Localization", operation: "Search", endpoint: "/localization/messages/v1/_search", name: "test_search_localization_with_invalid_tenant_id", description: "Search localization with any tenantId should succeed", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_project_types", description: "Search MDMS for project types", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_roles", description: "Search MDMS for roles", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_app_config", description: "Search MDMS for app config", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_backend_interface", description: "Search MDMS for backend interface", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_state_info", description: "Search MDMS for state info", type: "Positive"},
+            {service: "MDMS", operation: "Create", endpoint: "/mdms-v2/schema/v1/_create", name: "test_create_schema_definition", description: "Create a new MDMS schema definition", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/schema/v1/_search", name: "test_search_schema_definition", description: "Search for MDMS schema definition", type: "Positive"},
+            {service: "MDMS", operation: "Create", endpoint: "/mdms-v2/v2/_create", name: "test_add_mdms_data", description: "Add data to MDMS", type: "Positive"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_search_added_mdms_data", description: "Search for added MDMS data", type: "Positive"},
+            {service: "MDMS", operation: "Create", endpoint: "/mdms-v2/schema/v1/_create", name: "test_create_schema_definition_with_invalid_tenant_id", description: "Create schema definition with invalid tenantId should fail", type: "Negative"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/schema/v1/_search", name: "test_search_schema_definition_with_invalid_tenant_id", description: "Search schema definition with invalid tenantId should fail", type: "Negative"},
+            {service: "MDMS", operation: "Search", endpoint: "/mdms-v2/v2/_search", name: "test_search_mdms_data_with_invalid_tenant_id", description: "Search MDMS data with invalid tenantId should fail", type: "Negative"},
+            {service: "PGR", operation: "Create", endpoint: "/pgr-services/v2/request/_create", name: "test_create_complaint", description: "Create a new PGR complaint", type: "Positive"},
+            {service: "PGR", operation: "Update", endpoint: "/pgr-services/v2/request/_update", name: "test_resolve_complaint", description: "Resolve an existing complaint", type: "Positive"},
+            {service: "PGR", operation: "Search", endpoint: "/pgr-services/v2/request/_search", name: "test_search_complaint", description: "Search for a complaint by ID", type: "Positive"},
+            {service: "PGR", operation: "Update", endpoint: "/pgr-services/v2/request/_update", name: "test_assign_complaint", description: "Assign complaint to an employee", type: "Positive"},
+            {service: "PGR", operation: "Workflow", endpoint: "/pgr-services/v2/request/_create, _update", name: "test_complete_pgr_workflow", description: "Complete PGR workflow: create -> assign -> resolve", type: "Positive"},
+            {service: "Product", operation: "Create", endpoint: "/product/v1/_create", name: "test_create_product", description: "Create a new product", type: "Positive"},
+            {service: "Product", operation: "Create", endpoint: "/product/variant/v1/_create", name: "test_create_product_variant", description: "Create a new product variant", type: "Positive"},
+            {service: "Product", operation: "Search", endpoint: "/product/v1/_search", name: "test_search_product", description: "Search for a product by ID", type: "Positive"},
+            {service: "Product", operation: "Search", endpoint: "/product/variant/v1/_search", name: "test_search_product_variant", description: "Search for a product variant by ID", type: "Positive"},
+            {service: "Product", operation: "Create", endpoint: "/product/v1/_create", name: "test_create_product_with_invalid_tenant_id", description: "Create product with invalid tenantId should fail", type: "Negative"},
+            {service: "Product", operation: "Create", endpoint: "/product/variant/v1/_create", name: "test_create_product_variant_with_invalid_tenant_id", description: "Create product variant with invalid tenantId should fail", type: "Negative"},
+            {service: "Product", operation: "Create", endpoint: "/product/variant/v1/_create", name: "test_create_product_variant_without_productId", description: "Create product variant without productId should fail", type: "Negative"},
+            {service: "Product", operation: "Search", endpoint: "/product/v1/_search", name: "test_search_product_with_invalid_tenant_id", description: "Search product with invalid tenantId should fail", type: "Negative"},
+            {service: "Product", operation: "Search", endpoint: "/product/variant/v1/_search", name: "test_search_product_variant_with_invalid_tenant_id", description: "Search product variant with invalid tenantId should fail", type: "Negative"},
+            {service: "Product", operation: "Update", endpoint: "/product/v1/_update", name: "test_update_product", description: "Update product name", type: "Positive"},
+            {service: "Product", operation: "Update", endpoint: "/product/variant/v1/_update", name: "test_update_product_variant", description: "Update product variant sku", type: "Positive"},
+            {service: "Project", operation: "Create", endpoint: "/project/v1/_create", name: "test_create_project", description: "Create a new project", type: "Positive"},
+            {service: "Project", operation: "Search", endpoint: "/project/v1/_search", name: "test_search_project", description: "Search for a project by ID", type: "Positive"},
+            {service: "Project", operation: "Create", endpoint: "/project/v1/_create", name: "test_create_project_with_invalid_tenant_id", description: "Create project with invalid tenantId should fail", type: "Negative"},
+            {service: "Project", operation: "Search", endpoint: "/project/v1/_search", name: "test_search_project_with_invalid_tenant_id", description: "Search project with invalid tenantId should fail", type: "Negative"},
+            {service: "Project", operation: "Update", endpoint: "/project/v1/_update", name: "test_update_project", description: "Update project description", type: "Positive"},
+            {service: "Project Resource", operation: "Create", endpoint: "/project/resource/v1/_create", name: "test_create_project_resource", description: "Create a project resource mapping", type: "Positive"},
+            {service: "Project Resource", operation: "Search", endpoint: "/project/resource/v1/_search", name: "test_search_project_resource", description: "Search for project resource by project ID", type: "Positive"},
+            {service: "Project Resource", operation: "Create", endpoint: "/project/resource/v1/_create", name: "test_create_project_resource_with_invalid_tenant_id", description: "Create project resource with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Resource", operation: "Search", endpoint: "/project/resource/v1/_search", name: "test_search_project_resource_with_invalid_tenant_id", description: "Search project resource with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Resource", operation: "Update", endpoint: "/project/resource/v1/_update", name: "test_update_project_resource", description: "Update project resource endDate", type: "Positive"},
+            {service: "Project Resource", operation: "Delete", endpoint: "/project/resource/v1/_delete", name: "test_delete_project_resource", description: "Delete project resource (soft delete)", type: "Positive"},
+            {service: "Project Staff", operation: "Create", endpoint: "/project/staff/v1/_create", name: "test_create_project_staff", description: "Create a project staff mapping", type: "Positive"},
+            {service: "Project Staff", operation: "Search", endpoint: "/project/staff/v1/_search", name: "test_search_project_staff", description: "Search for project staff by project ID", type: "Positive"},
+            {service: "Project Staff", operation: "Create", endpoint: "/project/staff/v1/_create", name: "test_create_project_staff_with_invalid_tenant_id", description: "Create project staff with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Staff", operation: "Search", endpoint: "/project/staff/v1/_search", name: "test_search_project_staff_with_invalid_tenant_id", description: "Search project staff with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Staff", operation: "Update", endpoint: "/project/staff/v1/_update", name: "test_update_project_staff", description: "Update project staff endDate", type: "Positive"},
+            {service: "Project Staff", operation: "Delete", endpoint: "/project/staff/v1/_delete", name: "test_delete_project_staff", description: "Delete project staff (soft delete)", type: "Positive"},
+            {service: "Project Facility", operation: "Create", endpoint: "/project/facility/v1/_create", name: "test_create_project_facility", description: "Create a project facility mapping", type: "Positive"},
+            {service: "Project Facility", operation: "Search", endpoint: "/project/facility/v1/_search", name: "test_search_project_facility", description: "Search for project facility by project ID", type: "Positive"},
+            {service: "Project Facility", operation: "Create", endpoint: "/project/facility/v1/_create", name: "test_create_project_facility_with_invalid_tenant_id", description: "Create project facility with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Facility", operation: "Search", endpoint: "/project/facility/v1/_search", name: "test_search_project_facility_with_invalid_tenant_id", description: "Search project facility with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Facility", operation: "Update", endpoint: "/project/facility/v1/_update", name: "test_update_project_facility", description: "Update project facility additionalFields", type: "Positive"},
+            {service: "Project Facility", operation: "Delete", endpoint: "/project/facility/v1/_delete", name: "test_delete_project_facility", description: "Delete project facility (soft delete)", type: "Positive"},
+            {service: "Project Beneficiary", operation: "Create", endpoint: "/project/beneficiary/v1/_create", name: "test_create_project_beneficiary", description: "Create a project beneficiary", type: "Positive"},
+            {service: "Project Beneficiary", operation: "Search", endpoint: "/project/beneficiary/v1/_search", name: "test_search_project_beneficiary", description: "Search for project beneficiary by ID", type: "Positive"},
+            {service: "Project Beneficiary", operation: "Create", endpoint: "/project/beneficiary/v1/_create", name: "test_create_project_beneficiary_with_invalid_tenant_id", description: "Create project beneficiary with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Beneficiary", operation: "Search", endpoint: "/project/beneficiary/v1/_search", name: "test_search_project_beneficiary_with_invalid_tenant_id", description: "Search project beneficiary with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Beneficiary", operation: "Update", endpoint: "/project/beneficiary/v1/_update", name: "test_update_project_beneficiary", description: "Update project beneficiary tag", type: "Positive"},
+            {service: "Project Beneficiary", operation: "Delete", endpoint: "/project/beneficiary/v1/_delete", name: "test_delete_project_beneficiary", description: "Delete project beneficiary (soft delete)", type: "Positive"},
+            {service: "Project Task", operation: "Create", endpoint: "/project/task/v1/_create", name: "test_create_project_task", description: "Create a project task", type: "Positive"},
+            {service: "Project Task", operation: "Search", endpoint: "/project/task/v1/_search", name: "test_search_project_task", description: "Search for project task by ID", type: "Positive"},
+            {service: "Project Task", operation: "Create", endpoint: "/project/task/v1/_create", name: "test_create_project_task_with_invalid_tenant_id", description: "Create project task with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Task", operation: "Search", endpoint: "/project/task/v1/_search", name: "test_search_project_task_with_invalid_tenant_id", description: "Search project task with invalid tenantId should fail", type: "Negative"},
+            {service: "Project Task", operation: "Update", endpoint: "/project/task/v1/_update", name: "test_update_project_task", description: "Update project task status", type: "Positive"},
+            {service: "Project Task", operation: "Delete", endpoint: "/project/task/v1/_delete", name: "test_delete_project_task", description: "Delete project task (soft delete)", type: "Positive"},
+            {service: "Referral - Side Effect", operation: "Create", endpoint: "/referralmanagement/side-effect/v1/_create", name: "test_create_side_effect", description: "Create a new side effect", type: "Positive"},
+            {service: "Referral - Side Effect", operation: "Search", endpoint: "/referralmanagement/side-effect/v1/_search", name: "test_search_side_effect", description: "Search for a side effect by ID", type: "Positive"},
+            {service: "Referral - Side Effect", operation: "Create", endpoint: "/referralmanagement/side-effect/v1/_create", name: "test_create_side_effect_with_invalid_tenant_id", description: "Create side effect with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - Side Effect", operation: "Search", endpoint: "/referralmanagement/side-effect/v1/_search", name: "test_search_side_effect_with_invalid_tenant_id", description: "Search side effect with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - Side Effect", operation: "Update", endpoint: "/referralmanagement/side-effect/v1/_update", name: "test_update_side_effect", description: "Update side effect symptoms", type: "Positive"},
+            {service: "Referral - Side Effect", operation: "Delete", endpoint: "/referralmanagement/side-effect/v1/_delete", name: "test_delete_side_effect", description: "Delete side effect (soft delete)", type: "Positive"},
+            {service: "Referral - Referral", operation: "Create", endpoint: "/referralmanagement/v1/_create", name: "test_create_referral", description: "Create a new referral", type: "Positive"},
+            {service: "Referral - Referral", operation: "Search", endpoint: "/referralmanagement/v1/_search", name: "test_search_referral", description: "Search for a referral by ID", type: "Positive"},
+            {service: "Referral - Referral", operation: "Create", endpoint: "/referralmanagement/v1/_create", name: "test_create_referral_with_invalid_tenant_id", description: "Create referral with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - Referral", operation: "Search", endpoint: "/referralmanagement/v1/_search", name: "test_search_referral_with_invalid_tenant_id", description: "Search referral with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - Referral", operation: "Update", endpoint: "/referralmanagement/v1/_update", name: "test_update_referral", description: "Update referral reasons", type: "Positive"},
+            {service: "Referral - Referral", operation: "Delete", endpoint: "/referralmanagement/v1/_delete", name: "test_delete_referral", description: "Delete referral (soft delete)", type: "Positive"},
+            {service: "Referral - HF Referral", operation: "Create", endpoint: "/referralmanagement/hf-referral/v1/_create", name: "test_create_hf_referral", description: "Create a new HF referral", type: "Positive"},
+            {service: "Referral - HF Referral", operation: "Search", endpoint: "/referralmanagement/hf-referral/v1/_search", name: "test_search_hf_referral", description: "Search for an HF referral by ID", type: "Positive"},
+            {service: "Referral - HF Referral", operation: "Create", endpoint: "/referralmanagement/hf-referral/v1/_create", name: "test_create_hf_referral_with_invalid_tenant_id", description: "Create HF referral with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - HF Referral", operation: "Search", endpoint: "/referralmanagement/hf-referral/v1/_search", name: "test_search_hf_referral_with_invalid_tenant_id", description: "Search HF referral with invalid tenantId should fail", type: "Negative"},
+            {service: "Referral - HF Referral", operation: "Update", endpoint: "/referralmanagement/hf-referral/v1/_update", name: "test_update_hf_referral", description: "Update HF referral symptom", type: "Positive"},
+            {service: "Referral - HF Referral", operation: "Delete", endpoint: "/referralmanagement/hf-referral/v1/_delete", name: "test_delete_hf_referral", description: "Delete HF referral (soft delete)", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_received_between_facilities", description: "Create stock RECEIVED between two facilities", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_dispatched_between_facilities", description: "Create stock DISPATCHED between two facilities", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_received_from_staff_to_warehouse", description: "Create stock RECEIVED from STAFF to WAREHOUSE", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_dispatched_from_staff_to_warehouse", description: "Create stock DISPATCHED from STAFF to WAREHOUSE", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_received_from_warehouse_to_staff", description: "Create stock RECEIVED from WAREHOUSE to STAFF", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_dispatched_from_warehouse_to_staff", description: "Create stock DISPATCHED from WAREHOUSE to STAFF", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_received_between_staff", description: "Create stock RECEIVED between two STAFF members", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_dispatched_between_staff", description: "Create stock DISPATCHED between two STAFF members", type: "Positive"},
+            {service: "Stock", operation: "Search", endpoint: "/stock/v1/_search", name: "test_search_stock", description: "Search for stock by ID", type: "Positive"},
+            {service: "Stock", operation: "Create", endpoint: "/stock/v1/_create", name: "test_create_stock_with_invalid_tenant_id", description: "Create stock with invalid tenantId should fail", type: "Negative"},
+            {service: "Stock", operation: "Search", endpoint: "/stock/v1/_search", name: "test_search_stock_with_invalid_tenant_id", description: "Search stock with invalid tenantId should fail", type: "Negative"},
+            {service: "Stock", operation: "Update", endpoint: "/stock/v1/_update", name: "test_update_stock", description: "Update stock quantity", type: "Positive"},
+            {service: "Stock", operation: "Delete", endpoint: "/stock/v1/_delete", name: "test_delete_stock", description: "Delete stock (soft delete)", type: "Positive"},
+            {service: "Stock Reconciliation", operation: "Create", endpoint: "/stock/reconciliation/v1/_create", name: "test_create_stock_reconciliation", description: "Create stock reconciliation", type: "Positive"},
+            {service: "Stock Reconciliation", operation: "Search", endpoint: "/stock/reconciliation/v1/_search", name: "test_search_stock_reconciliation", description: "Search for stock reconciliation by ID", type: "Positive"},
+            {service: "Stock Reconciliation", operation: "Create", endpoint: "/stock/reconciliation/v1/_create", name: "test_create_stock_reconciliation_with_invalid_tenant_id", description: "Create stock reconciliation with invalid tenantId should fail", type: "Negative"},
+            {service: "Stock Reconciliation", operation: "Search", endpoint: "/stock/reconciliation/v1/_search", name: "test_search_stock_reconciliation_with_invalid_tenant_id", description: "Search stock reconciliation with invalid tenantId should fail", type: "Negative"},
+            {service: "Stock Reconciliation", operation: "Update", endpoint: "/stock/reconciliation/v1/_update", name: "test_update_stock_reconciliation", description: "Update stock reconciliation physicalCount", type: "Positive"},
+            {service: "Stock Reconciliation", operation: "Delete", endpoint: "/stock/reconciliation/v1/_delete", name: "test_delete_stock_reconciliation", description: "Delete stock reconciliation (soft delete)", type: "Positive"}
+        ];
+
+        // Populate service filter
+        const services = [...new Set(testCases.map(tc => tc.service))].sort();
+        const serviceFilter = document.getElementById('serviceFilter');
+        services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service;
+            option.textContent = service;
+            serviceFilter.appendChild(option);
+        });
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-results">No test cases found matching the filters</td></tr>';
+                document.getElementById('countDisplay').textContent = 'No test cases found';
+                return;
+            }
+
+            data.forEach((tc, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${tc.service}</td>
+                    <td><span class="badge badge-${tc.operation.toLowerCase()}">${tc.operation}</span></td>
+                    <td><span class="endpoint">${tc.endpoint}</span></td>
+                    <td><code>${tc.name}</code></td>
+                    <td>${tc.description}</td>
+                    <td><span class="badge badge-${tc.type.toLowerCase()}">${tc.type}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('countDisplay').textContent = `Showing ${data.length} of ${testCases.length} test cases`;
+        }
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const serviceValue = document.getElementById('serviceFilter').value;
+            const typeValue = document.getElementById('typeFilter').value;
+            const operationValue = document.getElementById('operationFilter').value;
+
+            const filtered = testCases.filter(tc => {
+                const matchesSearch = tc.name.toLowerCase().includes(searchTerm) ||
+                                     tc.description.toLowerCase().includes(searchTerm) ||
+                                     tc.service.toLowerCase().includes(searchTerm) ||
+                                     tc.endpoint.toLowerCase().includes(searchTerm);
+                const matchesService = !serviceValue || tc.service === serviceValue;
+                const matchesType = !typeValue || tc.type === typeValue;
+                const matchesOperation = !operationValue || tc.operation === operationValue;
+
+                return matchesSearch && matchesService && matchesType && matchesOperation;
+            });
+
+            renderTable(filtered);
+        }
+
+        let sortDirection = {};
+        function sortTable(columnIndex) {
+            const keys = ['index', 'service', 'operation', 'endpoint', 'name', 'description', 'type'];
+            const key = keys[columnIndex];
+
+            sortDirection[key] = !sortDirection[key];
+
+            const sorted = [...testCases].sort((a, b) => {
+                let valA = a[key] || '';
+                let valB = b[key] || '';
+
+                if (sortDirection[key]) {
+                    return valA.localeCompare(valB);
+                } else {
+                    return valB.localeCompare(valA);
+                }
+            });
+
+            renderTable(sorted);
+        }
+
+        // Initial render
+        renderTable(testCases);
+    </script>
+</body>
+</html>

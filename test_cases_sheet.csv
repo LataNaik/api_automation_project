@@ -1,0 +1,138 @@
+Service,Test Case Name,Test Type,Operation,Description
+Boundary,test_search_boundary,Positive,Search,Search for boundary by code
+Boundary,test_search_boundary_with_invalid_tenant_id,Negative,Search,Search boundary with invalid tenantId should fail
+Facility,test_create_facility,Positive,Create,Create a new facility
+Facility,test_search_facility,Positive,Search,Search for a facility by ID
+Facility,test_create_facility_with_invalid_tenant_id,Negative,Create,Create facility with invalid tenantId should fail
+Facility,test_search_facility_with_invalid_tenant_id,Negative,Search,Search facility with invalid tenantId should fail
+Facility,test_update_facility,Positive,Update,Update facility name (creates facility internally)
+Facility,test_delete_facility,Positive,Delete,Delete facility (creates facility internally then soft deletes)
+Household,test_create_household,Positive,Create,Create a new household
+Household,test_create_householdMember,Positive,Create,Create a new household member
+Household,test_search_household,Positive,Search,Search for a household by ID
+Household,test_search_householdMember_by_id,Positive,Search,Search for a household member by ID
+Household,test_create_householdMember_without_householdId,Negative,Create,Create household member without householdId should fail
+Household,test_create_householdMember_without_individualId,Negative,Create,Create household member without individualId should fail
+Household,test_create_household_with_invalid_tenant_id,Negative,Create,Create household with invalid tenantId should fail
+Household,test_create_householdMember_with_invalid_tenant_id,Negative,Create,Create household member with invalid tenantId should fail
+Household,test_search_household_with_invalid_tenant_id,Negative,Search,Search household with invalid tenantId should fail
+Household,test_search_householdMember_with_invalid_tenant_id,Negative,Search,Search household member with invalid tenantId should fail
+Household,test_update_household,Positive,Update,Update household memberCount (creates household internally)
+Household,test_update_household_member,Positive,Update,Update household member isHeadOfHousehold with 2 updates
+Household,test_delete_household,Positive,Delete,Delete household (creates household internally then soft deletes)
+Household,test_delete_household_member,Positive,Delete,Delete household member (creates all dependencies internally)
+Individual,test_create_individual,Positive,Create,Create a new individual
+Individual,test_search_individual,Positive,Search,Search for an individual by ID
+Individual,test_create_individual_with_invalid_tenant_id,Negative,Create,Create individual with invalid tenantId should fail
+Individual,test_search_individual_with_invalid_tenant_id,Negative,Search,Search individual with invalid tenantId should fail
+Individual,test_update_individual,Positive,Update,Update individual givenName (creates individual internally)
+Individual,test_delete_individual,Positive,Delete,Delete individual (creates individual internally then soft deletes)
+HRMS,test_create_employee,Positive,Create,Create a new employee
+HRMS,test_search_employee,Positive,Search,Search for an employee by code
+HRMS,test_create_hrms_with_invalid_tenant_id,Negative,Create,Create employee with invalid tenantId should fail
+HRMS,test_search_employee_with_invalid_tenant_id,Negative,Search,Search employee with invalid tenantId should fail
+HRMS,test_update_employee,Positive,Update,Update employee designation (creates employee internally)
+Localization,test_upsert_localization,Positive,Upsert,Upsert a localization message
+Localization,test_search_localization,Positive,Search,Search for a localization message by code
+Localization,test_upsert_localization_with_invalid_tenant_id,Negative,Upsert,Upsert localization with invalid tenantId should fail
+Localization,test_search_localization_with_invalid_tenant_id,Positive,Search,Search localization with any tenantId should succeed
+MDMS,test_project_types,Positive,Search,Search MDMS for project types
+MDMS,test_roles,Positive,Search,Search MDMS for roles
+MDMS,test_app_config,Positive,Search,Search MDMS for app config
+MDMS,test_backend_interface,Positive,Search,Search MDMS for backend interface
+MDMS,test_state_info,Positive,Search,Search MDMS for state info
+MDMS,test_create_schema_definition,Positive,Create,Create a new MDMS schema definition
+MDMS,test_search_schema_definition,Positive,Search,Search for MDMS schema definition
+MDMS,test_add_mdms_data,Positive,Create,Add data to MDMS
+MDMS,test_search_added_mdms_data,Positive,Search,Search for added MDMS data
+MDMS,test_create_schema_definition_with_invalid_tenant_id,Negative,Create,Create schema definition with invalid tenantId should fail
+MDMS,test_search_schema_definition_with_invalid_tenant_id,Negative,Search,Search schema definition with invalid tenantId should fail
+MDMS,test_search_mdms_data_with_invalid_tenant_id,Negative,Search,Search MDMS data with invalid tenantId should fail
+PGR,test_create_complaint,Positive,Create,Create a new PGR complaint
+PGR,test_resolve_complaint,Positive,Update,Resolve an existing complaint
+PGR,test_search_complaint,Positive,Search,Search for a complaint by ID
+PGR,test_assign_complaint,Positive,Update,Assign complaint to an employee
+PGR,test_complete_pgr_workflow,Positive,Workflow,Complete PGR workflow: create -> assign -> resolve
+Product,test_create_product,Positive,Create,Create a new product
+Product,test_create_product_variant,Positive,Create,Create a new product variant
+Product,test_search_product,Positive,Search,Search for a product by ID
+Product,test_search_product_variant,Positive,Search,Search for a product variant by ID
+Product,test_create_product_with_invalid_tenant_id,Negative,Create,Create product with invalid tenantId should fail
+Product,test_create_product_variant_with_invalid_tenant_id,Negative,Create,Create product variant with invalid tenantId should fail
+Product,test_create_product_variant_without_productId,Negative,Create,Create product variant without productId should fail
+Product,test_search_product_with_invalid_tenant_id,Negative,Search,Search product with invalid tenantId should fail
+Product,test_search_product_variant_with_invalid_tenant_id,Negative,Search,Search product variant with invalid tenantId should fail
+Product,test_update_product,Positive,Update,Update product name (creates product internally)
+Product,test_update_product_variant,Positive,Update,Update product variant sku (creates variant internally)
+Project,test_create_project,Positive,Create,Create a new project
+Project,test_search_project,Positive,Search,Search for a project by ID
+Project,test_create_project_with_invalid_tenant_id,Negative,Create,Create project with invalid tenantId should fail
+Project,test_search_project_with_invalid_tenant_id,Negative,Search,Search project with invalid tenantId should fail
+Project,test_update_project,Positive,Update,Update project description (creates project internally)
+Project Resource,test_create_project_resource,Positive,Create,Create a project resource mapping
+Project Resource,test_search_project_resource,Positive,Search,Search for project resource by project ID
+Project Resource,test_create_project_resource_with_invalid_tenant_id,Negative,Create,Create project resource with invalid tenantId should fail
+Project Resource,test_search_project_resource_with_invalid_tenant_id,Negative,Search,Search project resource with invalid tenantId should fail
+Project Resource,test_update_project_resource,Positive,Update,Update project resource endDate (creates resource internally)
+Project Resource,test_delete_project_resource,Positive,Delete,Delete project resource (creates all dependencies internally)
+Project Staff,test_create_project_staff,Positive,Create,Create a project staff mapping
+Project Staff,test_search_project_staff,Positive,Search,Search for project staff by project ID
+Project Staff,test_create_project_staff_with_invalid_tenant_id,Negative,Create,Create project staff with invalid tenantId should fail
+Project Staff,test_search_project_staff_with_invalid_tenant_id,Negative,Search,Search project staff with invalid tenantId should fail
+Project Staff,test_update_project_staff,Positive,Update,Update project staff endDate (creates staff internally)
+Project Staff,test_delete_project_staff,Positive,Delete,Delete project staff (creates all dependencies internally)
+Project Facility,test_create_project_facility,Positive,Create,Create a project facility mapping
+Project Facility,test_search_project_facility,Positive,Search,Search for project facility by project ID
+Project Facility,test_create_project_facility_with_invalid_tenant_id,Negative,Create,Create project facility with invalid tenantId should fail
+Project Facility,test_search_project_facility_with_invalid_tenant_id,Negative,Search,Search project facility with invalid tenantId should fail
+Project Facility,test_update_project_facility,Positive,Update,Update project facility additionalFields (creates facility internally)
+Project Facility,test_delete_project_facility,Positive,Delete,Delete project facility (creates all dependencies internally)
+Project Beneficiary,test_create_project_beneficiary,Positive,Create,Create a project beneficiary
+Project Beneficiary,test_search_project_beneficiary,Positive,Search,Search for project beneficiary by ID
+Project Beneficiary,test_create_project_beneficiary_with_invalid_tenant_id,Negative,Create,Create project beneficiary with invalid tenantId should fail
+Project Beneficiary,test_search_project_beneficiary_with_invalid_tenant_id,Negative,Search,Search project beneficiary with invalid tenantId should fail
+Project Beneficiary,test_update_project_beneficiary,Positive,Update,Update project beneficiary tag (creates beneficiary internally)
+Project Beneficiary,test_delete_project_beneficiary,Positive,Delete,Delete project beneficiary (creates all dependencies internally)
+Project Task,test_create_project_task,Positive,Create,Create a project task
+Project Task,test_search_project_task,Positive,Search,Search for project task by ID
+Project Task,test_create_project_task_with_invalid_tenant_id,Negative,Create,Create project task with invalid tenantId should fail
+Project Task,test_search_project_task_with_invalid_tenant_id,Negative,Search,Search project task with invalid tenantId should fail
+Project Task,test_update_project_task,Positive,Update,Update project task status (creates task internally)
+Project Task,test_delete_project_task,Positive,Delete,Delete project task (creates all dependencies internally)
+Referral Management - Side Effect,test_create_side_effect,Positive,Create,Create a new side effect
+Referral Management - Side Effect,test_search_side_effect,Positive,Search,Search for a side effect by ID
+Referral Management - Side Effect,test_create_side_effect_with_invalid_tenant_id,Negative,Create,Create side effect with invalid tenantId should fail
+Referral Management - Side Effect,test_search_side_effect_with_invalid_tenant_id,Negative,Search,Search side effect with invalid tenantId should fail
+Referral Management - Side Effect,test_update_side_effect,Positive,Update,Update side effect symptoms (creates side effect internally)
+Referral Management - Side Effect,test_delete_side_effect,Positive,Delete,Delete side effect (creates all dependencies internally)
+Referral Management - Referral,test_create_referral,Positive,Create,Create a new referral
+Referral Management - Referral,test_search_referral,Positive,Search,Search for a referral by ID
+Referral Management - Referral,test_create_referral_with_invalid_tenant_id,Negative,Create,Create referral with invalid tenantId should fail
+Referral Management - Referral,test_search_referral_with_invalid_tenant_id,Negative,Search,Search referral with invalid tenantId should fail
+Referral Management - Referral,test_update_referral,Positive,Update,Update referral reasons (creates referral internally)
+Referral Management - Referral,test_delete_referral,Positive,Delete,Delete referral (creates all dependencies internally)
+Referral Management - HF Referral,test_create_hf_referral,Positive,Create,Create a new HF referral
+Referral Management - HF Referral,test_search_hf_referral,Positive,Search,Search for an HF referral by ID
+Referral Management - HF Referral,test_create_hf_referral_with_invalid_tenant_id,Negative,Create,Create HF referral with invalid tenantId should fail
+Referral Management - HF Referral,test_search_hf_referral_with_invalid_tenant_id,Negative,Search,Search HF referral with invalid tenantId should fail
+Referral Management - HF Referral,test_update_hf_referral,Positive,Update,Update HF referral symptom (creates HF referral internally)
+Referral Management - HF Referral,test_delete_hf_referral,Positive,Delete,Delete HF referral (creates all dependencies internally)
+Stock,test_create_stock_received_between_facilities,Positive,Create,Create stock RECEIVED transaction between two facilities
+Stock,test_create_stock_dispatched_between_facilities,Positive,Create,Create stock DISPATCHED transaction between two facilities
+Stock,test_create_stock_received_from_staff_to_warehouse,Positive,Create,Create stock RECEIVED from STAFF to WAREHOUSE
+Stock,test_create_stock_dispatched_from_staff_to_warehouse,Positive,Create,Create stock DISPATCHED from STAFF to WAREHOUSE
+Stock,test_create_stock_received_from_warehouse_to_staff,Positive,Create,Create stock RECEIVED from WAREHOUSE to STAFF
+Stock,test_create_stock_dispatched_from_warehouse_to_staff,Positive,Create,Create stock DISPATCHED from WAREHOUSE to STAFF
+Stock,test_create_stock_received_between_staff,Positive,Create,Create stock RECEIVED between two STAFF members
+Stock,test_create_stock_dispatched_between_staff,Positive,Create,Create stock DISPATCHED between two STAFF members
+Stock,test_search_stock,Positive,Search,Search for stock by ID
+Stock,test_create_stock_with_invalid_tenant_id,Negative,Create,Create stock with invalid tenantId should fail
+Stock,test_search_stock_with_invalid_tenant_id,Negative,Search,Search stock with invalid tenantId should fail
+Stock,test_update_stock,Positive,Update,Update stock quantity (creates stock internally)
+Stock,test_delete_stock,Positive,Delete,Delete stock (creates stock internally then soft deletes)
+Stock Reconciliation,test_create_stock_reconciliation,Positive,Create,Create stock reconciliation after stock transaction
+Stock Reconciliation,test_search_stock_reconciliation,Positive,Search,Search for stock reconciliation by ID
+Stock Reconciliation,test_create_stock_reconciliation_with_invalid_tenant_id,Negative,Create,Create stock reconciliation with invalid tenantId should fail
+Stock Reconciliation,test_search_stock_reconciliation_with_invalid_tenant_id,Negative,Search,Search stock reconciliation with invalid tenantId should fail
+Stock Reconciliation,test_update_stock_reconciliation,Positive,Update,Update stock reconciliation physicalCount (creates recon internally)
+Stock Reconciliation,test_delete_stock_reconciliation,Positive,Delete,Delete stock reconciliation (creates all dependencies internally)

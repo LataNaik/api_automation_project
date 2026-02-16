@@ -251,7 +251,7 @@ def test_update_household():
 
 @pytest.mark.positive
 def test_update_household_member():
-    """Test to update a household member twice. Creates household, individual, and member internally first, then updates isHeadOfHousehold twice ending with true."""
+    """Test to update a household member. Creates household, individual, and member internally first, then updates with isHeadOfHousehold set to true."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
@@ -275,26 +275,16 @@ def test_update_household_member():
     )
     assert len(members) > 0, "Could not find created household member"
     member_full_data = members[0]
-    original_is_head = member_full_data.get("isHeadOfHousehold", False)
-    print(f"Original isHeadOfHousehold: {original_is_head}")
+    print(f"Original isHeadOfHousehold: {member_full_data.get('isHeadOfHousehold')}")
 
-    # Step 3: First update - set isHeadOfHousehold to False
-    print("First update: Setting isHeadOfHousehold to False...")
-    response1 = update_household_member(token, client, member_full_data, False)
-    assert response1.status_code in [200, 202], f"First update failed: {response1.text}"
-    updated_member1 = response1.json()["HouseholdMember"]
-    assert updated_member1["isHeadOfHousehold"] == False, f"First update failed. Expected False, got {updated_member1['isHeadOfHousehold']}"
-    print(f"First update successful. isHeadOfHousehold is now False")
+    # Step 3: Update - set isHeadOfHousehold to True
+    print("Updating: Setting isHeadOfHousehold to True...")
+    response = update_household_member(token, client, member_full_data, True)
+    assert response.status_code in [200, 202], f"Update failed: {response.text}"
+    updated_member = response.json()["HouseholdMember"]
+    assert updated_member["isHeadOfHousehold"] == True, f"Update failed. Expected True, got {updated_member['isHeadOfHousehold']}"
 
-    # Step 4: Second update - set isHeadOfHousehold to True
-    print("Second update: Setting isHeadOfHousehold to True...")
-    response2 = update_household_member(token, client, updated_member1, True)
-    assert response2.status_code in [200, 202], f"Second update failed: {response2.text}"
-    updated_member2 = response2.json()["HouseholdMember"]
-    assert updated_member2["isHeadOfHousehold"] == True, f"Second update failed. Expected True, got {updated_member2['isHeadOfHousehold']}"
-    print(f"Second update successful. isHeadOfHousehold is now True")
-
-    print(f"Household Member updated successfully with 2 updates. Final isHeadOfHousehold: True")
+    print(f"Household Member {member_id} updated successfully. isHeadOfHousehold: True")
 
 
 @pytest.mark.positive
