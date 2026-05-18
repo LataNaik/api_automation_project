@@ -34,7 +34,7 @@
       "type": "CORRESPONDENCE",
       "addressLine1": "Naveen",
       "locality": {
-        "code": "MICROPLAN_MO_01_01_02_01_ANG_OMBE"
+        "code": "{{boundaryCode}}"
       }
     },
     "isDeleted": false

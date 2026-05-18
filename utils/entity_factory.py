@@ -7,7 +7,7 @@ It reduces code duplication by centralizing entity creation logic.
 import uuid
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
-from utils.config import boundaryCode, tenantId
+from utils.config import boundaryCode, tenantId, hierarchyType, boundaryCodeRoot
 
 
 class EntityFactory:
@@ -117,6 +117,7 @@ class EntityFactory:
         """
         payload = self._create_payload("facility", "create_facility.json")
         payload["Facility"]["clientReferenceId"] = str(uuid.uuid4())
+        payload["Facility"]["address"]["locality"]["code"] = boundaryCode
 
         if tenant_id is not None:
             payload["Facility"]["tenantId"] = tenant_id
@@ -127,6 +128,7 @@ class EntityFactory:
         """Create facility and return full data for update/delete."""
         payload = self._create_payload("facility", "create_facility.json")
         payload["Facility"]["clientReferenceId"] = str(uuid.uuid4())
+        payload["Facility"]["address"]["locality"]["code"] = boundaryCode
 
         response = self.client.post("/facility/v1/_create", payload)
 

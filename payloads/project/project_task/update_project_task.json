@@ -79,7 +79,7 @@
             "locality": {
                 "id": null,
                 "tenantId": "mz",
-                "code": "MICROPLAN_MO_15_01_01_02_02_FULATAN_HP",
+                "code": "{{boundaryCode}}",
                 "geometry": null,
                 "auditDetails": null,
                 "additionalDetails": null

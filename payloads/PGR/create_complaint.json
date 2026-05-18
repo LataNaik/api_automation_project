@@ -30,11 +30,11 @@
         "rowVersion": 1,
         "address": {
             "locality": {
-                "code": "MICROPLAN_MO.MICROPLAN_MO_15_KANO_STATE.MICROPLAN_MO_15_01_KANO.MICROPLAN_MO_15_01_01_AJINGI.MICROPLAN_MO_15_01_01_02_AJINGI_L.MICROPLAN_MO_15_01_01_02_02_FULATAN_HP"
+                "code": "{{boundaryCode}}"
             },
             "geoLocation": {}
         },
-        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"boundaryCode\":\"MICROPLAN_MO.MICROPLAN_MO_15_KANO_STATE.MICROPLAN_MO_15_01_KANO.MICROPLAN_MO_15_01_01_AJINGI.MICROPLAN_MO_15_01_01_02_AJINGI_L.MICROPLAN_MO_15_01_01_02_02_FULATAN_HP\"}",
+        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"boundaryCode\":\"{{boundaryCode}}\"}",
         "auditDetails": {
             "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
             "createdTime": 1767851070693,

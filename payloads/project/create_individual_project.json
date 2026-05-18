@@ -32,7 +32,7 @@
                 "boundaryType": "Country",
                 "boundary": "mz",
                 "locality": {
-                    "code": "MICROPLAN_MO"
+                    "code": "{{boundaryCode}}"
                 }
             },
             "startDate": "1767205799000",

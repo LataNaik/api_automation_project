@@ -6,12 +6,5 @@
     "CEMENT",
     "METAL"
   ],
-  "serviceCode": [
-    "Other",
-    "PerformanceIssue",
-    "SecurityIssues",
-    "DataIssues",
-    "UserAccountIssues",
-    "TechnicalIssues"
-  ]
+  "serviceCode": []
 }

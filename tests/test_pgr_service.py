@@ -10,7 +10,7 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.config import pgr, tenantId, search_limit, search_offset, mdms, hrms
+from utils.config import pgr, tenantId, search_limit, search_offset, mdms, hrms, boundaryCode, hierarchyType, boundaryCodeRoot, pgrServiceCodes
 from utils.search_helpers import extract_id_from_file
 
 # Load environment variables
@@ -42,20 +42,20 @@ def _fetch_and_update_service_codes():
         if response.status_code == 200:
             mdms_data = response.json().get("mdms", [])
             if mdms_data:
-                # Extract service codes from MDMS response
                 service_codes = [item["data"]["serviceCode"] for item in mdms_data if "data" in item and "serviceCode" in item["data"]]
                 if service_codes:
-                    # Update inputs_data and inputs.json with fetched service codes
                     inputs_data["serviceCode"] = service_codes
                     with open("data/inputs.json", "w") as f:
                         json.dump(inputs_data, f, indent=2)
                     print(f"Fetched {len(service_codes)} service codes from MDMS: {service_codes}")
                     return
 
-        print("Using existing service codes from inputs.json")
+        print(f"Warning: MDMS returned status {response.status_code}. Clearing stale service codes.")
+        inputs_data["serviceCode"] = []
 
     except Exception as e:
-        print(f"Warning: Could not fetch service codes from MDMS: {e}. Using existing codes from inputs.json")
+        print(f"Warning: Could not fetch service codes from MDMS: {e}. Clearing stale service codes.")
+        inputs_data["serviceCode"] = []
 
 
 # Fetch service codes from MDMS at module load time
@@ -355,12 +355,20 @@ def create_complaint(token, client, tenant_id=None, service_code=None):
     payload = load_payload("PGR", "create_complaint.json")
     payload["RequestInfo"] = get_request_info(token)
 
-    # Use provided service code or pick random from pre-fetched codes
     if service_code is None:
-        service_codes = inputs_data.get("serviceCode", ["SecurityIssues"])
+        service_codes = inputs_data.get("serviceCode") or pgrServiceCodes
+        if not service_codes:
+            pytest.skip(
+                "No valid PGR service codes available. "
+                "MDMS is unavailable — set PGR_SERVICE_CODES in .env as a comma-separated fallback."
+            )
         service_code = random.choice(service_codes)
 
     payload["service"]["serviceCode"] = service_code
+    payload["service"]["address"]["locality"]["code"] = boundaryCode
+    payload["service"]["additionalDetail"] = (
+        f'{{"supervisorName":null,"supervisorContactNumber":null,"boundaryCode":"{boundaryCode}"}}'
+    )
     print(f"Creating complaint with service code: {service_code}")
 
     # Override tenantId if provided (for negative testing)
@@ -726,6 +734,10 @@ def create_pgr_employee(token, client):
 
     # Ensure eGov department is set
     payload["Employees"][0]["assignments"][0]["department"] = "eGov"
+
+    for jurisdiction in payload["Employees"][0].get("jurisdictions", []):
+        jurisdiction["hierarchy"] = hierarchyType
+        jurisdiction["boundary"] = boundaryCodeRoot
 
     url = f"/{hrms}/employees/_create?tenantId={tenantId}"
     response = client.post(url, payload)

@@ -37,7 +37,7 @@
             "locality": {
                 "id": null,
                 "tenantId": "mz",
-                "code": "MICROPLAN_MO_13_05_03_02_12_BENTOR_CAMP",
+                "code": "{{boundaryCode}}",
                 "geometry": null,
                 "auditDetails": null,
                 "additionalDetails": null

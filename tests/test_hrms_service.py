@@ -6,7 +6,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import extract_id_from_file
-from utils.config import tenantId, hrms, invalidTenantId
+from utils.config import tenantId, hrms, invalidTenantId, hierarchyType, boundaryCodeRoot
 
 
 # --- Test functions ---
@@ -176,6 +176,11 @@ def create_employee(token, client):
     payload["Employees"][0]["code"] = unique_code
     payload["Employees"][0]["user"]["userName"] = unique_code
     payload["Employees"][0]["user"]["mobileNumber"] = mobile_number
+
+    # Inject hierarchy and boundary from config
+    for jurisdiction in payload["Employees"][0].get("jurisdictions", []):
+        jurisdiction["hierarchy"] = hierarchyType
+        jurisdiction["boundary"] = boundaryCodeRoot
 
     url = f"/{hrms}/employees/_create?tenantId={tenantId}"
     response = client.post(url, payload)

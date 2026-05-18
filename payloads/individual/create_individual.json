@@ -31,7 +31,7 @@
                 "boundaryType": "Aldeia",
                 "street": "Necklace Road",
                 "locality": {
-                    "code": "MICROPLAN_MO_01_01_02_01_21_LIPIRANI",
+                    "code": "{{boundaryCode}}",
                     "name": "test_58630a388978",
                     "label": "test_7b7f928dcab8",
                     "latitude": 12.938808,

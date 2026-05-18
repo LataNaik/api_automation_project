@@ -21,7 +21,7 @@
             "buildingName": "Alpine Apartments",
             "street": "test_da0b8ebec5ef",
             "locality": {
-                "code": "MICROPLAN_MO_13_03_KONOBO",
+                "code": "{{boundaryCode}}",
                 "name": "mz"
             }
         },

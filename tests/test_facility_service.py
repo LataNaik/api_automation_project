@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import invalidTenantId
+from utils.config import invalidTenantId, boundaryCode
 
 
 # --- Test functions ---
@@ -153,10 +153,9 @@ def create_facility(token, client, tenant_id=None):
     """
     payload = load_payload("facility", "create_facility.json")
     payload["RequestInfo"] = get_request_info(token)
-    # Inject dynamic values
     payload["Facility"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Facility"]["address"]["locality"]["code"] = boundaryCode
 
-    # Override tenantId if provided (for negative testing)
     if tenant_id is not None:
         payload["Facility"]["tenantId"] = tenant_id
 
@@ -173,6 +172,7 @@ def create_facility_full(token, client):
     payload = load_payload("facility", "create_facility.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["Facility"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Facility"]["address"]["locality"]["code"] = boundaryCode
 
     response = client.post("/facility/v1/_create", payload)
 

@@ -15,7 +15,7 @@ from tests.test_facility_service import create_facility
 # --- Test functions ---
 
 @pytest.mark.positive
-def test_create_project():
+def test_create_individual_project():
     token = get_auth_token("user")
     client = APIClient(token=token)
 
@@ -74,7 +74,7 @@ def test_create_project():
 
 
 @pytest.mark.positive
-def test_search_project():
+def test_search_individual_project():
     """Test to search for a project by ID. Creates project if ID not found in file."""
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -494,7 +494,7 @@ def test_create_project_beneficiary_with_invalid_tenant_id():
 
 
 @pytest.mark.negative
-def test_create_project_with_invalid_tenant_id():
+def test_create_individual_project_with_invalid_tenant_id():
     token = get_auth_token("user")
     client = APIClient(token=token)
 
@@ -567,7 +567,7 @@ def test_create_project_staff_with_invalid_tenant_id():
 
 
 @pytest.mark.negative
-def test_search_project_with_invalid_tenant_id():
+def test_search_individual_project_with_invalid_tenant_id():
     """Negative test: Searching project with invalid tenantId should fail"""
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -841,7 +841,7 @@ def test_update_project_task():
 
 
 @pytest.mark.positive
-def test_update_project():
+def test_update_individual_project():
     """Test to update a project. Creates project internally first, then updates the description."""
     token = get_auth_token("user")
     client = APIClient(token=token)
@@ -997,15 +997,19 @@ def test_update_project_facility():
 
 @pytest.mark.positive
 def test_delete_project_facility():
-    """Test to delete a project facility. Creates all dependencies internally first, then deletes it."""
+    """Test to delete a project facility. Uses existing project if available, creates mapping fresh, then deletes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create all dependencies internally
-    print("Creating project...")
-    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
-    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
-    print(f"Project created with ID: {project_id}")
+    # Step 1: Use existing project ID or create new one
+    project_id = extract_id_from_file("Project ID:")
+    if project_id:
+        print(f"Using existing Project ID: {project_id}")
+    else:
+        print("No existing project found, creating new project...")
+        project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+        assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+        print(f"Project created with ID: {project_id}")
 
     print("Creating facility...")
     facility_response = create_facility(token, client)
@@ -1032,20 +1036,25 @@ def test_delete_project_facility():
 
 @pytest.mark.positive
 def test_delete_project_resource():
-    """Test to delete a project resource. Creates all dependencies internally first, then deletes it."""
+    """Test to delete a project resource. Uses existing project if available, creates mapping fresh, then deletes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create all dependencies internally
+    # Step 1: Create product variant (always needed for resource)
     print("Creating product variant...")
     variant_response = create_product_variant(token, client)
     assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
     variant_id = variant_response.json()["ProductVariant"][0]["id"]
 
-    print("Creating project...")
-    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
-    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
-    print(f"Project created with ID: {project_id}")
+    # Use existing project ID or create new one
+    project_id = extract_id_from_file("Project ID:")
+    if project_id:
+        print(f"Using existing Project ID: {project_id}")
+    else:
+        print("No existing project found, creating new project...")
+        project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+        assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+        print(f"Project created with ID: {project_id}")
 
     print("Creating project resource...")
     resource_data, resource_status = create_project_resource_full(token, client, project_id, variant_id)
@@ -1066,15 +1075,19 @@ def test_delete_project_resource():
 
 @pytest.mark.positive
 def test_delete_project_staff():
-    """Test to delete a project staff. Creates all dependencies internally first, then deletes it."""
+    """Test to delete a project staff. Uses existing project if available, creates mapping fresh, then deletes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create all dependencies internally
-    print("Creating project...")
-    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
-    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
-    print(f"Project created with ID: {project_id}")
+    # Step 1: Use existing project ID or create new one
+    project_id = extract_id_from_file("Project ID:")
+    if project_id:
+        print(f"Using existing Project ID: {project_id}")
+    else:
+        print("No existing project found, creating new project...")
+        project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+        assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+        print(f"Project created with ID: {project_id}")
 
     print("Creating employee...")
     from tests.test_hrms_service import create_employee
@@ -1101,15 +1114,19 @@ def test_delete_project_staff():
 
 @pytest.mark.positive
 def test_delete_project_beneficiary():
-    """Test to delete a project beneficiary. Creates all dependencies internally first, then deletes it."""
+    """Test to delete a project beneficiary. Uses existing project if available, creates mapping fresh, then deletes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create all dependencies internally
-    print("Creating project...")
-    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
-    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
-    print(f"Project created with ID: {project_id}")
+    # Step 1: Use existing project ID or create new one
+    project_id = extract_id_from_file("Project ID:")
+    if project_id:
+        print(f"Using existing Project ID: {project_id}")
+    else:
+        print("No existing project found, creating new project...")
+        project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+        assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+        print(f"Project created with ID: {project_id}")
 
     print("Creating household...")
     household_id, household_client_ref_id, household_status = create_household(token, client)
@@ -1142,20 +1159,25 @@ def test_delete_project_beneficiary():
 
 @pytest.mark.positive
 def test_delete_project_task():
-    """Test to delete a project task. Creates all dependencies internally first, then deletes it."""
+    """Test to delete a project task. Uses existing project if available, creates mapping fresh, then deletes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create all dependencies internally
+    # Step 1: Create product variant (always needed for task)
     print("Creating product variant...")
     variant_response = create_product_variant(token, client)
     assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
     variant_id = variant_response.json()["ProductVariant"][0]["id"]
 
-    print("Creating project...")
-    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
-    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
-    print(f"Project created with ID: {project_id}")
+    # Use existing project ID or create new one
+    project_id = extract_id_from_file("Project ID:")
+    if project_id:
+        print(f"Using existing Project ID: {project_id}")
+    else:
+        print("No existing project found, creating new project...")
+        project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+        assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+        print(f"Project created with ID: {project_id}")
 
     print("Creating project resource...")
     resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
@@ -1194,6 +1216,246 @@ def test_delete_project_task():
     print(f"Project Task {task_id} deleted successfully")
 
 
+# --- Household Project Tests ---
+
+@pytest.mark.positive
+def test_create_household_project():
+    """Test creating a household (Bednet) project with facility, variant, and resources."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Create facility
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed: {facility_response.text}"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    # Create product variant
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed: {variant_response.text}"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    # Create household project
+    project_id, status_code = create_household_project(token, client, boundaryType, boundaryCode, variant_id)
+    assert status_code in [200, 202], f"Household Project creation failed with status: {status_code}"
+
+    # Create project resource mapping
+    resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed with status: {resource_status}"
+
+    # Create project facility mapping
+    project_facility_id, facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert facility_status in [200, 202], f"Project Facility creation failed with status: {facility_status}"
+
+    print("Household Project created with ID:", project_id)
+    print("Project Resource created with ID:", resource_id)
+    print("Project Facility created with ID:", project_facility_id)
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Household Project details ---\n")
+        f.write(f"Household Project ID: {project_id}\n")
+        f.write(f"Household Project Resource ID: {resource_id}\n")
+        f.write(f"Household Project Facility ID: {project_facility_id}\n")
+
+
+@pytest.mark.positive
+def test_search_household_project():
+    """Test to search for a household (Bednet) project by ID."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    project_id = extract_id_from_file("Household Project ID:")
+    if not project_id:
+        print("Household Project ID not found in file, creating new household project...")
+        project_id, status_code = create_household_project(token, client, boundaryType, boundaryCode)
+        assert status_code in [200, 202], f"Household Project creation failed with status: {status_code}"
+        print(f"Household Project created with ID: {project_id}")
+
+    projects = search_entity(
+        entity_type="project",
+        token=token,
+        client=client,
+        entity_id=project_id,
+        payload_file="search_project.json",
+        endpoint=f"/{project}/v1/_search",
+        response_key="Project"
+    )
+
+    assert project_id in [p["id"] for p in projects], "Household Project not found"
+    print("Household Project found with ID:", project_id)
+
+
+@pytest.mark.positive
+def test_update_household_project():
+    """Test to update a household (Bednet) project. Creates project internally first, then updates the description."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create product variant
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    # Step 2: Create household project
+    print("Creating household project...")
+    project_data, project_status = create_household_project_full(token, client, boundaryType, boundaryCode, variant_id)
+    assert project_status in [200, 202], f"Household Project creation failed with status: {project_status}"
+    print(f"Household Project created with ID: {project_data['id']}")
+
+    # Step 3: Use create response data directly
+    original_description = project_data.get("description", "")
+    print(f"Original description: {original_description}")
+
+    # Step 4: Update the project (change description)
+    new_description = f"Updated household project description via automated test - {str(uuid.uuid4())[:8]}"
+    response = update_project(token, client, project_data, new_description)
+    assert response.status_code in [200, 202], f"Household Project update failed: {response.text}"
+
+    # Step 5: Verify update
+    updated_project = response.json()["Project"][0]
+    assert updated_project["description"] == new_description, f"Description not updated. Expected {new_description}, got {updated_project.get('description')}"
+    print(f"Household Project updated successfully. Description changed from '{original_description}' to '{new_description}'")
+
+
+@pytest.mark.positive
+def test_create_household_project_beneficiary():
+    """Test creating a project beneficiary using household ID for a household (Bednet) project."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Create household project
+    project_id, project_status = create_household_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Household Project creation failed with status: {project_status}"
+
+    # Create household
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+
+    # Create beneficiary with household as the beneficiary entity
+    beneficiary_id, _, status_code = create_household_project_beneficiary(token, client, project_id, household_id, household_client_ref_id)
+    assert status_code in [200, 202], f"Household Project Beneficiary creation failed with status: {status_code}"
+
+    print("Household Project Beneficiary created with ID:", beneficiary_id)
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Household Project Beneficiary details ---\n")
+        f.write(f"Household Project Beneficiary ID: {beneficiary_id}\n")
+
+
+@pytest.mark.positive
+def test_search_household_project_beneficiary():
+    """Test to search for a household project beneficiary by ID."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    beneficiary_id = extract_id_from_file("Household Project Beneficiary ID:")
+    if not beneficiary_id:
+        print("Household Project Beneficiary ID not found in file, creating new...")
+        project_id, _ = create_household_project(token, client, boundaryType, boundaryCode)
+        household_id, household_client_ref_id, _ = create_household(token, client)
+        beneficiary_id, _, status = create_household_project_beneficiary(token, client, project_id, household_id, household_client_ref_id)
+        assert status in [200, 202], f"Household Project Beneficiary creation failed with status: {status}"
+        print(f"Household Project Beneficiary created with ID: {beneficiary_id}")
+
+    beneficiaries = search_entity(
+        entity_type="project/project_beneficiary",
+        token=token,
+        client=client,
+        entity_id=beneficiary_id,
+        payload_file="search_project_beneficiary.json",
+        endpoint=f"/{project}/beneficiary/v1/_search",
+        response_key="ProjectBeneficiaries"
+    )
+
+    assert beneficiary_id in [b["id"] for b in beneficiaries], "Household Project Beneficiary not found"
+    print("Household Project Beneficiary found with ID:", beneficiary_id)
+
+
+@pytest.mark.positive
+def test_update_household_project_beneficiary():
+    """Test to update a household project beneficiary. Creates all dependencies internally first, then updates the tag."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create all dependencies internally
+    print("Creating household project...")
+    project_id, project_status = create_household_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Household Project creation failed with status: {project_status}"
+    print(f"Household Project created with ID: {project_id}")
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+
+    print("Creating household project beneficiary...")
+    beneficiary_id, _, beneficiary_status = create_household_project_beneficiary(token, client, project_id, household_id, household_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Household Project Beneficiary creation failed with status: {beneficiary_status}"
+    print(f"Household Project Beneficiary created with ID: {beneficiary_id}")
+
+    # Step 2: Search for the beneficiary to get full data for update
+    beneficiaries = search_project_beneficiary(token, client, beneficiary_id)
+    assert len(beneficiaries) > 0, "Could not find created household project beneficiary"
+    beneficiary_data = beneficiaries[0]
+    original_tag = beneficiary_data.get("tag", "")
+    print(f"Original tag: '{original_tag}'")
+
+    # Step 3: Update the beneficiary (change tag)
+    new_tag = f"HH-UPDATED-TAG-{str(uuid.uuid4())[:8]}"
+    response = update_project_beneficiary(token, client, beneficiary_data, new_tag)
+    assert response.status_code in [200, 202], f"Household Project Beneficiary update failed: {response.text}"
+
+    # Step 4: Verify update
+    updated_beneficiary = response.json()["ProjectBeneficiary"]
+    assert updated_beneficiary["tag"] == new_tag, f"Tag not updated. Expected {new_tag}, got {updated_beneficiary.get('tag')}"
+    print(f"Household Project Beneficiary updated successfully. Tag changed from '{original_tag}' to '{new_tag}'")
+
+
+@pytest.mark.negative
+def test_create_household_project_with_invalid_tenant_id():
+    """Negative test: Creating household project with invalid tenantId should fail."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    projectTypeId = extract_id_from_file("Bednet:")
+    payload = load_payload("project", "create_household_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["tenantId"] = "invalid.tenant.id"
+    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    payload["Projects"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["endDate"] = 1798707420000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1798707420000
+
+    url = f"/{project}/v1/_create"
+    response = client.post(url, payload)
+
+    assert response.status_code in [401], f"Expected error status code, got: {response.status_code}"
+    print(f"Request correctly rejected with status: {response.status_code}")
+
+
+@pytest.mark.negative
+def test_search_household_project_with_invalid_tenant_id():
+    """Negative test: Searching household project with invalid tenantId should fail."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    project_id = extract_id_from_file("Household Project ID:")
+    if not project_id:
+        project_id, status_code = create_household_project(token, client, boundaryType, boundaryCode)
+        assert status_code in [200, 202], f"Household Project creation failed with status: {status_code}"
+
+    payload = load_payload("project", "search_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["id"] = project_id
+
+    url = f"/{project}/v1/_search?tenantId={invalidTenantId}"
+    response = client.post(url, payload)
+
+    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    print(f"Search correctly rejected with status: {response.status_code}")
+
+
 # --- Helper functions ---
 
 def create_individual_project(token, client, boundaryType, boundaryCode, variant_id_1=None, variant_id_2=None):
@@ -1201,8 +1463,8 @@ def create_individual_project(token, client, boundaryType, boundaryCode, variant
     payload = load_payload("project", "create_individual_project.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["Projects"][0]["projectTypeId"] = projectTypeId
-    # payload["Projects"][0]["address"]["boundaryType"] = boundaryType
-    # payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
     payload["Projects"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["endDate"] = 1787670131000
     payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
@@ -1595,6 +1857,8 @@ def create_individual_project_full(token, client, boundaryType, boundaryCode, va
     payload = load_payload("project", "create_individual_project.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["Projects"][0]["projectTypeId"] = projectTypeId
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
     payload["Projects"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["endDate"] = 1787670131000
     payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
@@ -1853,3 +2117,100 @@ def delete_project_task(token, client, task_data):
     url = f"/{project}/task/v1/_delete"
     response = client.post(url, payload)
     return response
+
+
+def create_household_project(token, client, boundaryType, boundaryCode, variant_id=None):
+    """
+    Create a household (Bednet) project and return (project_id, status_code).
+    """
+    projectTypeId = extract_id_from_file("Bednet:")
+    payload = load_payload("project", "create_household_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["boundary"] = boundaryCode
+    payload["Projects"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["endDate"] = 1798707420000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1798707420000
+
+    # Set product variant ID if provided
+    if variant_id is not None:
+        payload["Projects"][0]["additionalDetails"]["projectType"]["resources"][0]["productVariantId"] = variant_id
+        for cycle in payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"]:
+            for delivery in cycle.get("deliveries", []):
+                for dose in delivery.get("doseCriteria", []):
+                    for pv in dose.get("ProductVariants", []):
+                        pv["productVariantId"] = variant_id
+
+    url = f"/{project}/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Project creation failed with status {response.status_code}: {response.text}")
+
+    project_data = response.json()["Project"][0]
+    return project_data["id"], response.status_code
+
+
+def create_household_project_full(token, client, boundaryType, boundaryCode, variant_id=None):
+    """
+    Create a household (Bednet) project and return full project data for update operations.
+
+    Returns:
+        Tuple of (project_data, status_code)
+    """
+    projectTypeId = extract_id_from_file("Bednet:")
+    payload = load_payload("project", "create_household_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["boundary"] = boundaryCode
+    payload["Projects"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["endDate"] = 1798707420000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+    payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1798707420000
+
+    # Set product variant ID if provided
+    if variant_id is not None:
+        payload["Projects"][0]["additionalDetails"]["projectType"]["resources"][0]["productVariantId"] = variant_id
+        for cycle in payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"]:
+            for delivery in cycle.get("deliveries", []):
+                for dose in delivery.get("doseCriteria", []):
+                    for pv in dose.get("ProductVariants", []):
+                        pv["productVariantId"] = variant_id
+
+    url = f"/{project}/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Project creation failed with status {response.status_code}: {response.text}")
+
+    return response.json()["Project"][0], response.status_code
+
+
+def create_household_project_beneficiary(token, client, project_id, household_id, household_client_ref_id):
+    """
+    Create a project beneficiary using a household ID (for household/Bednet project type).
+
+    Returns:
+        Tuple of (beneficiary_id, client_reference_id, status_code)
+    """
+    payload = load_payload("project/project_beneficiary", "create_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectBeneficiary"]["tenantId"] = tenantId
+    payload["ProjectBeneficiary"]["projectId"] = project_id
+    payload["ProjectBeneficiary"]["beneficiaryId"] = household_id
+    payload["ProjectBeneficiary"]["beneficiaryClientReferenceId"] = household_client_ref_id
+    payload["ProjectBeneficiary"]["clientReferenceId"] = str(uuid.uuid4())
+
+    url = f"/{project}/beneficiary/v1/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Project Beneficiary creation failed with status {response.status_code}: {response.text}")
+
+    beneficiary_data = response.json()["ProjectBeneficiary"]
+    return beneficiary_data["id"], beneficiary_data["clientReferenceId"], response.status_code

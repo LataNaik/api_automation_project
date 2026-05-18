@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import extract_id_from_file
-from utils.config import mdms, tenantId, invalidTenantId
+from utils.config import mdms, tenantId, invalidTenantId, hierarchyType
 
 
 # --- Test functions ---
@@ -347,6 +347,7 @@ def add_mdms_data(token, client, schema_code):
     payload["RequestInfo"] = get_request_info(token)
     payload["Mdms"]["tenantId"] = tenantId
     payload["Mdms"]["schemaCode"] = schema_code
+    payload["Mdms"]["data"]["hierarchyTypeCode"] = hierarchyType
 
     # Generate unique data ID
     data_id = get_next_mdms_data_id(token, client, schema_code)

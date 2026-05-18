@@ -10,8 +10,8 @@
             "jurisdictions": [
                 {
                     "id": "436be54b-550d-408f-9523-c570436a2661",
-                    "hierarchy": "MICROPLAN",
-                    "boundary": "MICROPLAN_MO_01_01_MOSSURILEE",
+                    "hierarchy": "{{hierarchyType}}",
+                    "boundary": "{{boundaryCode}}",
                     "boundaryType": "DISTRICT",
                     "tenantId": "mz",
                     "auditDetails": {
