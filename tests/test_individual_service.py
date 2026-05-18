@@ -66,7 +66,7 @@ def test_create_individual_with_invalid_tenant_id():
     res = create_individual(token, client, tenant_id=invalidTenantId)
 
     # Should fail with 401 Unauthorized
-    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    assert res.status_code == 401, f"Expected  4xx, got {res.status_code}: {res.text}"
     print("Negative test passed: Creating individual with invalid tenantId returned 401")
 
 
@@ -89,7 +89,7 @@ def test_search_individual_with_invalid_tenant_id():
     url = f"/{individual}/v1/_search?tenantId={invalidTenantId}"
     response = client.post(url, payload)
 
-    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    assert response.status_code == 401, f"Expected error status code, got: {response.status_code}"
     print(f"Search correctly rejected with status: {response.status_code}")
 
 

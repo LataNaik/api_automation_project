@@ -16,9 +16,9 @@
             "employeeType": "PERMANENT",
             "jurisdictions": [
                 {
-                    "hierarchy": "MICROPLAN",
-                    "boundaryType": "Country",
-                    "boundary": "MICROPLAN_MO",
+                    "hierarchy": "TCHAD",
+                    "boundaryType": "COUNTRY",
+                    "boundary": "ADMIN_TC",
                     "tenantId": "mz",
                     "roles": [
                         {
