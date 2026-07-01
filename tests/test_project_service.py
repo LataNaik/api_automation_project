@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file, poll_until_found, poll_until_match
-from utils.config import project, boundaryType, boundaryCode, tenantId, invalidTenantId
+from utils.config import project, boundaryType, boundaryCode, tenantId, invalidTenantId, hierarchyType
 from tests.test_individual_service import create_individual
 from tests.test_household_service import create_household, create_household_member
 from tests.test_product_service import create_product, create_product_variant
@@ -71,6 +71,84 @@ def test_create_project():
         f.write(f"Project Resource ID 2: {resource_id_2}\n")
         f.write(f"Project Facility ID 1: {project_facility_id_1}\n")
         f.write(f"Project Facility ID 2: {project_facility_id_2}\n")
+
+
+def _extract_one_per_level(boundaries_tree):
+    """Walk the boundary tree following the first child at each depth.
+    Returns an ordered list of (boundaryType, code) — one entry per level."""
+    levels = []
+    current = boundaries_tree
+    while current:
+        first = current[0]
+        levels.append((first.get("boundaryType"), first.get("code")))
+        current = first.get("children") or []
+    return levels
+
+
+@pytest.mark.positive
+def test_create_project_hierarchy():
+    """Creates one project per boundary level. Parent is null at root; for each
+    deeper level the parent field is the dot-separated chain of ancestor project IDs."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Fetch boundary hierarchy and pick one code per level
+    from tests.test_boundary_service import search_boundary_data
+    res = search_boundary_data(token, client, tenantId, "COUNTRY", hierarchyType)
+    assert res.status_code == 200, f"Boundary search failed: {res.text}"
+
+    tenant_boundaries = res.json().get("TenantBoundary", [])
+    assert tenant_boundaries, "No TenantBoundary found in response"
+
+    boundaries_tree = tenant_boundaries[0].get("boundary", [])
+    assert boundaries_tree, "No boundary data found"
+
+    levels = _extract_one_per_level(boundaries_tree)
+    assert levels, "Could not extract boundary levels from hierarchy"
+
+    print(f"\nBoundary hierarchy has {len(levels)} levels:")
+    for btype, code in levels:
+        print(f"  {btype}: {code}")
+
+    # Step 2: Create one project per level, chaining parent IDs
+    projectTypeId = extract_id_from_file("MR-DN:")
+    project_ids = []
+
+    for i, (btype, code) in enumerate(levels):
+        parent = ".".join(project_ids) if project_ids else None
+
+        payload = load_payload("project", "create_individual_project.json")
+        payload["RequestInfo"] = get_request_info(token)
+        if projectTypeId:
+            payload["Projects"][0]["projectTypeId"] = projectTypeId
+            payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+        payload["Projects"][0]["address"]["boundaryType"] = btype
+        payload["Projects"][0]["address"]["boundary"] = code
+        payload["Projects"][0]["address"]["locality"]["code"] = code
+        payload["Projects"][0]["parent"] = parent
+        payload["Projects"][0]["startDate"] = 1767205799000
+        payload["Projects"][0]["endDate"] = 1787670131000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["endDate"] = 1787670131000
+
+        url = f"/{project}/v1/_create"
+        response = client.post(url, payload)
+
+        assert response.status_code in [200, 202], \
+            f"Project creation failed at level {i} ({btype} / {code}), parent={parent}: {response.text}"
+
+        project_id = response.json()["Project"][0]["id"]
+        project_ids.append(project_id)
+        print(f"  Level {i} ({btype}): id={project_id}, parent={parent}")
+
+    print(f"\nProject hierarchy created across {len(levels)} levels")
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Project Hierarchy ---\n")
+        for i, (pid, (btype, _)) in enumerate(zip(project_ids, levels)):
+            f.write(f"Project Hierarchy Level {i} ({btype}): {pid}\n")
 
 
 def _fetch_project_types():
