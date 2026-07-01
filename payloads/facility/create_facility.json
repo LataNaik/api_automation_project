@@ -3,7 +3,7 @@
         "clientReferenceId": "a536d189-38a8-4dcf-ab42-8b63341f1867",
         "tenantId": "mz",
         "isPermanent": "true",
-        "name": "Facility Storage Konobo",
+        "name": "Automated-Facility",
         "usage": "Storing Resource",
         "storageCapacity": 200,
         "address": {

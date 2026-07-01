@@ -1,0 +1,93 @@
+{
+    "Tasks": [
+        {
+            "id": "PT-2025-05-22-000078",
+            "tenantId": "oy",
+            "source": null,
+            "rowVersion": 2,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "test_5266efb5bcd9",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "test_b9aa6f50056e",
+                        "value": "test_dcfafb1be02f"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "createdTime": 1747933071331,
+                "lastModifiedTime": 1747933352624
+            },
+            "clientReferenceId": "9fab34b1-5eb2-4851-9749-95cd21ea9931",
+            "clientAuditDetails": {
+                "createdBy": "4e9ed8fe-80dd-4b89-9c55-fa8ac5aadf9d",
+                "lastModifiedBy": "40b57ff0-7e55-4449-9ef9-3196b6a43fa8",
+                "createdTime": 1747933070005,
+                "lastModifiedTime": 1747933070005
+            },
+            "projectId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+            "projectBeneficiaryId": "PTB-2025-05-22-000111",
+            "projectBeneficiaryClientReferenceId": "d99a8e71-0183-409f-ac86-d6fee06edc44",
+            "resources": [
+                {
+                    "id": "c80b126e-cd9b-418e-8042-760912a11db5",
+                    "tenantId": "oy",
+                    "clientReferenceId": "0a67173e-752e-427e-8b38-f8960b152ec7",
+                    "taskId": "PT-2025-05-22-000078",
+                    "productVariantId": "PVAR-2025-05-22-000021",
+                    "quantity": 1.0,
+                    "isDelivered": false,
+                    "deliveryComment": "SUCCESSFUL_DELIVERY",
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                        "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                        "createdTime": 1747933071332,
+                        "lastModifiedTime": 1747933352624
+                    },
+                    "additionalFields": null
+                }
+            ],
+            "plannedStartDate": 1675582245,
+            "plannedEndDate": 1707723045,
+            "actualStartDate": 1707550245,
+            "actualEndDate": 1707590245,
+            "createdBy": null,
+            "createdDate": null,
+            "address": {
+                "id": "95c3c131-3199-43c9-906a-517e8ea5ff56",
+                "tenantId": "oy",
+                "clientReferenceId": "828039f3-c8f0-4405-bd34-fa95356e8960",
+                "doorNo": "test_4b2c5ad43e11",
+                "latitude": 86.78,
+                "longitude": 77.12,
+                "locationAccuracy": 66.0,
+                "type": "PERMANENT",
+                "addressLine1": "test_2512bdc41cb2",
+                "addressLine2": "test_afa1eadcb4f0",
+                "landmark": "test_d7ee474cb6da",
+                "city": "test_932d23b00265",
+                "pincode": "test_637fa8890171",
+                "buildingName": "test_90f36fdaf51d",
+                "street": "test_105ae34b63c6",
+                "boundaryType": null,
+                "boundary": null,
+                "locality": {
+                    "id": null,
+                    "tenantId": null,
+                    "code": "STATE_CODE_COMMUNITY",
+                    "geometry": null,
+                    "auditDetails": null,
+                    "additionalDetails": null
+                }
+            },
+            "isDeleted": true,
+            "status": "ADMINISTRATION_SUCCESS"
+        }
+    ]
+}

@@ -1,0 +1,20 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "ProjectResources": [
+        {
+        "tenantId": "mz",
+        "projectId": "{{projectIdDistrict}}",
+        "resource": {
+            "productVariantId": "PVAR-2025-05-16-000468",
+            "type": "DRUG",
+            "isBaseUnitVariant": false
+        },
+        "startDate": 1758516758399,
+        "endDate": 1987932637,
+        "isDeleted": false,
+        "rowVersion": 1
+    }
+    ]
+}

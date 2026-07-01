@@ -4,7 +4,7 @@ from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
-from utils.search_helpers import search_entity, extract_id_from_file
+from utils.search_helpers import search_entity, extract_id_from_file, poll_until_found, poll_until_match
 from utils.config import project, boundaryType, boundaryCode, tenantId, invalidTenantId
 from tests.test_individual_service import create_individual
 from tests.test_household_service import create_household, create_household_member
@@ -73,6 +73,64 @@ def test_create_project():
         f.write(f"Project Facility ID 2: {project_facility_id_2}\n")
 
 
+def _fetch_project_types():
+    try:
+        from tests.test_mdms_service import search_mdms_data
+        token = get_auth_token("user")
+        client = APIClient(token=token)
+        response = search_mdms_data(token, client, "HCM-PROJECT-TYPES.projectTypes")
+        if response.status_code != 200:
+            return []
+        mdms_data = response.json().get("mdms", [])
+        return [
+            (item["data"]["id"], item["data"]["code"])
+            for item in mdms_data
+            if item.get("isActive") is True
+        ]
+    except Exception:
+        return []
+
+
+def _make_project_type_test(type_id, type_code):
+    @pytest.mark.positive
+    def _test():
+        token = get_auth_token("user")
+        client = APIClient(token=token)
+
+        payload = load_payload("project", "create_individual_project.json")
+        payload["RequestInfo"] = get_request_info(token)
+        payload["Projects"][0]["projectTypeId"] = type_id
+        payload["Projects"][0]["projectType"] = type_code
+        payload["Projects"][0]["projectSubType"] = type_code
+        payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+        payload["Projects"][0]["address"]["boundary"] = boundaryCode
+        payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
+        payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = type_id
+        payload["Projects"][0]["additionalDetails"]["projectType"]["code"] = type_code
+        payload["Projects"][0]["startDate"] = 1767205799000
+        payload["Projects"][0]["endDate"] = 1787670131000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
+        payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["endDate"] = 1787670131000
+
+        url = f"/{project}/v1/_create"
+        response = client.post(url, payload)
+
+        assert response.status_code in [200, 202], f"Project creation failed for type '{type_code}': {response.text}"
+        project_id = response.json()["Project"][0]["id"]
+        print(f"Project created for type '{type_code}' with ID: {project_id}")
+
+    test_name = "test_create_project_" + type_code.lower().replace("-", "_").replace(" ", "_").replace(".", "_")
+    _test.__name__ = test_name
+    return test_name, _test
+
+
+for _type_id, _type_code in _fetch_project_types():
+    _test_name, _test_fn = _make_project_type_test(_type_id, _type_code)
+    globals()[_test_name] = _test_fn
+
+
 @pytest.mark.positive
 def test_search_project():
     """Test to search for a project by ID. Creates project if ID not found in file."""
@@ -109,8 +167,12 @@ def test_create_project_resource():
     project_id = extract_id_from_file("Project ID:")
     variant_id = extract_id_from_file("Variant ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert variant_id, "Variant ID not found in file"
+    if not project_id or not variant_id:
+        variant_response = create_product_variant(token, client)
+        assert variant_response.status_code in [200, 202], f"Product Variant creation failed: {variant_response.text}"
+        variant_id = variant_response.json()["ProductVariant"][0]["id"]
+        project_id, proj_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+        assert proj_status in [200, 202], f"Project creation failed with status: {proj_status}"
 
     resource_id, status_code = create_project_resource(token, client, project_id, variant_id)
     assert status_code in [200, 202], f"Project Resource creation failed with status: {status_code}"
@@ -157,8 +219,14 @@ def test_create_project_staff():
     project_id = extract_id_from_file("Project ID:")
     userservice_uuid = extract_id_from_file("Employee UserService UUID:")
 
-    assert project_id, "Project ID not found in file"
-    assert userservice_uuid, "Employee UserService UUID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not userservice_uuid:
+        from tests.test_hrms_service import create_employee
+        _, _, _, userservice_uuid, _ = create_employee(token, client)
+
+    assert project_id, "Project ID not found"
+    assert userservice_uuid, "Employee UserService UUID not found"
 
     staff_id, status_code = create_project_staff(token, client, project_id, userservice_uuid)
     assert status_code in [200, 202], f"Project Staff creation failed with status: {status_code}"
@@ -213,8 +281,12 @@ def test_create_project_facility():
     project_id = extract_id_from_file("Project ID:")
     facility_id = extract_id_from_file("Facility ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert facility_id, "Facility ID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not facility_id:
+        fac_res = create_facility(token, client)
+        assert fac_res.status_code in [200, 202], f"Facility creation failed"
+        facility_id = fac_res.json()["Facility"]["id"]
 
     project_facility_id, status_code = create_project_facility(token, client, project_id, facility_id)
     assert status_code in [200, 202], f"Project Facility creation failed with status: {status_code}"
@@ -270,8 +342,12 @@ def test_create_project_facility_with_invalid_tenant_id():
     project_id = extract_id_from_file("Project ID:")
     facility_id = extract_id_from_file("Facility ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert facility_id, "Facility ID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not facility_id:
+        fac_res = create_facility(token, client)
+        assert fac_res.status_code in [200, 202], f"Facility creation failed"
+        facility_id = fac_res.json()["Facility"]["id"]
 
     payload = load_payload("project/project_facility", "create_project_facility.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -441,9 +517,15 @@ def test_create_project_task_with_invalid_tenant_id():
     project_beneficiary_id = extract_id_from_file("Project Beneficiary ID:")
     variant_id = extract_id_from_file("Variant ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert project_beneficiary_id, "Project Beneficiary ID not found in file"
-    assert variant_id, "Variant ID not found in file"
+    if not variant_id:
+        var_res = create_product_variant(token, client)
+        assert var_res.status_code in [200, 202], f"Product Variant creation failed"
+        variant_id = var_res.json()["ProductVariant"][0]["id"]
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    if not project_beneficiary_id:
+        ind_id, ind_ref_id, _, _ = create_individual(token, client)
+        project_beneficiary_id, _, _ = create_project_beneficiary(token, client, project_id, ind_id, ind_ref_id)
 
     payload = load_payload("project/project_task", "create_project_task.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -475,9 +557,10 @@ def test_create_project_beneficiary_with_invalid_tenant_id():
     individual_id = extract_id_from_file("Individual ID:")
     individual_client_ref_id = extract_id_from_file("Individual Client Reference ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert individual_id, "Individual ID not found in file"
-    assert individual_client_ref_id, "Individual Client Reference ID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not individual_id or not individual_client_ref_id:
+        individual_id, individual_client_ref_id, _, _ = create_individual(token, client)
 
     payload = load_payload("project/project_beneficiary", "create_project_beneficiary.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -502,10 +585,11 @@ def test_create_project_with_invalid_tenant_id():
     payload = load_payload("project", "create_individual_project.json")
     payload["RequestInfo"] = get_request_info(token)
     payload["Projects"][0]["tenantId"] = "invalid.tenant.id"
-    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    if projectTypeId:
+        payload["Projects"][0]["projectTypeId"] = projectTypeId
+        payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
     payload["Projects"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["endDate"] = 1787670131000
-    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
@@ -526,8 +610,12 @@ def test_create_project_resource_with_invalid_tenant_id():
     project_id = extract_id_from_file("Project ID:")
     variant_id = extract_id_from_file("Variant ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert variant_id, "Variant ID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not variant_id:
+        var_res = create_product_variant(token, client)
+        assert var_res.status_code in [200, 202], f"Product Variant creation failed"
+        variant_id = var_res.json()["ProductVariant"][0]["id"]
 
     payload = load_payload("project/project_resource", "create_project_resource.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -550,8 +638,11 @@ def test_create_project_staff_with_invalid_tenant_id():
     project_id = extract_id_from_file("Project ID:")
     userservice_uuid = extract_id_from_file("Employee UserService UUID:")
 
-    assert project_id, "Project ID not found in file"
-    assert userservice_uuid, "Employee UserService UUID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not userservice_uuid:
+        from tests.test_hrms_service import create_employee
+        _, _, _, userservice_uuid, _ = create_employee(token, client)
 
     payload = load_payload("project/project_staff", "create_project_staff.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -1065,6 +1156,105 @@ def test_delete_project_resource():
 
 
 @pytest.mark.positive
+def test_create_project_resource_bulk():
+    """Test to bulk create a project resource. Creates all dependencies internally first."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    # Step 2: Bulk create project resource — response is always 202 with status body only
+    print("Bulk creating project resource...")
+    status_code = create_project_resource_bulk(token, client, project_id, variant_id)
+    assert status_code == 202, f"Project Resource bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    # Step 3: Search by projectId and verify resource with variant_id exists
+    resources = search_project_resource(token, client, project_id)
+    matching = [r for r in resources if r.get("resource", {}).get("productVariantId") == variant_id]
+    assert matching, f"No resource found with productVariantId {variant_id} after bulk create"
+    print(f"Verified: resource with productVariantId {variant_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_project_resource_bulk():
+    """Test to bulk update a project resource. Creates resource first, then bulk updates the resource type."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource (regular create to get resource data)...")
+    resource_data, resource_status = create_project_resource_full(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed with status: {resource_status}"
+    print(f"Project Resource created with ID: {resource_data['id']}")
+
+    # Step 2: Bulk update the project resource (change resource type) — response is always 202
+    original_type = resource_data.get("resource", {}).get("type", "")
+    print(f"Original resource type: {original_type}")
+
+    new_type = "BEDNET"
+    response = update_project_resource_bulk(token, client, resource_data, new_type)
+    assert response.status_code == 202, f"Project Resource bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    # Step 3: Search and verify resource type was updated
+    resources = search_project_resource(token, client, project_id)
+    updated = next((r for r in resources if r.get("id") == resource_data["id"]), None)
+    assert updated is not None, f"Resource {resource_data['id']} not found after bulk update"
+    assert updated["resource"]["type"] == new_type, f"Resource type not updated. Expected {new_type}, got {updated.get('resource', {}).get('type')}"
+    print(f"Project Resource bulk updated successfully. Resource type changed from '{original_type}' to '{new_type}'")
+
+
+@pytest.mark.positive
+def test_delete_project_resource_bulk():
+    """Test to bulk delete a project resource. Creates resource first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource (regular create to get resource data)...")
+    resource_data, resource_status = create_project_resource_full(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed with status: {resource_status}"
+    resource_id = resource_data["id"]
+    print(f"Project Resource created with ID: {resource_id}")
+
+    # Step 2: Bulk delete the project resource — response is always 202
+    print("Bulk deleting project resource...")
+    response = delete_project_resource_bulk(token, client, resource_data)
+    assert response.status_code == 202, f"Project Resource bulk delete failed: {response.text}"
+    print(f"Project Resource {resource_id} bulk deleted successfully (202 accepted)")
+
+
+@pytest.mark.positive
 def test_delete_project_staff():
     """Test to delete a project staff. Creates all dependencies internally first, then deletes it."""
     token = get_auth_token("user")
@@ -1097,6 +1287,207 @@ def test_delete_project_staff():
     deleted_staff = response.json()["ProjectStaff"]
     assert deleted_staff["isDeleted"] == True, f"Project Staff not marked as deleted"
     print(f"Project Staff {staff_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_create_project_facility_bulk():
+    """Test to bulk create a project facility. Creates all dependencies internally first."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+    print(f"Facility created with ID: {facility_id}")
+
+    # Step 2: Bulk create project facility — response is always 202 with status body only
+    print("Bulk creating project facility...")
+    status_code = create_project_facility_bulk(token, client, project_id, facility_id)
+    assert status_code == 202, f"Project Facility bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    # Step 3: Search by projectId and verify facility was linked
+    facilities = search_project_facility_by_project(token, client, project_id)
+    matching = [f for f in facilities if f.get("facilityId") == facility_id]
+    assert matching, f"No project facility found with facilityId {facility_id} after bulk create"
+    print(f"Verified: project facility with facilityId {facility_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_project_facility_bulk():
+    """Test to bulk update a project facility. Creates facility first, then bulk updates additionalFields."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+    print(f"Facility created with ID: {facility_id}")
+
+    print("Creating project facility (regular create to get full data)...")
+    project_facility_data, pf_status = create_project_facility_full(token, client, project_id, facility_id)
+    assert pf_status in [200, 202], f"Project Facility creation failed with status: {pf_status}"
+    print(f"Project Facility created with ID: {project_facility_data['id']}")
+
+    # Step 2: Bulk update additionalFields — response is always 202
+    new_additional_fields = {"schema": "updated_schema", "version": 2, "fields": [{"key": "updated_key", "value": "updated_value"}]}
+    response = update_project_facility_bulk(token, client, project_facility_data, new_additional_fields)
+    assert response.status_code == 202, f"Project Facility bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    # Step 3: Search by projectId and verify additionalFields updated
+    facilities = search_project_facility_by_project(token, client, project_id)
+    updated = next((f for f in facilities if f.get("id") == project_facility_data["id"]), None)
+    assert updated is not None, f"Project Facility {project_facility_data['id']} not found after bulk update"
+    assert updated.get("additionalFields", {}).get("schema") == "updated_schema", "additionalFields not updated"
+    print("Project Facility bulk updated successfully. additionalFields updated.")
+
+
+@pytest.mark.positive
+def test_delete_project_facility_bulk():
+    """Test to bulk delete a project facility. Creates facility first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+    print(f"Facility created with ID: {facility_id}")
+
+    print("Creating project facility (regular create to get full data)...")
+    project_facility_data, pf_status = create_project_facility_full(token, client, project_id, facility_id)
+    assert pf_status in [200, 202], f"Project Facility creation failed with status: {pf_status}"
+    pf_id = project_facility_data["id"]
+    print(f"Project Facility created with ID: {pf_id}")
+
+    # Step 2: Bulk delete — response is always 202
+    print("Bulk deleting project facility...")
+    response = delete_project_facility_bulk(token, client, project_facility_data)
+    assert response.status_code == 202, f"Project Facility bulk delete failed: {response.text}"
+    print(f"Project Facility {pf_id} bulk deleted successfully (202 accepted)")
+
+
+@pytest.mark.positive
+def test_create_project_staff_bulk():
+    """Test to bulk create a project staff. Creates all dependencies internally first."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating employee...")
+    from tests.test_hrms_service import create_employee
+    _, _, _, userservice_uuid, employee_status = create_employee(token, client)
+    assert employee_status in [200, 202], f"Employee creation failed"
+    print(f"Employee created with userServiceUuid: {userservice_uuid}")
+
+    # Step 2: Bulk create project staff — response is always 202 with status body only
+    print("Bulk creating project staff...")
+    status_code = create_project_staff_bulk(token, client, project_id, userservice_uuid)
+    assert status_code == 202, f"Project Staff bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    # Step 3: Search by projectId and verify staff with matching userId exists
+    staff_list = search_project_staff_by_project(token, client, project_id)
+    matching = [s for s in staff_list if s.get("userId") == userservice_uuid]
+    assert matching, f"No staff found with userId {userservice_uuid} after bulk create"
+    print(f"Verified: staff with userId {userservice_uuid} found in search results")
+
+
+@pytest.mark.positive
+def test_update_project_staff_bulk():
+    """Test to bulk update a project staff. Creates staff first, then bulk updates the endDate."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating employee...")
+    from tests.test_hrms_service import create_employee
+    _, _, _, userservice_uuid, employee_status = create_employee(token, client)
+    assert employee_status in [200, 202], f"Employee creation failed"
+    print(f"Employee created with userServiceUuid: {userservice_uuid}")
+
+    print("Creating project staff (regular create to get staff data)...")
+    staff_data, staff_status = create_project_staff_full(token, client, project_id, userservice_uuid)
+    assert staff_status in [200, 202], f"Project Staff creation failed with status: {staff_status}"
+    print(f"Project Staff created with ID: {staff_data['id']}")
+
+    # Step 2: Bulk update the project staff (change endDate) — response is always 202
+    original_end_date = staff_data.get("endDate")
+    new_end_date = 1987670400000
+    print(f"Original endDate: {original_end_date}")
+
+    response = update_project_staff_bulk(token, client, staff_data, new_end_date)
+    assert response.status_code == 202, f"Project Staff bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    # Step 3: Search and verify endDate was updated
+    staff_list = search_project_staff_by_project(token, client, project_id)
+    updated = next((s for s in staff_list if s.get("id") == staff_data["id"]), None)
+    assert updated is not None, f"Staff {staff_data['id']} not found after bulk update"
+    assert updated.get("endDate") == new_end_date, f"endDate not updated. Expected {new_end_date}, got {updated.get('endDate')}"
+    print(f"Project Staff bulk updated successfully. endDate changed from '{original_end_date}' to '{new_end_date}'")
+
+
+@pytest.mark.positive
+def test_delete_project_staff_bulk():
+    """Test to bulk delete a project staff. Creates staff first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    # Step 1: Create dependencies
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating employee...")
+    from tests.test_hrms_service import create_employee
+    _, _, _, userservice_uuid, employee_status = create_employee(token, client)
+    assert employee_status in [200, 202], f"Employee creation failed"
+    print(f"Employee created with userServiceUuid: {userservice_uuid}")
+
+    print("Creating project staff (regular create to get staff data)...")
+    staff_data, staff_status = create_project_staff_full(token, client, project_id, userservice_uuid)
+    assert staff_status in [200, 202], f"Project Staff creation failed with status: {staff_status}"
+    staff_id = staff_data["id"]
+    print(f"Project Staff created with ID: {staff_id}")
+
+    # Step 2: Bulk delete the project staff — response is always 202
+    print("Bulk deleting project staff...")
+    response = delete_project_staff_bulk(token, client, staff_data)
+    assert response.status_code == 202, f"Project Staff bulk delete failed: {response.text}"
+    print(f"Project Staff {staff_id} bulk deleted successfully (202 accepted)")
 
 
 @pytest.mark.positive
@@ -1138,6 +1529,94 @@ def test_delete_project_beneficiary():
     deleted_beneficiary = response.json()["ProjectBeneficiary"]
     assert deleted_beneficiary["isDeleted"] == True, f"Project Beneficiary not marked as deleted"
     print(f"Project Beneficiary {beneficiary_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_create_project_beneficiary_bulk():
+    """Test to bulk create a project beneficiary. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Bulk creating project beneficiary...")
+    client_ref_id, status_code = create_project_beneficiary_bulk(token, client, project_id, individual_id, individual_client_ref_id)
+    assert status_code == 202, f"Project Beneficiary bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    beneficiaries = search_project_beneficiary_by_client_ref(token, client, client_ref_id)
+    assert beneficiaries, f"No project beneficiary found with clientReferenceId {client_ref_id} after bulk create"
+    assert beneficiaries[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: project beneficiary with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_project_beneficiary_bulk():
+    """Test to bulk update a project beneficiary. Creates all dependencies first, then bulk updates tag."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Creating project beneficiary (regular create to get full data)...")
+    beneficiary_data, beneficiary_status = create_project_beneficiary_full(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed with status: {beneficiary_status}"
+    print(f"Project Beneficiary created with ID: {beneficiary_data['id']}")
+
+    new_tag = "UPDATED_TAG"
+    print(f"Bulk updating project beneficiary tag to '{new_tag}'...")
+    response = update_project_beneficiary_bulk(token, client, beneficiary_data, new_tag)
+    assert response.status_code == 202, f"Project Beneficiary bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    beneficiaries = search_project_beneficiary_by_client_ref(token, client, beneficiary_data["clientReferenceId"])
+    assert beneficiaries, f"Project Beneficiary not found after bulk update"
+    assert beneficiaries[0].get("tag") == new_tag, f"tag not updated. Got {beneficiaries[0].get('tag')}"
+    print(f"Project Beneficiary bulk updated successfully. tag verified as '{new_tag}'.")
+
+
+@pytest.mark.positive
+def test_delete_project_beneficiary_bulk():
+    """Test to bulk delete a project beneficiary. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Creating project beneficiary (regular create to get full data)...")
+    beneficiary_data, beneficiary_status = create_project_beneficiary_full(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed with status: {beneficiary_status}"
+    beneficiary_id = beneficiary_data["id"]
+    print(f"Project Beneficiary created with ID: {beneficiary_id}")
+
+    print("Bulk deleting project beneficiary...")
+    response = delete_project_beneficiary_bulk(token, client, beneficiary_data)
+    assert response.status_code == 202, f"Project Beneficiary bulk delete failed: {response.text}"
+    print(f"Project Beneficiary {beneficiary_id} bulk deleted successfully (202 accepted)")
 
 
 @pytest.mark.positive
@@ -1194,18 +1673,186 @@ def test_delete_project_task():
     print(f"Project Task {task_id} deleted successfully")
 
 
+@pytest.mark.positive
+def test_create_project_task_bulk():
+    """Test to bulk create a project task. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource...")
+    resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Bulk creating project task...")
+    client_ref_id, status_code = create_project_task_bulk(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert status_code == 202, f"Project Task bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    tasks = poll_until_found(lambda: search_project_task_by_client_ref(token, client, client_ref_id))
+    assert tasks, f"No project task found with clientReferenceId {client_ref_id} after bulk create"
+    assert tasks[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: project task with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_project_task_bulk():
+    """Test to bulk update a project task. Creates all dependencies first, then bulk updates status."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource...")
+    resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task (regular create to get full data)...")
+    task_data, task_status = create_project_task_full(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed with status: {task_status}"
+    print(f"Project Task created with ID: {task_data['id']}")
+
+    new_status = "BENEFICIARY_REFUSED"
+    print(f"Bulk updating project task status to '{new_status}'...")
+    response = update_project_task_bulk(token, client, task_data, new_status)
+    assert response.status_code == 202, f"Project Task bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    tasks = poll_until_match(
+        lambda: search_project_task_by_client_ref(token, client, task_data["clientReferenceId"]),
+        lambda results: results[0].get("status") == new_status,
+        retries=10,
+        delay=5
+    )
+    assert tasks, f"Project Task not found after bulk update"
+    assert tasks[0].get("status") == new_status, f"status not updated. Got {tasks[0].get('status')}"
+    print(f"Project Task bulk updated successfully. status verified as '{new_status}'.")
+
+
+@pytest.mark.positive
+def test_delete_project_task_bulk():
+    """Test to bulk delete a project task. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed with status: {project_status}"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating project resource...")
+    resource_id, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task (regular create to get full data)...")
+    task_data, task_status = create_project_task_full(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed with status: {task_status}"
+    task_id = task_data["id"]
+    print(f"Project Task created with ID: {task_id}")
+
+    print("Bulk deleting project task...")
+    response = delete_project_task_bulk(token, client, task_data)
+    assert response.status_code == 202, f"Project Task bulk delete failed: {response.text}"
+    print(f"Project Task {task_id} bulk deleted successfully (202 accepted)")
+
+
 # --- Helper functions ---
+
+def search_project_by_id(token, client, project_id):
+    payload = load_payload("project", "search_project.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Projects"][0]["id"] = project_id
+
+    url = f"/{project}/v1/_search?limit=10&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code != 200:
+        return []
+    return response.json().get("Project", [])
+
 
 def create_individual_project(token, client, boundaryType, boundaryCode, variant_id_1=None, variant_id_2=None):
     projectTypeId = extract_id_from_file("MR-DN:")
     payload = load_payload("project", "create_individual_project.json")
     payload["RequestInfo"] = get_request_info(token)
-    payload["Projects"][0]["projectTypeId"] = projectTypeId
-    # payload["Projects"][0]["address"]["boundaryType"] = boundaryType
-    # payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
+    if projectTypeId:
+        payload["Projects"][0]["projectTypeId"] = projectTypeId
+        payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["boundary"] = boundaryCode
+    payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
     payload["Projects"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["endDate"] = 1787670131000
-    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
@@ -1235,6 +1882,9 @@ def create_individual_project(token, client, boundaryType, boundaryCode, variant
 
     project_data = response.json()["Project"][0]
     project_id = project_data["id"]
+
+    if response.status_code == 202:
+        poll_until_found(lambda: search_project_by_id(token, client, project_id))
 
     return project_id, response.status_code
 
@@ -1594,10 +2244,14 @@ def create_individual_project_full(token, client, boundaryType, boundaryCode, va
     projectTypeId = extract_id_from_file("MR-DN:")
     payload = load_payload("project", "create_individual_project.json")
     payload["RequestInfo"] = get_request_info(token)
-    payload["Projects"][0]["projectTypeId"] = projectTypeId
+    if projectTypeId:
+        payload["Projects"][0]["projectTypeId"] = projectTypeId
+        payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
+    payload["Projects"][0]["address"]["boundaryType"] = boundaryType
+    payload["Projects"][0]["address"]["boundary"] = boundaryCode
+    payload["Projects"][0]["address"]["locality"]["code"] = boundaryCode
     payload["Projects"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["endDate"] = 1787670131000
-    payload["Projects"][0]["additionalDetails"]["projectType"]["id"] = projectTypeId
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["startDate"] = 1767205799000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][0]["endDate"] = 1787670131000
     payload["Projects"][0]["additionalDetails"]["projectType"]["cycles"][1]["startDate"] = 1767205799000
@@ -1689,6 +2343,70 @@ def delete_project_facility(token, client, facility_data):
     return response
 
 
+def create_project_facility_bulk(token, client, project_id, facility_id):
+    payload = load_payload("project/project_facility", "create_bulk_project_facility.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectFacilities"][0]["tenantId"] = tenantId
+    payload["ProjectFacilities"][0]["projectId"] = project_id
+    payload["ProjectFacilities"][0]["facilityId"] = facility_id
+
+    url = f"/{project}/facility/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Facility bulk create failed with status {response.status_code}: {response.text}")
+
+    return response.status_code
+
+
+def update_project_facility_bulk(token, client, facility_data, new_additional_fields):
+    payload = load_payload("project/project_facility", "update_bulk_project_facility.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectFacilities"][0]["id"] = facility_data["id"]
+    payload["ProjectFacilities"][0]["tenantId"] = facility_data["tenantId"]
+    payload["ProjectFacilities"][0]["rowVersion"] = facility_data["rowVersion"]
+    payload["ProjectFacilities"][0]["auditDetails"] = facility_data["auditDetails"]
+    payload["ProjectFacilities"][0]["facilityId"] = facility_data["facilityId"]
+    payload["ProjectFacilities"][0]["projectId"] = facility_data["projectId"]
+    payload["ProjectFacilities"][0]["additionalFields"] = new_additional_fields
+    payload["ProjectFacilities"][0]["isDeleted"] = False
+
+    url = f"/{project}/facility/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_facility_bulk(token, client, facility_data):
+    payload = load_payload("project/project_facility", "delete_bulk_project_facility.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectFacilities"][0]["id"] = facility_data["id"]
+    payload["ProjectFacilities"][0]["tenantId"] = facility_data["tenantId"]
+    payload["ProjectFacilities"][0]["rowVersion"] = facility_data["rowVersion"]
+    payload["ProjectFacilities"][0]["auditDetails"] = facility_data["auditDetails"]
+    payload["ProjectFacilities"][0]["facilityId"] = facility_data["facilityId"]
+    payload["ProjectFacilities"][0]["projectId"] = facility_data["projectId"]
+    payload["ProjectFacilities"][0]["additionalFields"] = facility_data.get("additionalFields")
+    payload["ProjectFacilities"][0]["isDeleted"] = True
+
+    url = f"/{project}/facility/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_project_facility_by_project(token, client, project_id):
+    payload = load_payload("project/project_facility", "search_project_facility.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectFacility"] = {"projectId": [project_id]}
+
+    url = f"/{project}/facility/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Facility search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("ProjectFacilities", [])
+
+
 def delete_project_resource(token, client, resource_data):
     """
     Delete a project resource (soft delete by setting isDeleted=true).
@@ -1711,6 +2429,60 @@ def delete_project_resource(token, client, resource_data):
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/{project}/resource/v1/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def create_project_resource_bulk(token, client, project_id, variant_id):
+    payload = load_payload("project/project_resource", "create_bulk_project_resource.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectResources"][0]["tenantId"] = tenantId
+    payload["ProjectResources"][0]["projectId"] = project_id
+    payload["ProjectResources"][0]["resource"]["productVariantId"] = variant_id
+
+    url = f"/{project}/resource/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Resource bulk creation failed with status {response.status_code}: {response.text}")
+
+    return response.status_code
+
+
+def update_project_resource_bulk(token, client, resource_data, new_type):
+    payload = load_payload("project/project_resource", "update_bulk_project_resource.json")
+
+    payload["ProjectResources"][0]["id"] = resource_data["id"]
+    payload["ProjectResources"][0]["tenantId"] = resource_data["tenantId"]
+    payload["ProjectResources"][0]["rowVersion"] = resource_data["rowVersion"]
+    payload["ProjectResources"][0]["auditDetails"] = resource_data["auditDetails"]
+    payload["ProjectResources"][0]["projectId"] = resource_data["projectId"]
+    payload["ProjectResources"][0]["resource"] = resource_data["resource"].copy()
+    payload["ProjectResources"][0]["resource"]["type"] = new_type
+    payload["ProjectResources"][0]["startDate"] = resource_data.get("startDate")
+    payload["ProjectResources"][0]["endDate"] = resource_data.get("endDate")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/resource/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_resource_bulk(token, client, resource_data):
+    payload = load_payload("project/project_resource", "delete_bulk_project_resource.json")
+
+    payload["ProjectResources"][0]["id"] = resource_data["id"]
+    payload["ProjectResources"][0]["tenantId"] = resource_data["tenantId"]
+    payload["ProjectResources"][0]["rowVersion"] = resource_data["rowVersion"]
+    payload["ProjectResources"][0]["auditDetails"] = resource_data["auditDetails"]
+    payload["ProjectResources"][0]["projectId"] = resource_data["projectId"]
+    payload["ProjectResources"][0]["resource"] = resource_data["resource"]
+    payload["ProjectResources"][0]["startDate"] = resource_data.get("startDate")
+    payload["ProjectResources"][0]["endDate"] = resource_data.get("endDate")
+    payload["ProjectResources"][0]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/resource/v1/bulk/_delete"
     response = client.post(url, payload)
     return response
 
@@ -1740,6 +2512,75 @@ def delete_project_staff(token, client, staff_data):
     url = f"/{project}/staff/v1/_delete"
     response = client.post(url, payload)
     return response
+
+
+def create_project_staff_bulk(token, client, project_id, userservice_uuid):
+    payload = load_payload("project/project_staff", "create_bulk_project_staff.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectStaff"][0]["tenantId"] = tenantId
+    payload["ProjectStaff"][0]["projectId"] = project_id
+    payload["ProjectStaff"][0]["userId"] = userservice_uuid
+
+    url = f"/{project}/staff/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Staff bulk creation failed with status {response.status_code}: {response.text}")
+
+    return response.status_code
+
+
+def update_project_staff_bulk(token, client, staff_data, new_end_date):
+    payload = load_payload("project/project_staff", "update_bulk_project_staff.json")
+
+    payload["ProjectStaff"][0]["id"] = staff_data["id"]
+    payload["ProjectStaff"][0]["tenantId"] = staff_data["tenantId"]
+    payload["ProjectStaff"][0]["rowVersion"] = staff_data["rowVersion"]
+    payload["ProjectStaff"][0]["auditDetails"] = staff_data["auditDetails"]
+    payload["ProjectStaff"][0]["userId"] = staff_data["userId"]
+    payload["ProjectStaff"][0]["projectId"] = staff_data["projectId"]
+    payload["ProjectStaff"][0]["startDate"] = staff_data.get("startDate")
+    payload["ProjectStaff"][0]["endDate"] = new_end_date
+    payload["ProjectStaff"][0]["additionalFields"] = staff_data.get("additionalFields")
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/staff/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_staff_bulk(token, client, staff_data):
+    payload = load_payload("project/project_staff", "delete_bulk_project_staff.json")
+
+    payload["ProjectStaff"][0]["id"] = staff_data["id"]
+    payload["ProjectStaff"][0]["tenantId"] = staff_data["tenantId"]
+    payload["ProjectStaff"][0]["rowVersion"] = staff_data["rowVersion"]
+    payload["ProjectStaff"][0]["auditDetails"] = staff_data["auditDetails"]
+    payload["ProjectStaff"][0]["userId"] = staff_data["userId"]
+    payload["ProjectStaff"][0]["projectId"] = staff_data["projectId"]
+    payload["ProjectStaff"][0]["startDate"] = staff_data.get("startDate")
+    payload["ProjectStaff"][0]["endDate"] = staff_data.get("endDate")
+    payload["ProjectStaff"][0]["additionalFields"] = staff_data.get("additionalFields")
+    payload["ProjectStaff"][0]["isDeleted"] = True
+    payload["RequestInfo"] = get_request_info(token)
+
+    url = f"/{project}/staff/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_project_staff_by_project(token, client, project_id):
+    payload = load_payload("project/project_staff", "search_project_staff.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectStaff"] = {"projectId": [project_id]}
+
+    url = f"/{project}/staff/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code != 200:
+        raise Exception(f"Project Staff search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("ProjectStaff", [])
 
 
 def create_project_beneficiary_full(token, client, project_id, individual_id, individual_client_ref_id):
@@ -1825,6 +2666,80 @@ def delete_project_beneficiary(token, client, beneficiary_data):
     return response
 
 
+def create_project_beneficiary_bulk(token, client, project_id, individual_id, individual_client_ref_id):
+    payload = load_payload("project/project_beneficiary", "create_bulk_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["ProjectBeneficiaries"][0]["clientReferenceId"] = client_ref_id
+    payload["ProjectBeneficiaries"][0]["tenantId"] = tenantId
+    payload["ProjectBeneficiaries"][0]["projectId"] = project_id
+    payload["ProjectBeneficiaries"][0]["beneficiaryId"] = individual_id
+    payload["ProjectBeneficiaries"][0]["beneficiaryClientReferenceId"] = individual_client_ref_id
+
+    url = f"/{project}/beneficiary/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Beneficiary bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_project_beneficiary_bulk(token, client, beneficiary_data, new_tag):
+    payload = load_payload("project/project_beneficiary", "update_bulk_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectBeneficiaries"][0]["id"] = beneficiary_data["id"]
+    payload["ProjectBeneficiaries"][0]["tenantId"] = beneficiary_data["tenantId"]
+    payload["ProjectBeneficiaries"][0]["clientReferenceId"] = beneficiary_data["clientReferenceId"]
+    payload["ProjectBeneficiaries"][0]["rowVersion"] = beneficiary_data["rowVersion"]
+    payload["ProjectBeneficiaries"][0]["auditDetails"] = beneficiary_data["auditDetails"]
+    payload["ProjectBeneficiaries"][0]["clientAuditDetails"] = beneficiary_data.get("clientAuditDetails")
+    payload["ProjectBeneficiaries"][0]["projectId"] = beneficiary_data["projectId"]
+    payload["ProjectBeneficiaries"][0]["beneficiaryId"] = beneficiary_data["beneficiaryId"]
+    payload["ProjectBeneficiaries"][0]["beneficiaryClientReferenceId"] = beneficiary_data["beneficiaryClientReferenceId"]
+    payload["ProjectBeneficiaries"][0]["dateOfRegistration"] = beneficiary_data.get("dateOfRegistration")
+    payload["ProjectBeneficiaries"][0]["tag"] = new_tag
+    payload["ProjectBeneficiaries"][0]["isDeleted"] = False
+
+    url = f"/{project}/beneficiary/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_beneficiary_bulk(token, client, beneficiary_data):
+    payload = load_payload("project/project_beneficiary", "delete_bulk_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectBeneficiaries"][0]["id"] = beneficiary_data["id"]
+    payload["ProjectBeneficiaries"][0]["tenantId"] = beneficiary_data["tenantId"]
+    payload["ProjectBeneficiaries"][0]["clientReferenceId"] = beneficiary_data["clientReferenceId"]
+    payload["ProjectBeneficiaries"][0]["rowVersion"] = beneficiary_data["rowVersion"]
+    payload["ProjectBeneficiaries"][0]["auditDetails"] = beneficiary_data["auditDetails"]
+    payload["ProjectBeneficiaries"][0]["clientAuditDetails"] = beneficiary_data.get("clientAuditDetails")
+    payload["ProjectBeneficiaries"][0]["projectId"] = beneficiary_data["projectId"]
+    payload["ProjectBeneficiaries"][0]["beneficiaryId"] = beneficiary_data["beneficiaryId"]
+    payload["ProjectBeneficiaries"][0]["beneficiaryClientReferenceId"] = beneficiary_data["beneficiaryClientReferenceId"]
+    payload["ProjectBeneficiaries"][0]["dateOfRegistration"] = beneficiary_data.get("dateOfRegistration")
+    payload["ProjectBeneficiaries"][0]["isDeleted"] = True
+
+    url = f"/{project}/beneficiary/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_project_beneficiary_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("project/project_beneficiary", "search_project_beneficiary.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["ProjectBeneficiary"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/{project}/beneficiary/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Beneficiary search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("ProjectBeneficiaries", [])
+
+
 def delete_project_task(token, client, task_data):
     """
     Delete a project task (soft delete by setting isDeleted=true).
@@ -1853,3 +2768,87 @@ def delete_project_task(token, client, task_data):
     url = f"/{project}/task/v1/_delete"
     response = client.post(url, payload)
     return response
+
+
+def create_project_task_bulk(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id):
+    payload = load_payload("project/project_task", "create_bulk_project_task.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["Tasks"][0]["clientReferenceId"] = client_ref_id
+    payload["Tasks"][0]["tenantId"] = tenantId
+    payload["Tasks"][0]["projectId"] = project_id
+    payload["Tasks"][0]["projectBeneficiaryId"] = beneficiary_id
+    payload["Tasks"][0]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["Tasks"][0]["resources"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Tasks"][0]["resources"][0]["taskClientReferenceId"] = client_ref_id
+    payload["Tasks"][0]["resources"][0]["productVariantId"] = variant_id
+    payload["Tasks"][0]["resources"][0]["tenantId"] = tenantId
+    payload["Tasks"][0]["address"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Tasks"][0]["address"]["tenantId"] = tenantId
+    payload["Tasks"][0]["address"]["locality"]["code"] = boundaryCode
+
+    url = f"/{project}/task/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Task bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_project_task_bulk(token, client, task_data, new_status):
+    payload = load_payload("project/project_task", "update_bulk_project_task.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Tasks"][0]["id"] = task_data["id"]
+    payload["Tasks"][0]["tenantId"] = task_data["tenantId"]
+    payload["Tasks"][0]["clientReferenceId"] = task_data["clientReferenceId"]
+    payload["Tasks"][0]["rowVersion"] = task_data["rowVersion"]
+    payload["Tasks"][0]["auditDetails"] = task_data["auditDetails"]
+    payload["Tasks"][0]["clientAuditDetails"] = task_data.get("clientAuditDetails")
+    payload["Tasks"][0]["projectId"] = task_data["projectId"]
+    payload["Tasks"][0]["projectBeneficiaryId"] = task_data["projectBeneficiaryId"]
+    payload["Tasks"][0]["projectBeneficiaryClientReferenceId"] = task_data.get("projectBeneficiaryClientReferenceId")
+    payload["Tasks"][0]["resources"] = task_data.get("resources", [])
+    payload["Tasks"][0]["address"] = task_data.get("address")
+    payload["Tasks"][0]["status"] = new_status
+    payload["Tasks"][0]["isDeleted"] = False
+
+    url = f"/{project}/task/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_project_task_bulk(token, client, task_data):
+    payload = load_payload("project/project_task", "delete_bulk_project_task.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Tasks"][0]["id"] = task_data["id"]
+    payload["Tasks"][0]["tenantId"] = task_data["tenantId"]
+    payload["Tasks"][0]["clientReferenceId"] = task_data["clientReferenceId"]
+    payload["Tasks"][0]["rowVersion"] = task_data["rowVersion"]
+    payload["Tasks"][0]["auditDetails"] = task_data["auditDetails"]
+    payload["Tasks"][0]["clientAuditDetails"] = task_data.get("clientAuditDetails")
+    payload["Tasks"][0]["projectId"] = task_data["projectId"]
+    payload["Tasks"][0]["projectBeneficiaryId"] = task_data["projectBeneficiaryId"]
+    payload["Tasks"][0]["projectBeneficiaryClientReferenceId"] = task_data.get("projectBeneficiaryClientReferenceId")
+    payload["Tasks"][0]["resources"] = task_data.get("resources", [])
+    payload["Tasks"][0]["address"] = task_data.get("address")
+    payload["Tasks"][0]["status"] = task_data.get("status")
+    payload["Tasks"][0]["isDeleted"] = True
+
+    url = f"/{project}/task/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_project_task_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("project/project_task", "search_project_task.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Task"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/{project}/task/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Project Task search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Tasks", [])

@@ -16,9 +16,9 @@
             "employeeType": "PERMANENT",
             "jurisdictions": [
                 {
-                    "hierarchy": "TCHAD",
+                    "hierarchy": "NIGERIA",
                     "boundaryType": "COUNTRY",
-                    "boundary": "ADMIN_TC",
+                    "boundary": "NIGERIA_NI",
                     "tenantId": "mz",
                     "roles": [
                         {
@@ -110,7 +110,7 @@
             ],
             "user": {
                 "mobileNumber": "8887005251",
-                "name": "Shubhang",
+                "name": "Automated-User",
                 "correspondenceAddress": "dg",
                 "emailId": "raj@gmail.com",
                 "gender": "MALE",

@@ -3,7 +3,7 @@
         {
             "tenantId": "mz",
             "productId": "P-2025-07-25-000520",
-            "sku": "Bednet",
+            "sku": "Automated-Bednet",
             "variation": "Grade 1",
             "additionalFields": {
                 "schema": "test",

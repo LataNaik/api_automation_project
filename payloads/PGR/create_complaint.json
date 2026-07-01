@@ -2,44 +2,119 @@
     "service": {
         "active": true,
         "tenantId": "mz",
-        "serviceCode": "SecurityIssues",
-        "description": "entered additional details ",
+        "serviceCode": "SyncNotWorking",
+        "description": "waesrdfg",
         "applicationStatus": "CREATED",
         "source": "web",
-        "isDeleted": false,
-        "rowVersion": 1,
-        "address": {
-            "locality": {
-                "code": "ADMIN_TC_10_07_12_MADADJANG"
-            },
-            "geoLocation": {}
-        },
-        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"boundaryCode\":\"ADMIN_TC_10_07_12_MADADJANG\"}",
-        "auditDetails": {
-            "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
-            "createdTime": 1767851070693,
-            "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
-            "lastModifiedTime": 1767851070693
-        },
-        "citizen": {
-            "id": 17187,
-            "uuid": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
-            "userName": "LN2",
+        "user": {
+            "id": 47593,
+            "uuid": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+            "userName": "LN1",
             "name": "Lata Naik",
-            "mobileNumber": "8887005247",
+            "mobileNumber": "8887005246",
             "emailId": "lata.naik@egovernments.org",
             "locale": null,
-            "type": "CITIZEN",
+            "type": "EMPLOYEE",
             "roles": [
                 {
-                    "name": "Citizen",
-                    "code": "CITIZEN",
+                    "name": "Logistical Officer",
+                    "code": "LOGISTICAL_OFFICER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "MDMS ADMIN",
+                    "code": "MDMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HRMS Admin",
+                    "code": "HRMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HELPDESK USER",
+                    "code": "HELPDESK_USER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Registrar",
+                    "code": "REGISTRAR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Monitor Local",
+                    "code": "MONITOR_LOCAL",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Boundary Manager",
+                    "code": "BOUNDARY_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "System Administrator",
+                    "code": "SYSTEM_ADMINISTRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Health Facilty Worker",
+                    "code": "HEALTH_FACILITY_WORKER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Distributor",
+                    "code": "DISTRIBUTOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "L2 Support",
+                    "code": "L2_SUPPORT",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Warehouse Manager",
+                    "code": "WAREHOUSE_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Microplan Campaign integrator",
+                    "code": "MICROPLAN_CAMPAIGN_INTEGRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "PGR Administrator",
+                    "code": "PGR-ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Microplan Admin",
+                    "code": "MICROPLAN_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Campaign Managers",
+                    "code": "CAMPAIGN_MANAGER",
                     "tenantId": "mz"
                 }
             ],
             "active": true,
             "tenantId": "mz",
             "permanentCity": null
+        },
+        "isDeleted": false,
+        "rowVersion": 1,
+        "address": {
+            "locality": {
+                "code": "NIGERIA_NI"
+            },
+            "geoLocation": {}
+        },
+        "additionalDetail": "{\"supervisorName\":null,\"supervisorContactNumber\":null,\"boundaryCode\":\"NIGERIA_NI\"}",
+        "auditDetails": {
+            "createdBy": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+            "createdTime": 1781856105133,
+            "lastModifiedBy": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+            "lastModifiedTime": 1781856105133
         }
     },
     "workflow": {
@@ -47,6 +122,17 @@
         "assignes": [],
         "hrmsAssignes": [],
         "comments": "",
-        "verificationDocuments": null
+        "verificationDocuments": [
+            {
+                "fileStoreId": "cf6c0781-0460-4c44-ad31-6fe6d8042ef8",
+                "tenantId": "mz",
+                "auditDetails": {
+                    "createdBy": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+                    "lastModifiedBy": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+                    "createdTime": 1781856103211,
+                    "lastModifiedTime": 1781856103211
+                }
+            }
+        ]
     }
 }

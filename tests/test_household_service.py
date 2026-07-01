@@ -3,9 +3,9 @@ from utils.api_client import APIClient
 from utils.auth import get_auth_token
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
-from utils.search_helpers import search_entity, extract_id_from_file
+from utils.search_helpers import search_entity, extract_id_from_file, poll_until_found
 from test_individual_service import create_individual
-from utils.config import boundaryCode, invalidTenantId
+from utils.config import tenantId, boundaryCode, invalidTenantId, search_limit, search_offset
 import uuid
 import json
 import random
@@ -251,50 +251,44 @@ def test_update_household():
 
 @pytest.mark.positive
 def test_update_household_member():
-    """Test to update a household member twice. Creates household, individual, and member internally first, then updates isHeadOfHousehold twice ending with true."""
+    """Test updating a non-head household member to become the head (isHeadOfHousehold: False → True).
+    Creates a household with a head member first, then adds a second non-head member and promotes it."""
     token = get_auth_token("user")
     client = APIClient(token=token)
 
-    # Step 1: Create household member (which internally creates household and individual)
-    print("Creating household member for update test...")
-    res = create_household_member(token, client)
-    assert res.status_code in [200, 202], f"Household Member creation failed: {res.text}"
-    member_data = res.json()["HouseholdMember"]
-    member_id = member_data["id"]
-    print(f"Household Member created with ID: {member_id}")
+    # Step 1: Create household with a head member
+    print("Creating household...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed: {household_status}"
+    household_id = household_data["id"]
+    household_client_ref_id = household_data["clientReferenceId"]
+    print(f"Household created with ID: {household_id}")
 
-    # Step 2: Search for the member to get full data for update
-    members = search_entity(
-        entity_type="household",
-        token=token,
-        client=client,
-        entity_id=member_id,
-        payload_file="search_householdMember.json",
-        endpoint="/household/member/v1/_search",
-        response_key="HouseholdMembers"
+    print("Creating first individual (head member)...")
+    head_individual_id, head_individual_client_ref_id, _, ind_status = create_individual(token, client)
+    assert ind_status in [200, 202], f"Individual creation failed: {ind_status}"
+    create_household_member_full(token, client, household_id, household_client_ref_id, head_individual_id, head_individual_client_ref_id, is_head=True)
+    print("Head member created.")
+
+    # Step 2: Create a second individual and add as non-head member
+    print("Creating second individual (non-head member)...")
+    individual_id, individual_client_ref_id, _, ind_status2 = create_individual(token, client)
+    assert ind_status2 in [200, 202], f"Second individual creation failed: {ind_status2}"
+
+    member_data, member_status = create_household_member_full(
+        token, client, household_id, household_client_ref_id,
+        individual_id, individual_client_ref_id, is_head=False
     )
-    assert len(members) > 0, "Could not find created household member"
-    member_full_data = members[0]
-    original_is_head = member_full_data.get("isHeadOfHousehold", False)
-    print(f"Original isHeadOfHousehold: {original_is_head}")
+    assert member_status in [200, 202], f"Non-head member creation failed: {member_status}"
+    print(f"Non-head member created with ID: {member_data['id']}, isHeadOfHousehold: {member_data['isHeadOfHousehold']}")
 
-    # Step 3: First update - set isHeadOfHousehold to False
-    print("First update: Setting isHeadOfHousehold to False...")
-    response1 = update_household_member(token, client, member_full_data, False)
-    assert response1.status_code in [200, 202], f"First update failed: {response1.text}"
-    updated_member1 = response1.json()["HouseholdMember"]
-    assert updated_member1["isHeadOfHousehold"] == False, f"First update failed. Expected False, got {updated_member1['isHeadOfHousehold']}"
-    print(f"First update successful. isHeadOfHousehold is now False")
-
-    # Step 4: Second update - set isHeadOfHousehold to True
-    print("Second update: Setting isHeadOfHousehold to True...")
-    response2 = update_household_member(token, client, updated_member1, True)
-    assert response2.status_code in [200, 202], f"Second update failed: {response2.text}"
-    updated_member2 = response2.json()["HouseholdMember"]
-    assert updated_member2["isHeadOfHousehold"] == True, f"Second update failed. Expected True, got {updated_member2['isHeadOfHousehold']}"
-    print(f"Second update successful. isHeadOfHousehold is now True")
-
-    print(f"Household Member updated successfully with 2 updates. Final isHeadOfHousehold: True")
+    # Step 3: Promote non-head member to head (False → True)
+    print("Updating member: setting isHeadOfHousehold to True...")
+    response = update_household_member(token, client, member_data, True)
+    assert response.status_code in [200, 202], f"Update failed: {response.text}"
+    updated_member = response.json()["HouseholdMember"]
+    assert updated_member["isHeadOfHousehold"] == True, f"Update failed. Expected True, got {updated_member['isHeadOfHousehold']}"
+    print(f"Household Member updated successfully. isHeadOfHousehold is now True")
 
 
 @pytest.mark.positive
@@ -319,6 +313,63 @@ def test_delete_household():
     deleted_household = response.json()["Household"]
     assert deleted_household["isDeleted"] == True, f"Household not marked as deleted"
     print(f"Household {household_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_create_household_bulk():
+    """Test to bulk create a household. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Bulk creating household...")
+    client_ref_id, status_code = create_household_bulk(token, client)
+    assert status_code == 202, f"Household bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    households = poll_until_found(lambda: search_household_by_client_ref(token, client, client_ref_id))
+    assert households, f"No household found with clientReferenceId {client_ref_id} after bulk create"
+    assert households[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: household with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_household_bulk():
+    """Test to bulk update a household. Creates household first, then bulk updates memberCount."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating household for bulk update test...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    print(f"Household created with ID: {household_data['id']}")
+
+    print("Bulk updating household memberCount to 5...")
+    response = update_household_bulk(token, client, household_data, new_member_count=5)
+    assert response.status_code == 202, f"Household bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    households = poll_until_found(lambda: search_household_by_client_ref(token, client, household_data["clientReferenceId"]))
+    assert households, f"Household not found after bulk update"
+    assert households[0]["memberCount"] == 5, f"memberCount not updated. Got {households[0].get('memberCount')}"
+    print("Household bulk updated successfully. memberCount verified as 5.")
+
+
+@pytest.mark.positive
+def test_delete_household_bulk():
+    """Test to bulk delete a household. Creates household first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating household for bulk delete test...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data["id"]
+    print(f"Household created with ID: {household_id}")
+
+    print("Bulk deleting household...")
+    response = delete_household_bulk(token, client, household_data)
+    assert response.status_code == 202, f"Household bulk delete failed: {response.text}"
+    print(f"Household {household_id} bulk deleted successfully (202 accepted)")
 
 
 @pytest.mark.positive
@@ -359,6 +410,112 @@ def test_delete_household_member():
     print(f"Household Member {member_id} deleted successfully")
 
 
+@pytest.mark.positive
+def test_create_household_member_bulk():
+    """Test to bulk create a household member. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating household...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data["id"]
+    household_client_ref_id = household_data["clientReferenceId"]
+    print(f"Household created with ID: {household_id}")
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Bulk creating household member...")
+    client_ref_id, status_code = create_household_member_bulk(
+        token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id
+    )
+    assert status_code == 202, f"Household Member bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    members = poll_until_found(lambda: search_household_member_by_client_ref(token, client, client_ref_id))
+    assert members, f"No household member found with clientReferenceId {client_ref_id} after bulk create"
+    assert members[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: household member with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_household_member_bulk():
+    """Test bulk updating a non-head household member to become the head (isHeadOfHousehold: False → True).
+    Creates a household with a head member first, then adds a second non-head member and bulk promotes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating household...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data["id"]
+    household_client_ref_id = household_data["clientReferenceId"]
+    print(f"Household created with ID: {household_id}")
+
+    print("Creating first individual (head member)...")
+    head_individual_id, head_individual_client_ref_id, _, head_status = create_individual(token, client)
+    assert head_status in [200, 202], f"Head individual creation failed: {head_status}"
+    create_household_member_full(token, client, household_id, household_client_ref_id, head_individual_id, head_individual_client_ref_id, is_head=True)
+    print("Head member created.")
+
+    print("Creating second individual (non-head member)...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Creating non-head household member...")
+    member_data, member_status = create_household_member_full(
+        token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id, is_head=False
+    )
+    assert member_status in [200, 202], f"Household Member creation failed with status: {member_status}"
+    print(f"Non-head member created with ID: {member_data['id']}, isHeadOfHousehold: {member_data['isHeadOfHousehold']}")
+
+    print("Bulk updating household member isHeadOfHousehold to True...")
+    response = update_household_member_bulk(token, client, member_data, new_is_head=True)
+    assert response.status_code == 202, f"Household Member bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    members = poll_until_found(lambda: search_household_member_by_client_ref(token, client, member_data["clientReferenceId"]))
+    assert members, f"Household Member not found after bulk update"
+    assert members[0]["isHeadOfHousehold"] == True, f"isHeadOfHousehold not updated. Got {members[0].get('isHeadOfHousehold')}"
+    print("Household Member bulk updated successfully. isHeadOfHousehold verified as True.")
+
+
+@pytest.mark.positive
+def test_delete_household_member_bulk():
+    """Test to bulk delete a household member. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating household...")
+    household_data, household_status = create_household_full(token, client)
+    assert household_status in [200, 202], f"Household creation failed with status: {household_status}"
+    household_id = household_data["id"]
+    household_client_ref_id = household_data["clientReferenceId"]
+    print(f"Household created with ID: {household_id}")
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Creating household member (regular create to get full data)...")
+    member_data, member_status = create_household_member_full(
+        token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id
+    )
+    assert member_status in [200, 202], f"Household Member creation failed with status: {member_status}"
+    member_id = member_data["id"]
+    print(f"Household Member created with ID: {member_id}")
+
+    print("Bulk deleting household member...")
+    response = delete_household_member_bulk(token, client, member_data)
+    assert response.status_code == 202, f"Household Member bulk delete failed: {response.text}"
+    print(f"Household Member {member_id} bulk deleted successfully (202 accepted)")
+
+
 # --- Helper function ---
 
 def create_household(token, client, tenant_id=None):
@@ -378,10 +535,9 @@ def create_household(token, client, tenant_id=None):
     payload["Household"]["additionalFields"]["fields"][0]["value"] = selected_type
     payload["RequestInfo"] = get_request_info(token)
 
-    # Override tenantId if provided (for negative testing)
-    if tenant_id is not None:
-        payload["Household"]["tenantId"] = tenant_id
-        payload["Household"]["address"]["tenantId"] = tenant_id
+    effective_tenant = tenant_id if tenant_id is not None else tenantId
+    payload["Household"]["tenantId"] = effective_tenant
+    payload["Household"]["address"]["tenantId"] = effective_tenant
 
     # Make the API call
     response = client.post("/household/v1/_create", payload)
@@ -437,9 +593,7 @@ def create_household_member(token, client, household_id="create", household_clie
     payload["HouseholdMember"]["individualClientReferenceId"] = individualClientReferenceId
     payload["RequestInfo"] = get_request_info(token)
 
-    # Override tenantId if provided (for negative testing)
-    if tenant_id is not None:
-        payload["HouseholdMember"]["tenantId"] = tenant_id
+    payload["HouseholdMember"]["tenantId"] = tenant_id if tenant_id is not None else tenantId
 
     res = client.post("/household/member/v1/_create", payload)
     return res
@@ -548,7 +702,7 @@ def delete_household(token, client, household_data):
     return response
 
 
-def create_household_member_full(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id):
+def create_household_member_full(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id, is_head=True):
     """
     Create a household member and return full data for delete operations.
 
@@ -561,7 +715,7 @@ def create_household_member_full(token, client, household_id, household_client_r
     payload["HouseholdMember"]["householdClientReferenceId"] = household_client_ref_id
     payload["HouseholdMember"]["individualId"] = individual_id
     payload["HouseholdMember"]["individualClientReferenceId"] = individual_client_ref_id
-    payload["HouseholdMember"]["isHeadOfHousehold"] = True
+    payload["HouseholdMember"]["isHeadOfHousehold"] = is_head
     payload["RequestInfo"] = get_request_info(token)
 
     response = client.post("/household/member/v1/_create", payload)
@@ -598,3 +752,141 @@ def delete_household_member(token, client, member_data):
 
     response = client.post("/household/member/v1/_delete", payload)
     return response
+
+
+def create_household_bulk(token, client):
+    payload = load_payload("household", "create_bulk_household.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["Households"][0]["clientReferenceId"] = client_ref_id
+    payload["Households"][0]["address"]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Households"][0]["tenantId"] = tenantId
+    payload["Households"][0]["address"]["tenantId"] = tenantId
+
+    response = client.post("/household/v1/bulk/_create", payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_household_bulk(token, client, household_data, new_member_count):
+    payload = load_payload("household", "update_bulk_household.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Households"][0]["id"] = household_data["id"]
+    payload["Households"][0]["tenantId"] = household_data["tenantId"]
+    payload["Households"][0]["clientReferenceId"] = household_data["clientReferenceId"]
+    payload["Households"][0]["rowVersion"] = household_data["rowVersion"]
+    payload["Households"][0]["auditDetails"] = household_data["auditDetails"]
+    payload["Households"][0]["clientAuditDetails"] = household_data.get("clientAuditDetails")
+    payload["Households"][0]["address"] = household_data["address"]
+    payload["Households"][0]["memberCount"] = new_member_count
+    payload["Households"][0]["isDeleted"] = False
+
+    response = client.post("/household/v1/bulk/_update", payload)
+    return response
+
+
+def delete_household_bulk(token, client, household_data):
+    payload = load_payload("household", "delete_bulk_household.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Households"][0]["id"] = household_data["id"]
+    payload["Households"][0]["tenantId"] = household_data["tenantId"]
+    payload["Households"][0]["clientReferenceId"] = household_data["clientReferenceId"]
+    payload["Households"][0]["rowVersion"] = household_data["rowVersion"]
+    payload["Households"][0]["auditDetails"] = household_data["auditDetails"]
+    payload["Households"][0]["clientAuditDetails"] = household_data.get("clientAuditDetails")
+    payload["Households"][0]["address"] = household_data["address"]
+    payload["Households"][0]["memberCount"] = household_data.get("memberCount", 1)
+    payload["Households"][0]["isDeleted"] = True
+
+    response = client.post("/household/v1/bulk/_delete", payload)
+    return response
+
+
+def search_household_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("household", "search_household.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Household"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/household/v1/_search?tenantId={tenantId}&limit={search_limit}&offset={search_offset}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Households", [])
+
+
+def create_household_member_bulk(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id):
+    payload = load_payload("household", "create_bulk_householdMember.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["HouseholdMembers"][0]["clientReferenceId"] = client_ref_id
+    payload["HouseholdMembers"][0]["tenantId"] = tenantId
+    payload["HouseholdMembers"][0]["householdId"] = household_id
+    payload["HouseholdMembers"][0]["householdClientReferenceId"] = household_client_ref_id
+    payload["HouseholdMembers"][0]["individualId"] = individual_id
+    payload["HouseholdMembers"][0]["individualClientReferenceId"] = individual_client_ref_id
+
+    response = client.post("/household/member/v1/bulk/_create", payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Member bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_household_member_bulk(token, client, member_data, new_is_head):
+    payload = load_payload("household", "update_bulk_householdMember.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HouseholdMembers"][0]["id"] = member_data["id"]
+    payload["HouseholdMembers"][0]["tenantId"] = member_data["tenantId"]
+    payload["HouseholdMembers"][0]["clientReferenceId"] = member_data["clientReferenceId"]
+    payload["HouseholdMembers"][0]["rowVersion"] = member_data["rowVersion"]
+    payload["HouseholdMembers"][0]["auditDetails"] = member_data["auditDetails"]
+    payload["HouseholdMembers"][0]["clientAuditDetails"] = member_data.get("clientAuditDetails")
+    payload["HouseholdMembers"][0]["householdId"] = member_data["householdId"]
+    payload["HouseholdMembers"][0]["householdClientReferenceId"] = member_data["householdClientReferenceId"]
+    payload["HouseholdMembers"][0]["individualId"] = member_data["individualId"]
+    payload["HouseholdMembers"][0]["individualClientReferenceId"] = member_data["individualClientReferenceId"]
+    payload["HouseholdMembers"][0]["isHeadOfHousehold"] = new_is_head
+    payload["HouseholdMembers"][0]["isDeleted"] = False
+
+    response = client.post("/household/member/v1/bulk/_update", payload)
+    return response
+
+
+def delete_household_member_bulk(token, client, member_data):
+    payload = load_payload("household", "delete_bulk_householdMember.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HouseholdMembers"][0]["id"] = member_data["id"]
+    payload["HouseholdMembers"][0]["tenantId"] = member_data["tenantId"]
+    payload["HouseholdMembers"][0]["clientReferenceId"] = member_data["clientReferenceId"]
+    payload["HouseholdMembers"][0]["rowVersion"] = member_data["rowVersion"]
+    payload["HouseholdMembers"][0]["auditDetails"] = member_data["auditDetails"]
+    payload["HouseholdMembers"][0]["clientAuditDetails"] = member_data.get("clientAuditDetails")
+    payload["HouseholdMembers"][0]["householdId"] = member_data["householdId"]
+    payload["HouseholdMembers"][0]["householdClientReferenceId"] = member_data["householdClientReferenceId"]
+    payload["HouseholdMembers"][0]["individualId"] = member_data["individualId"]
+    payload["HouseholdMembers"][0]["individualClientReferenceId"] = member_data["individualClientReferenceId"]
+    payload["HouseholdMembers"][0]["isHeadOfHousehold"] = member_data.get("isHeadOfHousehold", False)
+    payload["HouseholdMembers"][0]["isDeleted"] = True
+
+    response = client.post("/household/member/v1/bulk/_delete", payload)
+    return response
+
+
+def search_household_member_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("household", "search_householdMember.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HouseholdMember"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/household/member/v1/_search?tenantId={tenantId}&limit={search_limit}&offset={search_offset}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Household Member search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("HouseholdMembers", [])

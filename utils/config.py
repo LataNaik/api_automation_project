@@ -8,7 +8,7 @@ tenantId = os.getenv("TENANTID", "mz")
 
 search_limit = os.getenv("SEARCH_LIMIT", "100")
 search_offset = os.getenv("SEARCH_OFFSET", "0")
-hierarchyType = os.getenv("HIERARCHYTYPE")
+hierarchyType = os.getenv("BOUNDARY_HIERARCHY_CODE") or os.getenv("HIERARCHYTYPE")
 boundaryCode = os.getenv("BOUNDARY_CODE")
 boundaryType=os.getenv("BOUNDARY_TYPE")
 

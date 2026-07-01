@@ -1,0 +1,62 @@
+{
+    "Households": [
+        {
+            "memberCount": 2,
+            "tenantId": "mz",
+            "source": "dolore enim",
+            "applicationId": "07fa01a1-3dbf-4033-b642-32dd3b12756d",
+            "hasErrors": false,
+            "householdType": "FAMILY",
+            "additionalFields": {
+                "schema": "Household",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "houseStructureTypes",
+                        "value": "GLASS"
+                    },
+                    {
+                        "key": "noOfRooms",
+                        "value": 1
+                    },
+                    {
+                        "key": "pregnantWomen",
+                        "value": 1
+                    },
+                    {
+                        "key": "children",
+                        "value": 3
+                    },
+                    {
+                        "key": "latitude",
+                        "value": 12.9716
+                    },
+                    {
+                        "key": "longitude",
+                        "value": 77.5946
+                    }
+                ]
+            },
+            "clientReferenceId": "57ebfe1c-ea64-471f-80ca-83a5bfc0a7ab",
+            "clientAuditDetails": {
+                "createdBy": "0b35570a-a269-4a4f-a0f5-2c310e8108a0",
+                "lastModifiedBy": "951f11ab-763c-4af9-9330-a92f0e7eb427",
+                "createdTime": 1752582847040,
+                "lastModifiedTime": 1752582847040
+            },
+            "address": {
+                "clientReferenceId": "7e685bc1-fe74-458d-aeeb-67bf9398c3ac",
+                "tenantId": "mz",
+                "latitude": 12.9716,
+                "longitude": 77.5946,
+                "locationAccuracy": 11.27,
+                "type": "CORRESPONDENCE",
+                "addressLine1": "Naveen",
+                "locality": {
+                    "code": "MICROPLAN_MO_01_01_02_01_ANG_OMBE"
+                }
+            },
+            "isDeleted": false
+        }
+    ]
+}

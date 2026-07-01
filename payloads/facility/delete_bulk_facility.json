@@ -1,0 +1,60 @@
+{
+    "Facilities": [
+        {
+            "id": "F-2025-05-22-000026",
+            "tenantId": "oy",
+            "source": null,
+            "rowVersion": 3,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "test_e37466be924cjhghjg",
+                "version": 8,
+                "fields": [
+                    {
+                        "key": "test",
+                        "value": "test"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "createdTime": 1747912034909,
+                "lastModifiedTime": 1747912431410
+            },
+            "clientReferenceId": "eccc9fcb-82f0-4e83-a9bd-8155399db279",
+            "clientAuditDetails": null,
+            "isPermanent": true,
+            "name": "IRS Facilities",
+            "usage": "Storing Resource",
+            "storageCapacity": 200,
+            "address": {
+                "id": "b398c394-1e1e-42a3-b3c9-26193f2a265a",
+                "tenantId": "oy",
+                "clientReferenceId": null,
+                "doorNo": "123",
+                "latitude": 12.34,
+                "longitude": 123.45,
+                "locationAccuracy": 124.0,
+                "type": "PERMANENT",
+                "addressLine1": "Alpine Apartments",
+                "addressLine2": "Road Number 12",
+                "landmark": "Near Niagara Lake",
+                "city": "Bangalore",
+                "pincode": "1234567",
+                "buildingName": "Alpine Apartments",
+                "street": "test_da0b8ebec5ef",
+                "locality": {
+                    "id": null,
+                    "tenantId": null,
+                    "code": "STATE_CODE_OYO",
+                    "geometry": null,
+                    "auditDetails": null,
+                    "additionalDetails": null
+                }
+            },
+            "isDeleted": true
+        }
+    ]
+}

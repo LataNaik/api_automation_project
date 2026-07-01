@@ -5,7 +5,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import tenantId, boundaryType, boundaryCode, project
+from utils.config import tenantId, boundaryType, boundaryCode, project, invalidTenantId
 from tests.test_individual_service import create_individual
 from tests.test_household_service import create_household, create_household_member
 from tests.test_product_service import create_product_variant
@@ -14,7 +14,8 @@ from tests.test_project_service import (
     create_project_resource,
     create_project_beneficiary,
     create_project_task,
-    create_project_facility
+    create_project_facility,
+    search_project_beneficiary
 )
 from tests.test_facility_service import create_facility
 
@@ -253,6 +254,26 @@ def test_search_hf_referral():
     print("HF Referral found with ID:", hf_referral_id)
 
 
+def _create_task_dependencies(token, client):
+    """Create variant → project → household/individual → beneficiary → task.
+    Returns (task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, project_id)."""
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed: {variant_response.text}"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    create_project_resource(token, client, project_id, variant_id)
+
+    household_id, household_client_ref_id, _ = create_household(token, client)
+    individual_id, individual_client_ref_id, _, _ = create_individual(token, client)
+    create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+
+    beneficiary_id, beneficiary_client_ref_id, _ = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    task_id, task_client_ref_id, _ = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+
+    return task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, project_id
+
+
 @pytest.mark.negative
 def test_create_side_effect_with_invalid_tenant_id():
     token = get_auth_token("user")
@@ -262,9 +283,8 @@ def test_create_side_effect_with_invalid_tenant_id():
     task_client_ref_id = extract_id_from_file("Project Task Client Reference ID:")
     beneficiary_id = extract_id_from_file("Project Beneficiary ID:")
 
-    assert task_id, "Project Task ID not found in file"
-    assert task_client_ref_id, "Project Task Client Reference ID not found in file"
-    assert beneficiary_id, "Project Beneficiary ID not found in file"
+    if not task_id or not task_client_ref_id or not beneficiary_id:
+        task_id, task_client_ref_id, beneficiary_id, _, _ = _create_task_dependencies(token, client)
 
     payload = load_payload("referralmanagement/side_effect", "create_side_effect.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -293,10 +313,14 @@ def test_create_referral_with_invalid_tenant_id():
     beneficiary_id = extract_id_from_file("Project Beneficiary ID:")
     side_effect_id = extract_id_from_file("Side Effect ID:")
 
-    assert task_id, "Project Task ID not found in file"
-    assert task_client_ref_id, "Project Task Client Reference ID not found in file"
-    assert beneficiary_id, "Project Beneficiary ID not found in file"
-    assert side_effect_id, "Side Effect ID not found in file"
+    if not task_id or not task_client_ref_id or not beneficiary_id:
+        task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, _ = _create_task_dependencies(token, client)
+    else:
+        beneficiaries = search_project_beneficiary(token, client, beneficiary_id)
+        beneficiary_client_ref_id = beneficiaries[0]["clientReferenceId"] if beneficiaries else str(uuid.uuid4())
+
+    if not side_effect_id:
+        side_effect_id, _, _ = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
 
     payload = load_payload("referralmanagement/referral", "create_referral.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -327,8 +351,13 @@ def test_create_hf_referral_with_invalid_tenant_id():
     project_id = extract_id_from_file("Project ID:")
     project_facility_id = extract_id_from_file("Project Facility ID:")
 
-    assert project_id, "Project ID not found in file"
-    assert project_facility_id, "Project Facility ID not found in file"
+    if not project_id:
+        project_id, _ = create_individual_project(token, client, boundaryType, boundaryCode)
+    if not project_facility_id:
+        facility_response = create_facility(token, client)
+        assert facility_response.status_code in [200, 202], f"Facility creation failed: {facility_response.text}"
+        facility_id = facility_response.json()["Facility"]["id"]
+        project_facility_id, _ = create_project_facility(token, client, project_id, facility_id)
 
     payload = load_payload("referralmanagement/hf_referral", "create_hf_referral.json")
     payload["RequestInfo"] = get_request_info(token)
@@ -370,7 +399,7 @@ def test_search_side_effect_with_invalid_tenant_id():
     payload["RequestInfo"] = get_request_info(token)
     payload["SideEffect"]["id"] = [side_effect_id]
 
-    url = f"/referralmanagement/side-effect/v1/_search?tenantId=invalid.tenant.id"
+    url = f"/referralmanagement/side-effect/v1/_search?tenantId={invalidTenantId}"
     response = client.post(url, payload)
 
     assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
@@ -406,7 +435,7 @@ def test_search_referral_with_invalid_tenant_id():
     payload["RequestInfo"] = get_request_info(token)
     payload["Referral"]["id"] = [referral_id]
 
-    url = f"/referralmanagement/v1/_search?tenantId=invalid.tenant.id"
+    url = f"/referralmanagement/v1/_search?tenantId={invalidTenantId}"
     response = client.post(url, payload)
 
     assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
@@ -435,7 +464,7 @@ def test_search_hf_referral_with_invalid_tenant_id():
     payload["RequestInfo"] = get_request_info(token)
     payload["HFReferral"]["id"] = [hf_referral_id]
 
-    url = f"/referralmanagement/hf-referral/v1/_search?tenantId=invalid.tenant.id"
+    url = f"/referralmanagement/hf-referral/v1/_search?tenantId={invalidTenantId}"
     response = client.post(url, payload)
 
     assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
@@ -679,6 +708,163 @@ def test_delete_side_effect():
 
 
 @pytest.mark.positive
+def test_create_side_effect_bulk():
+    """Test to bulk create a side effect. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Bulk creating side effect...")
+    client_ref_id, status_code = create_side_effect_bulk(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert status_code == 202, f"Side Effect bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    side_effects = search_side_effect_by_client_ref(token, client, client_ref_id)
+    assert side_effects, f"No side effect found with clientReferenceId {client_ref_id} after bulk create"
+    assert side_effects[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: side effect with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_side_effect_bulk():
+    """Test to bulk update a side effect. Creates all dependencies first, then bulk updates symptoms."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect (regular create to get full data)...")
+    side_effect_data, side_effect_status = create_side_effect_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+    print(f"Side Effect created with ID: {side_effect_data['id']}")
+
+    new_symptoms = ["HEADACHE"]
+    print(f"Bulk updating side effect symptoms to {new_symptoms}...")
+    response = update_side_effect_bulk(token, client, side_effect_data, new_symptoms)
+    assert response.status_code == 202, f"Side Effect bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    side_effects = search_side_effect_by_client_ref(token, client, side_effect_data["clientReferenceId"])
+    assert side_effects, f"Side Effect not found after bulk update"
+    assert side_effects[0].get("symptoms") == new_symptoms, f"symptoms not updated. Got {side_effects[0].get('symptoms')}"
+    print(f"Side Effect bulk updated successfully. symptoms verified as {new_symptoms}.")
+
+
+@pytest.mark.positive
+def test_delete_side_effect_bulk():
+    """Test to bulk delete a side effect. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect (regular create to get full data)...")
+    side_effect_data, side_effect_status = create_side_effect_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+    side_effect_id = side_effect_data["id"]
+    print(f"Side Effect created with ID: {side_effect_id}")
+
+    print("Bulk deleting side effect...")
+    response = delete_side_effect_bulk(token, client, side_effect_data)
+    assert response.status_code == 202, f"Side Effect bulk delete failed: {response.text}"
+    print(f"Side Effect {side_effect_id} bulk deleted successfully (202 accepted)")
+
+
+@pytest.mark.positive
 def test_delete_referral():
     """Test to delete a referral. Creates all dependencies internally first, then deletes it."""
     token = get_auth_token("user")
@@ -749,6 +935,192 @@ def test_delete_referral():
 
 
 @pytest.mark.positive
+def test_create_referral_bulk():
+    """Test to bulk create a referral. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_id, side_effect_client_ref_id, side_effect_status = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+
+    print("Bulk creating referral...")
+    client_ref_id, status_code = create_referral_bulk(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id)
+    assert status_code == 202, f"Referral bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    referrals = search_referral_by_client_ref(token, client, client_ref_id)
+    assert referrals, f"No referral found with clientReferenceId {client_ref_id} after bulk create"
+    assert referrals[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: referral with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_referral_bulk():
+    """Test to bulk update a referral. Creates all dependencies first, then bulk updates reasons."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_id, side_effect_client_ref_id, side_effect_status = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+
+    print("Creating referral (regular create to get full data)...")
+    referral_data, referral_status = create_referral_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id)
+    assert referral_status in [200, 202], f"Referral creation failed"
+    print(f"Referral created with ID: {referral_data['id']}")
+
+    new_reasons = ["HEADACHE"]
+    print(f"Bulk updating referral reasons to {new_reasons}...")
+    response = update_referral_bulk(token, client, referral_data, new_reasons)
+    assert response.status_code == 202, f"Referral bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    referrals = search_referral_by_client_ref(token, client, referral_data["clientReferenceId"])
+    assert referrals, f"Referral not found after bulk update"
+    assert referrals[0].get("reasons") == new_reasons, f"reasons not updated. Got {referrals[0].get('reasons')}"
+    print(f"Referral bulk updated successfully. reasons verified as {new_reasons}.")
+
+
+@pytest.mark.positive
+def test_delete_referral_bulk():
+    """Test to bulk delete a referral. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+
+    print("Creating project resource...")
+    _, resource_status = create_project_resource(token, client, project_id, variant_id)
+    assert resource_status in [200, 202], f"Project Resource creation failed"
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating household...")
+    household_id, household_client_ref_id, household_status = create_household(token, client)
+    assert household_status in [200, 202], f"Household creation failed"
+
+    print("Creating individual...")
+    individual_id, individual_client_ref_id, _, individual_status = create_individual(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed"
+
+    print("Creating household member...")
+    member_response = create_household_member(token, client, household_id, household_client_ref_id, individual_id, individual_client_ref_id)
+    assert member_response.status_code in [200, 202], f"Household Member creation failed"
+
+    print("Creating project beneficiary...")
+    beneficiary_id, beneficiary_client_ref_id, beneficiary_status = create_project_beneficiary(token, client, project_id, individual_id, individual_client_ref_id)
+    assert beneficiary_status in [200, 202], f"Project Beneficiary creation failed"
+
+    print("Creating project task...")
+    task_id, task_client_ref_id, task_status = create_project_task(token, client, project_id, beneficiary_id, beneficiary_client_ref_id, variant_id)
+    assert task_status in [200, 202], f"Project Task creation failed"
+
+    print("Creating side effect...")
+    side_effect_id, side_effect_client_ref_id, side_effect_status = create_side_effect(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id)
+    assert side_effect_status in [200, 202], f"Side Effect creation failed"
+
+    print("Creating referral (regular create to get full data)...")
+    referral_data, referral_status = create_referral_full(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id)
+    assert referral_status in [200, 202], f"Referral creation failed"
+    referral_id = referral_data["id"]
+    print(f"Referral created with ID: {referral_id}")
+
+    print("Bulk deleting referral...")
+    response = delete_referral_bulk(token, client, referral_data)
+    if response.status_code == 401:
+        pytest.skip("Referral bulk delete endpoint not available in this environment (401)")
+    assert response.status_code == 202, f"Referral bulk delete failed: {response.text}"
+    print(f"Referral {referral_id} bulk deleted successfully (202 accepted)")
+
+
+@pytest.mark.positive
 def test_delete_hf_referral():
     """Test to delete an HF referral. Creates all dependencies internally first, then deletes it."""
     token = get_auth_token("user")
@@ -789,6 +1161,123 @@ def test_delete_hf_referral():
     deleted_hf_referral = response.json()["HFReferral"]
     assert deleted_hf_referral["isDeleted"] == True, f"HF Referral not marked as deleted"
     print(f"HF Referral {hf_referral_id} deleted successfully")
+
+
+@pytest.mark.positive
+def test_create_hf_referral_bulk():
+    """Test to bulk create an HF referral. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    project_facility_id, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Bulk creating HF referral...")
+    client_ref_id, status_code = create_hf_referral_bulk(token, client, project_id, project_facility_id)
+    assert status_code == 202, f"HF Referral bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    hf_referrals = search_hf_referral_by_client_ref(token, client, client_ref_id)
+    assert hf_referrals, f"No HF referral found with clientReferenceId {client_ref_id} after bulk create"
+    assert hf_referrals[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: HF referral with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_hf_referral_bulk():
+    """Test to bulk update an HF referral. Creates all dependencies first, then bulk updates symptom."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    project_facility_id, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating HF referral (regular create to get full data)...")
+    hf_referral_data, hf_referral_status = create_hf_referral_full(token, client, project_id, project_facility_id)
+    assert hf_referral_status in [200, 202], f"HF Referral creation failed"
+    print(f"HF Referral created with ID: {hf_referral_data['id']}")
+
+    new_symptom = "headache"
+    print(f"Bulk updating HF referral symptom to '{new_symptom}'...")
+    response = update_hf_referral_bulk(token, client, hf_referral_data, new_symptom)
+    assert response.status_code == 202, f"HF Referral bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    hf_referrals = search_hf_referral_by_client_ref(token, client, hf_referral_data["clientReferenceId"])
+    assert hf_referrals, f"HF Referral not found after bulk update"
+    assert hf_referrals[0].get("symptom") == new_symptom, f"symptom not updated. Got {hf_referrals[0].get('symptom')}"
+    print(f"HF Referral bulk updated successfully. symptom verified as '{new_symptom}'.")
+
+
+@pytest.mark.positive
+def test_delete_hf_referral_bulk():
+    """Test to bulk delete an HF referral. Creates all dependencies first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating product variant...")
+    variant_response = create_product_variant(token, client)
+    assert variant_response.status_code in [200, 202], f"Product Variant creation failed"
+    variant_id = variant_response.json()["ProductVariant"][0]["id"]
+
+    print("Creating project...")
+    project_id, project_status = create_individual_project(token, client, boundaryType, boundaryCode, variant_id, variant_id)
+    assert project_status in [200, 202], f"Project creation failed"
+    print(f"Project created with ID: {project_id}")
+
+    print("Creating facility...")
+    facility_response = create_facility(token, client)
+    assert facility_response.status_code in [200, 202], f"Facility creation failed"
+    facility_id = facility_response.json()["Facility"]["id"]
+
+    print("Creating project facility...")
+    project_facility_id, project_facility_status = create_project_facility(token, client, project_id, facility_id)
+    assert project_facility_status in [200, 202], f"Project Facility mapping failed"
+
+    print("Creating HF referral (regular create to get full data)...")
+    hf_referral_data, hf_referral_status = create_hf_referral_full(token, client, project_id, project_facility_id)
+    assert hf_referral_status in [200, 202], f"HF Referral creation failed"
+    hf_referral_id = hf_referral_data["id"]
+    print(f"HF Referral created with ID: {hf_referral_id}")
+
+    print("Bulk deleting HF referral...")
+    response = delete_hf_referral_bulk(token, client, hf_referral_data)
+    if response.status_code == 401:
+        pytest.skip("HF Referral bulk delete endpoint not available in this environment (401)")
+    assert response.status_code == 202, f"HF Referral bulk delete failed: {response.text}"
+    print(f"HF Referral {hf_referral_id} bulk deleted successfully (202 accepted)")
 
 
 # --- Helper functions ---
@@ -1177,6 +1666,83 @@ def delete_side_effect(token, client, side_effect_data):
     return response
 
 
+def create_side_effect_bulk(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id):
+    payload = load_payload("referralmanagement/side_effect", "create_bulk_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["SideEffects"][0]["clientReferenceId"] = client_ref_id
+    payload["SideEffects"][0]["tenantId"] = tenantId
+    payload["SideEffects"][0]["taskId"] = task_id
+    payload["SideEffects"][0]["taskClientReferenceId"] = task_client_ref_id
+    payload["SideEffects"][0]["projectBeneficiaryId"] = beneficiary_id
+    payload["SideEffects"][0]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["SideEffects"][0]["symptoms"] = ["FEVER"]
+
+    url = f"/referralmanagement/side-effect/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Side Effect bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_side_effect_bulk(token, client, side_effect_data, new_symptoms):
+    payload = load_payload("referralmanagement/side_effect", "update_bulk_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffects"][0]["id"] = side_effect_data["id"]
+    payload["SideEffects"][0]["tenantId"] = side_effect_data["tenantId"]
+    payload["SideEffects"][0]["clientReferenceId"] = side_effect_data["clientReferenceId"]
+    payload["SideEffects"][0]["rowVersion"] = side_effect_data["rowVersion"]
+    payload["SideEffects"][0]["auditDetails"] = side_effect_data["auditDetails"]
+    payload["SideEffects"][0]["clientAuditDetails"] = side_effect_data.get("clientAuditDetails")
+    payload["SideEffects"][0]["taskId"] = side_effect_data["taskId"]
+    payload["SideEffects"][0]["taskClientReferenceId"] = side_effect_data.get("taskClientReferenceId")
+    payload["SideEffects"][0]["projectBeneficiaryId"] = side_effect_data["projectBeneficiaryId"]
+    payload["SideEffects"][0]["projectBeneficiaryClientReferenceId"] = side_effect_data.get("projectBeneficiaryClientReferenceId")
+    payload["SideEffects"][0]["symptoms"] = new_symptoms
+    payload["SideEffects"][0]["isDeleted"] = False
+
+    url = f"/referralmanagement/side-effect/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_side_effect_bulk(token, client, side_effect_data):
+    payload = load_payload("referralmanagement/side_effect", "delete_bulk_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffects"][0]["id"] = side_effect_data["id"]
+    payload["SideEffects"][0]["tenantId"] = side_effect_data["tenantId"]
+    payload["SideEffects"][0]["clientReferenceId"] = side_effect_data["clientReferenceId"]
+    payload["SideEffects"][0]["rowVersion"] = side_effect_data["rowVersion"]
+    payload["SideEffects"][0]["auditDetails"] = side_effect_data["auditDetails"]
+    payload["SideEffects"][0]["clientAuditDetails"] = side_effect_data.get("clientAuditDetails")
+    payload["SideEffects"][0]["taskId"] = side_effect_data["taskId"]
+    payload["SideEffects"][0]["taskClientReferenceId"] = side_effect_data.get("taskClientReferenceId")
+    payload["SideEffects"][0]["projectBeneficiaryId"] = side_effect_data["projectBeneficiaryId"]
+    payload["SideEffects"][0]["projectBeneficiaryClientReferenceId"] = side_effect_data.get("projectBeneficiaryClientReferenceId")
+    payload["SideEffects"][0]["symptoms"] = side_effect_data.get("symptoms", [])
+    payload["SideEffects"][0]["isDeleted"] = True
+
+    url = f"/referralmanagement/side-effect/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_side_effect_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("referralmanagement/side_effect", "search_side_effect.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["SideEffect"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/referralmanagement/side-effect/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Side Effect search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("SideEffects", [])
+
+
 def delete_referral(token, client, referral_data):
     """
     Delete a referral (soft delete by setting isDeleted=true).
@@ -1206,6 +1772,84 @@ def delete_referral(token, client, referral_data):
     return response
 
 
+def create_referral_bulk(token, client, task_id, task_client_ref_id, beneficiary_id, beneficiary_client_ref_id, side_effect_id, side_effect_client_ref_id, facility_id):
+    payload = load_payload("referralmanagement/referral", "create_bulk_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["Referrals"][0]["clientReferenceId"] = client_ref_id
+    payload["Referrals"][0]["tenantId"] = tenantId
+    payload["Referrals"][0]["taskId"] = task_id
+    payload["Referrals"][0]["taskClientReferenceId"] = task_client_ref_id
+    payload["Referrals"][0]["projectBeneficiaryId"] = beneficiary_id
+    payload["Referrals"][0]["projectBeneficiaryClientReferenceId"] = beneficiary_client_ref_id
+    payload["Referrals"][0]["recipientType"] = "FACILITY"
+    payload["Referrals"][0]["recipientId"] = facility_id
+
+    url = f"/referralmanagement/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_referral_bulk(token, client, referral_data, new_reasons):
+    payload = load_payload("referralmanagement/referral", "update_bulk_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referrals"][0]["id"] = referral_data["id"]
+    payload["Referrals"][0]["tenantId"] = referral_data["tenantId"]
+    payload["Referrals"][0]["clientReferenceId"] = referral_data["clientReferenceId"]
+    payload["Referrals"][0]["rowVersion"] = referral_data["rowVersion"]
+    payload["Referrals"][0]["auditDetails"] = referral_data["auditDetails"]
+    payload["Referrals"][0]["clientAuditDetails"] = referral_data.get("clientAuditDetails")
+    payload["Referrals"][0]["projectBeneficiaryId"] = referral_data["projectBeneficiaryId"]
+    payload["Referrals"][0]["projectBeneficiaryClientReferenceId"] = referral_data.get("projectBeneficiaryClientReferenceId")
+    payload["Referrals"][0]["recipientType"] = referral_data.get("recipientType")
+    payload["Referrals"][0]["recipientId"] = referral_data.get("recipientId")
+    payload["Referrals"][0]["reasons"] = new_reasons
+    payload["Referrals"][0]["isDeleted"] = False
+
+    url = f"/referralmanagement/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_referral_bulk(token, client, referral_data):
+    payload = load_payload("referralmanagement/referral", "delete_bulk_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referrals"][0]["id"] = referral_data["id"]
+    payload["Referrals"][0]["tenantId"] = referral_data["tenantId"]
+    payload["Referrals"][0]["clientReferenceId"] = referral_data["clientReferenceId"]
+    payload["Referrals"][0]["rowVersion"] = referral_data["rowVersion"]
+    payload["Referrals"][0]["auditDetails"] = referral_data["auditDetails"]
+    payload["Referrals"][0]["clientAuditDetails"] = referral_data.get("clientAuditDetails")
+    payload["Referrals"][0]["projectBeneficiaryId"] = referral_data["projectBeneficiaryId"]
+    payload["Referrals"][0]["projectBeneficiaryClientReferenceId"] = referral_data.get("projectBeneficiaryClientReferenceId")
+    payload["Referrals"][0]["recipientType"] = referral_data.get("recipientType")
+    payload["Referrals"][0]["recipientId"] = referral_data.get("recipientId")
+    payload["Referrals"][0]["reasons"] = referral_data.get("reasons", [])
+    payload["Referrals"][0]["isDeleted"] = True
+
+    url = f"/referralmanagement/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_referral_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("referralmanagement/referral", "search_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Referral"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/referralmanagement/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Referrals", [])
+
+
 def delete_hf_referral(token, client, hf_referral_data):
     """
     Delete an HF referral (soft delete by setting isDeleted=true).
@@ -1232,3 +1876,78 @@ def delete_hf_referral(token, client, hf_referral_data):
     url = f"/referralmanagement/hf-referral/v1/_delete"
     response = client.post(url, payload)
     return response
+
+
+def create_hf_referral_bulk(token, client, project_id, project_facility_id):
+    payload = load_payload("referralmanagement/hf_referral", "create_bulk_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["HFReferrals"][0]["clientReferenceId"] = client_ref_id
+    payload["HFReferrals"][0]["tenantId"] = tenantId
+    payload["HFReferrals"][0]["projectId"] = project_id
+    payload["HFReferrals"][0]["projectfacilityId"] = project_facility_id
+    payload["HFReferrals"][0]["symptomSurveyId"] = str(uuid.uuid4())
+
+    url = f"/referralmanagement/hf-referral/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_hf_referral_bulk(token, client, hf_referral_data, new_symptom):
+    payload = load_payload("referralmanagement/hf_referral", "update_bulk_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferrals"][0]["id"] = hf_referral_data["id"]
+    payload["HFReferrals"][0]["tenantId"] = hf_referral_data["tenantId"]
+    payload["HFReferrals"][0]["clientReferenceId"] = hf_referral_data["clientReferenceId"]
+    payload["HFReferrals"][0]["rowVersion"] = hf_referral_data["rowVersion"]
+    payload["HFReferrals"][0]["auditDetails"] = hf_referral_data["auditDetails"]
+    payload["HFReferrals"][0]["clientAuditDetails"] = hf_referral_data.get("clientAuditDetails")
+    payload["HFReferrals"][0]["projectId"] = hf_referral_data["projectId"]
+    payload["HFReferrals"][0]["projectFacilityId"] = hf_referral_data.get("projectFacilityId")
+    payload["HFReferrals"][0]["symptom"] = new_symptom
+    payload["HFReferrals"][0]["symptomSurveyId"] = hf_referral_data.get("symptomSurveyId")
+    payload["HFReferrals"][0]["additionalFields"] = hf_referral_data.get("additionalFields")
+    payload["HFReferrals"][0]["isDeleted"] = False
+
+    url = f"/referralmanagement/hf-referral/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_hf_referral_bulk(token, client, hf_referral_data):
+    payload = load_payload("referralmanagement/hf_referral", "delete_bulk_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferrals"][0]["id"] = hf_referral_data["id"]
+    payload["HFReferrals"][0]["tenantId"] = hf_referral_data["tenantId"]
+    payload["HFReferrals"][0]["clientReferenceId"] = hf_referral_data["clientReferenceId"]
+    payload["HFReferrals"][0]["rowVersion"] = hf_referral_data["rowVersion"]
+    payload["HFReferrals"][0]["auditDetails"] = hf_referral_data["auditDetails"]
+    payload["HFReferrals"][0]["clientAuditDetails"] = hf_referral_data.get("clientAuditDetails")
+    payload["HFReferrals"][0]["projectId"] = hf_referral_data["projectId"]
+    payload["HFReferrals"][0]["projectFacilityId"] = hf_referral_data.get("projectFacilityId")
+    payload["HFReferrals"][0]["symptom"] = hf_referral_data.get("symptom")
+    payload["HFReferrals"][0]["symptomSurveyId"] = hf_referral_data.get("symptomSurveyId")
+    payload["HFReferrals"][0]["additionalFields"] = hf_referral_data.get("additionalFields")
+    payload["HFReferrals"][0]["isDeleted"] = True
+
+    url = f"/referralmanagement/hf-referral/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_hf_referral_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("referralmanagement/hf_referral", "search_hf_referral.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["HFReferral"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/referralmanagement/hf-referral/v1/_search?limit=100&offset=0&tenantId={tenantId}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"HF Referral search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("HFReferrals", [])

@@ -4,7 +4,7 @@ from utils.data_loader import load_payload
 from utils.auth import get_auth_token
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import invalidTenantId
+from utils.config import tenantId, invalidTenantId
 
 
 # --- Test functions ---
@@ -253,10 +253,7 @@ def create_product(token, client, tenant_id=None):
     """
     payload = load_payload("product", "create_product.json")
     payload["RequestInfo"] = get_request_info(token)
-
-    # Override tenantId if provided (for negative testing)
-    if tenant_id is not None:
-        payload["Product"][0]["tenantId"] = tenant_id
+    payload["Product"][0]["tenantId"] = tenant_id if tenant_id is not None else tenantId
 
     return client.post("/product/v1/_create", payload)
 
@@ -279,11 +276,8 @@ def create_product_variant(token, client, tenant_id=None, product_id="create"):
 
     payload = load_payload("product", "create_productVariant.json")
     payload["ProductVariant"][0]["productId"] = productId
+    payload["ProductVariant"][0]["tenantId"] = tenant_id if tenant_id is not None else tenantId
     payload["RequestInfo"] = get_request_info(token)
-
-    # Override tenantId if provided (for negative testing)
-    if tenant_id is not None:
-        payload["ProductVariant"][0]["tenantId"] = tenant_id
 
     return client.post("/product/variant/v1/_create", payload)
 
@@ -296,6 +290,7 @@ def create_product_full(token, client):
         Tuple of (product_data, status_code)
     """
     payload = load_payload("product", "create_product.json")
+    payload["Product"][0]["tenantId"] = tenantId
     payload["RequestInfo"] = get_request_info(token)
 
     response = client.post("/product/v1/_create", payload)
@@ -321,6 +316,7 @@ def create_product_variant_full(token, client):
 
     payload = load_payload("product", "create_productVariant.json")
     payload["ProductVariant"][0]["productId"] = productId
+    payload["ProductVariant"][0]["tenantId"] = tenantId
     payload["RequestInfo"] = get_request_info(token)
 
     response = client.post("/product/variant/v1/_create", payload)
