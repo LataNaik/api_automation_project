@@ -3,7 +3,7 @@
         {
             "tenantId": "mz",
             "type": "DRUG",
-            "name": "SP",
+            "name": "Automated-SP",
             "manufacturer": "Generic",
             "additionalFields": {
                 "schema": "test_3e1c7976b4d6",

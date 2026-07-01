@@ -175,7 +175,18 @@ def create_employee(token, client):
     # Update employee code and username
     payload["Employees"][0]["code"] = unique_code
     payload["Employees"][0]["user"]["userName"] = unique_code
+    suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    payload["Employees"][0]["user"]["name"] = f"Auto-Emp-{suffix}"
     payload["Employees"][0]["user"]["mobileNumber"] = mobile_number
+    payload["Employees"][0]["user"]["emailId"] = f"{unique_code.lower()}@automated.test"
+    payload["Employees"][0]["tenantId"] = tenantId
+    payload["Employees"][0]["user"]["tenantId"] = tenantId
+    for jurisdiction in payload["Employees"][0].get("jurisdictions", []):
+        jurisdiction["tenantId"] = tenantId
+        for role in jurisdiction.get("roles", []):
+            role["tenantId"] = tenantId
+    for role in payload["Employees"][0]["user"].get("roles", []):
+        role["tenantId"] = tenantId
 
     url = f"/{hrms}/employees/_create?tenantId={tenantId}"
     response = client.post(url, payload)

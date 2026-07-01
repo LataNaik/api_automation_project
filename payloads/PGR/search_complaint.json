@@ -1,0 +1,103 @@
+{
+    "RequestInfo": {
+        "apiId": "Rainmaker",
+        "authToken": "9a4a46a9-2f96-4fe8-ab7b-5db2ff574ca9",
+        "userInfo": {
+            "id": 47593,
+            "uuid": "8ca0fd96-d0d8-4c1d-b209-4aa5518f78e7",
+            "userName": "LN1",
+            "name": "Lata Naik",
+            "mobileNumber": "8887005246",
+            "emailId": "lata.naik@egovernments.org",
+            "locale": null,
+            "type": "EMPLOYEE",
+            "roles": [
+                {
+                    "name": "Logistical Officer",
+                    "code": "LOGISTICAL_OFFICER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "MDMS ADMIN",
+                    "code": "MDMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HRMS Admin",
+                    "code": "HRMS_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "HELPDESK USER",
+                    "code": "HELPDESK_USER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Registrar",
+                    "code": "REGISTRAR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Monitor Local",
+                    "code": "MONITOR_LOCAL",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Boundary Manager",
+                    "code": "BOUNDARY_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "System Administrator",
+                    "code": "SYSTEM_ADMINISTRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Health Facilty Worker",
+                    "code": "HEALTH_FACILITY_WORKER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Distributor",
+                    "code": "DISTRIBUTOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "L2 Support",
+                    "code": "L2_SUPPORT",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Warehouse Manager",
+                    "code": "WAREHOUSE_MANAGER",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Microplan Campaign integrator",
+                    "code": "MICROPLAN_CAMPAIGN_INTEGRATOR",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "PGR Administrator",
+                    "code": "PGR-ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Microplan Admin",
+                    "code": "MICROPLAN_ADMIN",
+                    "tenantId": "mz"
+                },
+                {
+                    "name": "Campaign Managers",
+                    "code": "CAMPAIGN_MANAGER",
+                    "tenantId": "mz"
+                }
+            ],
+            "active": true,
+            "tenantId": "mz",
+            "permanentCity": null
+        },
+        "msgId": "1781856339395|en_IN",
+        "plainAccessRequest": {}
+    }
+}

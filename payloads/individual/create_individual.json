@@ -3,7 +3,7 @@
         "tenantId": "mz",
         "clientReferenceId": "92d31c1d-e0c9-45d0-960f-bde9f5800038",
         "name": {
-            "givenName": "Moussa ",
+            "givenName": "Automated-Individual",
             "familyName": "Khumalo"
         },
         "dateOfBirth": "10/2/2024",
@@ -31,7 +31,7 @@
                 "boundaryType": "Aldeia",
                 "street": "Necklace Road",
                 "locality": {
-                    "code": "MICROPLAN_MO_01_01_02_01_21_LIPIRANI",
+                    "code": "ADMIN_TC_10_07_12_MADADJANG",
                     "name": "test_58630a388978",
                     "label": "test_7b7f928dcab8",
                     "latitude": 12.938808,

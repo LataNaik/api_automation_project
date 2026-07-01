@@ -1,0 +1,26 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "ProjectStaff": [
+        {
+            "tenantId": "mz",
+            "userId": "cd90a8e3-337c-4f0d-aed2-0c100c2b31a0",
+            "projectId": "237102e9-5269-4372-9dbc-88de5509dfdf",
+            "startDate": 1753920000000,
+            "endDate": 1782844199000,
+            "channel": "testing for HCM multi round mobile app",
+            "rowVersion": 1,
+            "additionalFields": {
+                "schema": "registration",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "key",
+                        "value": "value"
+                    }
+                ]
+            }
+        }
+    ]
+}

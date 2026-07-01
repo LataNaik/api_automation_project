@@ -8,7 +8,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
-from utils.auth import get_auth_token
+from utils.auth import get_auth_token, get_user_info
 from utils.request_info import get_request_info
 from utils.config import pgr, tenantId, search_limit, search_offset, mdms, hrms
 from utils.search_helpers import extract_id_from_file
@@ -354,6 +354,7 @@ def create_complaint(token, client, tenant_id=None, service_code=None):
     """
     payload = load_payload("PGR", "create_complaint.json")
     payload["RequestInfo"] = get_request_info(token)
+    payload["service"]["citizen"] = get_user_info("user")
 
     # Use provided service code or pick random from pre-fetched codes
     if service_code is None:

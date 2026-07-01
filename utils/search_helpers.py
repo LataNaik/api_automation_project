@@ -1,3 +1,4 @@
+import time
 from utils.api_client import APIClient
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
@@ -28,6 +29,28 @@ def search_entity(entity_type, token, client, entity_id, payload_file, endpoint,
     response_data = res.json()
     return response_data.get(response_key, [])
 
+
+
+def poll_until_found(search_fn, retries=5, delay=3):
+    """Call search_fn() repeatedly until it returns a non-empty list or retries are exhausted."""
+    for attempt in range(retries):
+        result = search_fn()
+        if result:
+            return result
+        time.sleep(delay)
+    return []
+
+
+def poll_until_match(search_fn, condition_fn, retries=5, delay=3):
+    """Call search_fn() repeatedly until condition_fn(results) returns True or retries are exhausted.
+    Returns the last result regardless — caller should assert the condition."""
+    result = []
+    for attempt in range(retries):
+        result = search_fn()
+        if result and condition_fn(result):
+            return result
+        time.sleep(delay)
+    return result
 
 
 def extract_id_from_file(label):

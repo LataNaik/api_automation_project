@@ -1,4 +1,8 @@
-def get_request_info(token: str) -> dict:
+from utils.config import tenantId as _tenantId
+from utils.auth import get_user_info
+
+def get_request_info(token: str, service: str = "user") -> dict:
+    user_info = get_user_info(service)
     return {
         "apiId": "org.egov.household",
         "ver": "1.0",
@@ -6,18 +10,12 @@ def get_request_info(token: str) -> dict:
         "action": "create",
         "msgId": "202507150001",
         "authToken": token,
-        "userInfo": {
-            "id": 16164561,
-            "userName": "auto_user",
+        "userInfo": user_info if user_info else {
+            "id": 0,
+            "userName": "",
             "type": "EMPLOYEE",
-            "uuid": "ac775061-7078-41b9-83bc-bfd1d064d20b",
-            "tenantId": "mz",
-            "roles": [
-                {
-                    "name": "District Supervisor",
-                    "code": "DISTRICT_SUPERVISOR",
-                    "tenantId": "mz"
-                }
-            ]
+            "uuid": "",
+            "tenantId": _tenantId,
+            "roles": []
         }
     }

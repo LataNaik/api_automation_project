@@ -1,0 +1,64 @@
+{
+    "HFReferrals": [
+        {
+            "id": "{{hfReferralId}}",
+            "tenantId": "{{tenantId}}",
+            "status": null,
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "HFReferral",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "hfCoordinator",
+                        "value": "User with all roles"
+                    },
+                    {
+                        "key": "dateOfEvaluation",
+                        "value": "1700988948452"
+                    },
+                    {
+                        "key": "nameOfReferral",
+                        "value": "Kanishq"
+                    },
+                    {
+                        "key": "age",
+                        "value": "25"
+                    },
+                    {
+                        "key": "gender",
+                        "value": "MALE"
+                    },
+                    {
+                        "key": "cycle",
+                        "value": "1"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "clientReferenceId": "{{hfReferralClientReferenceId}}",
+            "clientAuditDetails": {
+                "createdBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+                "lastModifiedBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "projectId": "{{projectIdIndividual}}",
+            "projectFacilityId": null,
+            "symptom": "fever",
+            "symptomSurveyId": "abc1",
+            "beneficiaryId": "",
+            "referralCode": null,
+            "nationalLevelId": null,
+            "isDeleted": false
+        }
+    ]
+}
