@@ -1,0 +1,42 @@
+{
+    "ProjectBeneficiaries": [
+        {
+            "id": "{{projectBeneficiaryIdIndividual}}",
+            "tenantId": "{{tenantId}}",
+            "status": null,
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "registration",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "key1",
+                        "value": "value1"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "clientReferenceId": "{{projectBeneficiaryClientReferenceIdIndividual}}",
+            "clientAuditDetails": {
+                "createdBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+                "lastModifiedBy": "8c11b1df-dded-4c9b-b413-65bd09c028fc",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "projectId": "{{projectIdIndividual}}",
+            "beneficiaryId": "{{individualId}}",
+            "dateOfRegistration": 1710158101634,
+            "beneficiaryClientReferenceId": "{{individualClientReferenceId}}",
+            "isDeleted": false,
+            "tag": "{{newTagProjectBenefiviary}}"
+        }
+    ]
+}

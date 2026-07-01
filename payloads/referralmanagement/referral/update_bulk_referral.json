@@ -1,0 +1,38 @@
+{
+    "Referrals": [
+        {
+            "id": "{{referralId}}",
+            "tenantId": "{{tenantId}}",
+            "status": null,
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": null,
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1723540958066,
+                "lastModifiedTime": 1723540958066
+            },
+            "clientReferenceId": "{{referralClientReferenceId}}",
+            "clientAuditDetails": {
+                "createdBy": "f3682e94-4464-4e60-b8b7-461ed75bb348",
+                "lastModifiedBy": "f3682e94-4464-4e60-b8b7-461ed75bb348",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "projectBeneficiaryId": "{{projectBeneficiaryIdIndividual}}",
+            "projectBeneficiaryClientReferenceId": "{{projectBeneficiaryClientReferenceIdIndividual}}",
+            "referrerId": null,
+            "recipientType": "{{recipientType}}",
+            "recipientId": "{{recipientId}}",
+            "reasons": [
+                "fever"
+            ],
+            "referralCode": null,
+            "sideEffect": null,
+            "isDeleted": false
+        }
+    ]
+}

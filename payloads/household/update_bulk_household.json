@@ -1,0 +1,55 @@
+{
+    "Households": [
+        {
+            "id": "{{householdId}}",
+            "tenantId": "{{tenantId}}",
+            "status": null,
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": null,
+            "householdType": "FAMILY",
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1723456109748,
+                "lastModifiedTime": 1723456109748
+            },
+            "clientReferenceId": "{{householdClientReferenceId}}",
+            "clientAuditDetails": {
+                "createdBy": "59c1d98d-5876-43ad-9960-396b40642232",
+                "lastModifiedBy": "59c1d98d-5876-43ad-9960-396b40642232",
+                "createdTime": 1723456109031,
+                "lastModifiedTime": 1723456109031
+            },
+            "memberCount": 5,
+            "address": {
+                "id": "1d0eb5f1-79f0-4459-b345-44a3c62d9710",
+                "clientReferenceId": "e396dc29-a46c-48fe-ae1c-b7bd9473e4d9",
+                "tenantId": "mz",
+                "doorNo": null,
+                "latitude": 12.938808,
+                "longitude": 77.6379754,
+                "locationAccuracy": 11.27,
+                "type": "CORRESPONDENCE",
+                "addressLine1": "Naveen",
+                "addressLine2": null,
+                "landmark": null,
+                "city": null,
+                "pincode": null,
+                "buildingName": null,
+                "street": null,
+                "locality": {
+                    "id": null,
+                    "tenantId": "mz",
+                    "code": "MICROPLAN_MO_13_05_03_02_12_BENTOR_CAMP",
+                    "geometry": null,
+                    "auditDetails": null,
+                    "additionalDetails": null
+                }
+            },
+            "isDeleted": false
+        }
+    ]
+}

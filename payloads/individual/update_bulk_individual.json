@@ -1,0 +1,141 @@
+{
+    "Individuals": [
+        {
+            "id": "{{individualId}}",
+            "tenantId": "{{tenantId}}",
+            "status": null,
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "test_f76b4cca6bff",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "test_80f7fb8d8a45",
+                        "value": "test_38bfd0dc223b"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "clientReferenceId": "{{individualClientReferenceId}}",
+            "clientAuditDetails": {
+                "createdBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+                "lastModifiedBy": "a8c7b5c5-6007-4556-945e-3969c98b5167",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "individualId": "{{individualIndId}}",
+            "userId": null,
+            "userUuid": null,
+            "name": {
+                "givenName": "{{newGivenName}}",
+                "familyName": " Kohli",
+                "otherNames": "King"
+            },
+            "dateOfBirth": "25/02/2009",
+            "gender": "MALE",
+            "bloodGroup": "B-",
+            "mobileNumber": "890809891",
+            "altContactNumber": null,
+            "email": "souravganguly_dada@gmail.com",
+            "address": [
+                {
+                    "id": "9b101a6c-c765-42cc-83c5-8ea7338057ba",
+                    "clientReferenceId": "cac947cd-60af-4fa2-bd6b-49c1b0f83560",
+                    "individualId": "a426107c-d1b0-4594-b5a9-dff969dc7a42",
+                    "tenantId": "mz",
+                    "doorNo": "123",
+                    "latitude": 12.938808,
+                    "longitude": 77.6379754,
+                    "locationAccuracy": 11.27,
+                    "type": "PERMANENT",
+                    "addressLine1": "Apartment",
+                    "addressLine2": "2nd Floor",
+                    "landmark": "Near Juhu Beach",
+                    "city": "Mumbai",
+                    "pincode": "123456",
+                    "buildingName": "Apartment",
+                    "street": "Necklace Road",
+                    "locality": {
+                        "id": null,
+                        "tenantId": "mz",
+                        "code": "CONSOLEHCM_NI_01_18_11_21_01_AGO_PANU__USO_EMURE_1",
+                        "geometry": null,
+                        "auditDetails": null,
+                        "additionalDetails": null
+                    },
+                    "ward": null,
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "createdTime": 1767868519111,
+                        "lastModifiedTime": 1767868519111
+                    }
+                }
+            ],
+            "fatherName": "Ganguly Sr",
+            "husbandName": null,
+            "relationship": null,
+            "identifiers": [
+                {
+                    "id": "9c17caf7-b02e-47a5-8768-6e8e9ae26b00",
+                    "clientReferenceId": "fe690780-dfb6-4764-9535-4f8594162540",
+                    "individualId": "a426107c-d1b0-4594-b5a9-dff969dc7a42",
+                    "individualClientReferenceId": "edb464e4-26c2-48f6-a86b-953936b1b09c",
+                    "identifierType": "SYSTEM_GENERATED",
+                    "identifierId": "********************************b16f",
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "createdTime": 1767868519111,
+                        "lastModifiedTime": 1767868519111
+                    }
+                }
+            ],
+            "skills": [
+                {
+                    "id": "4f40fe8b-6e64-4d3f-bb92-0530b2aaf0ea",
+                    "clientReferenceId": "c04e09fb-f55b-4f9e-a9db-e89603e83621",
+                    "individualId": "a426107c-d1b0-4594-b5a9-dff969dc7a42",
+                    "type": "Event Organizer",
+                    "level": "Expert",
+                    "experience": "5 Years",
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "lastModifiedBy": "6cb73e04-9dcb-4dd7-8ceb-e6f836c7c4e7",
+                        "createdTime": 1767868519112,
+                        "lastModifiedTime": 1767868519112
+                    }
+                }
+            ],
+            "photo": "test_35bd4e8545d8",
+            "isDeleted": false,
+            "isSystemUser": false,
+            "isSystemUserActive": true,
+            "userDetails": {
+                "username": "TEST140",
+                "password": "eGov@1234",
+                "tenantId": "{{tenantId}}",
+                "roles": [
+                    {
+                        "name": "District Supervisor",
+                        "code": "DISTRICT_SUPERVISOR",
+                        "description": null,
+                        "tenantId": "{{tenantId}}"
+                    }
+                ],
+                "type": "EMPLOYEE"
+            }
+        }
+    ]
+}

@@ -1,0 +1,93 @@
+{
+    "Tasks": [
+        {
+            "id": "{{taskIdIndividual}}",
+            "tenantId": "{{tenantId}}",
+            "source": null,
+            "rowVersion": 1,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "test_5266efb5bcd9",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "test_b9aa6f50056e",
+                        "value": "test_dcfafb1be02f"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "clientReferenceId": "{{taskClientReferenceIdIndividual}}",
+            "clientAuditDetails": {
+                "createdBy": "59c1d98d-5876-43ad-9960-396b40642232",
+                "lastModifiedBy": "59c1d98d-5876-43ad-9960-396b40642232",
+                "createdTime": 1768895893250,
+                "lastModifiedTime": 1768895893250
+            },
+            "projectId": "{{projectIdIndividual}}",
+            "projectBeneficiaryId": "{{projectBeneficiaryIdIndividual}}",
+            "projectBeneficiaryClientReferenceId": "{{projectBeneficiaryClientReferenceIdIndividual}}",
+            "resources": [
+                {
+                    "id": "16975a12-c045-4120-8823-2b2856b2707b",
+                    "tenantId": "mz",
+                    "clientReferenceId": "0c5858da-b714-4a08-8587-f7088618ec6a",
+                    "taskId": "PT-2025-08-22-157592",
+                    "productVariantId": "PVAR-2024-11-20-000437",
+                    "quantity": 1,
+                    "isDelivered": false,
+                    "deliveryComment": "SUCCESSFUL_DELIVERY",
+                    "isDeleted": false,
+                    "auditDetails": {
+                        "createdBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                        "lastModifiedBy": "1c69d641-db27-4fc9-9e56-d2fbe5590bf5",
+                        "createdTime": 1755886379704,
+                        "lastModifiedTime": 1755886379704
+                    },
+                    "additionalFields": null
+                }
+            ],
+            "plannedStartDate": 1675582245,
+            "plannedEndDate": 1707723045,
+            "actualStartDate": 1707550245,
+            "actualEndDate": 1707590245,
+            "createdBy": null,
+            "createdDate": null,
+            "address": {
+                "id": "89791969-19d2-4e2b-98d1-4e2ba03be24f",
+                "tenantId": "mz",
+                "clientReferenceId": "57ff045f-f8f6-4b54-a790-7867fb66f496",
+                "doorNo": "test_4b2c5ad43e11",
+                "latitude": 12.938808,
+                "longitude": 77.6379754,
+                "locationAccuracy": 65.67,
+                "type": "PERMANENT",
+                "addressLine1": "test_2512bdc41cb2",
+                "addressLine2": "test_afa1eadcb4f0",
+                "landmark": "test_d7ee474cb6da",
+                "city": "test_932d23b00265",
+                "pincode": "test_637fa8890171",
+                "buildingName": "test_90f36fdaf51d",
+                "street": "test_105ae34b63c6",
+                "boundaryType": "Aldeia",
+                "boundary": null,
+                "locality": {
+                    "id": null,
+                    "tenantId": "mz",
+                    "code": "ADMIN_TC_10_07_12_MADADJANG",
+                    "geometry": null,
+                    "auditDetails": null,
+                    "additionalDetails": null
+                }
+            },
+            "isDeleted": false,
+            "status": "ADMINISTRATION_SUCCESS"
+        }
+    ]
+}

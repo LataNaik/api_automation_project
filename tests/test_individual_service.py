@@ -4,7 +4,7 @@ from utils.auth import get_auth_token
 from utils.data_loader import load_payload
 from utils.request_info import get_request_info
 from utils.search_helpers import search_entity, extract_id_from_file
-from utils.config import boundaryCode, individual, invalidTenantId
+from utils.config import tenantId, boundaryCode, individual, invalidTenantId, search_limit, search_offset
 import uuid
 
 
@@ -66,7 +66,7 @@ def test_create_individual_with_invalid_tenant_id():
     res = create_individual(token, client, tenant_id=invalidTenantId)
 
     # Should fail with 401 Unauthorized
-    assert res.status_code == 401, f"Expected 401, got {res.status_code}: {res.text}"
+    assert res.status_code == 401, f"Expected  4xx, got {res.status_code}: {res.text}"
     print("Negative test passed: Creating individual with invalid tenantId returned 401")
 
 
@@ -89,7 +89,7 @@ def test_search_individual_with_invalid_tenant_id():
     url = f"/{individual}/v1/_search?tenantId={invalidTenantId}"
     response = client.post(url, payload)
 
-    assert response.status_code in [400, 401, 403], f"Expected error status code, got: {response.status_code}"
+    assert response.status_code == 401, f"Expected error status code, got: {response.status_code}"
     print(f"Search correctly rejected with status: {response.status_code}")
 
 
@@ -154,6 +154,64 @@ def test_delete_individual():
     print(f"Individual {individual_id} deleted successfully")
 
 
+@pytest.mark.positive
+def test_create_individual_bulk():
+    """Test to bulk create an individual. Asserts 202, then verifies via search by clientReferenceId."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Bulk creating individual...")
+    client_ref_id, status_code = create_individual_bulk(token, client)
+    assert status_code == 202, f"Individual bulk creation failed with status: {status_code}"
+    print("Bulk create accepted with 202")
+
+    individuals = search_individual_by_client_ref(token, client, client_ref_id)
+    assert individuals, f"No individual found with clientReferenceId {client_ref_id} after bulk create"
+    assert individuals[0]["clientReferenceId"] == client_ref_id
+    print(f"Verified: individual with clientReferenceId {client_ref_id} found in search results")
+
+
+@pytest.mark.positive
+def test_update_individual_bulk():
+    """Test to bulk update an individual. Creates individual first, then bulk updates givenName."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating individual for bulk update test...")
+    individual_data, individual_status = create_individual_full(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    print(f"Individual created with ID: {individual_data['id']}")
+
+    new_name = "Automated-Updated-Individual"
+    print(f"Bulk updating individual givenName to '{new_name}'...")
+    response = update_individual_bulk(token, client, individual_data, new_name)
+    assert response.status_code == 202, f"Individual bulk update failed: {response.text}"
+    print("Bulk update accepted with 202")
+
+    individuals = search_individual_by_client_ref(token, client, individual_data["clientReferenceId"])
+    assert individuals, f"Individual not found after bulk update"
+    assert individuals[0]["name"]["givenName"] == new_name, f"givenName not updated. Got {individuals[0].get('name', {}).get('givenName')}"
+    print(f"Individual bulk updated successfully. givenName verified as '{new_name}'.")
+
+
+@pytest.mark.positive
+def test_delete_individual_bulk():
+    """Test to bulk delete an individual. Creates individual first, then bulk deletes it."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    print("Creating individual for bulk delete test...")
+    individual_data, individual_status = create_individual_full(token, client)
+    assert individual_status in [200, 202], f"Individual creation failed with status: {individual_status}"
+    individual_id = individual_data["id"]
+    print(f"Individual created with ID: {individual_id}")
+
+    print("Bulk deleting individual...")
+    response = delete_individual_bulk(token, client, individual_data)
+    assert response.status_code == 202, f"Individual bulk delete failed: {response.text}"
+    print(f"Individual {individual_id} bulk deleted successfully (202 accepted)")
+
+
 # --- Helper function (no assertion) ---
 def create_individual(token, client, tenant_id=None):
     """
@@ -172,10 +230,9 @@ def create_individual(token, client, tenant_id=None):
     payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["RequestInfo"] = get_request_info(token)
 
-    # Override tenantId if provided (for negative testing)
-    if tenant_id is not None:
-        payload["Individual"]["tenantId"] = tenant_id
-        payload["Individual"]["address"][0]["tenantId"] = tenant_id
+    effective_tenant = tenant_id if tenant_id is not None else tenantId
+    payload["Individual"]["tenantId"] = effective_tenant
+    payload["Individual"]["address"][0]["tenantId"] = effective_tenant
 
     url = f"/{individual}/v1/_create"
     response = client.post(url, payload)
@@ -250,6 +307,8 @@ def create_individual_full(token, client):
     payload["Individual"]["address"][0]["locality"]["code"] = boundaryCode
     payload["Individual"]["identifiers"][0]["clientReferenceId"] = str(uuid.uuid4())
     payload["Individual"]["skills"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individual"]["tenantId"] = tenantId
+    payload["Individual"]["address"][0]["tenantId"] = tenantId
     payload["RequestInfo"] = get_request_info(token)
 
     url = f"/{individual}/v1/_create"
@@ -291,4 +350,85 @@ def delete_individual(token, client, individual_data):
     url = f"/{individual}/v1/_delete"
     response = client.post(url, payload)
     return response
+
+
+def create_individual_bulk(token, client):
+    payload = load_payload("individual", "create_bulk_individual.json")
+    payload["RequestInfo"] = get_request_info(token)
+    client_ref_id = str(uuid.uuid4())
+    payload["Individuals"][0]["clientReferenceId"] = client_ref_id
+    payload["Individuals"][0]["address"][0]["clientReferenceId"] = str(uuid.uuid4())
+    payload["Individuals"][0]["tenantId"] = tenantId
+    payload["Individuals"][0]["address"][0]["tenantId"] = tenantId
+
+    url = f"/{individual}/v1/bulk/_create"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Individual bulk create failed with status {response.status_code}: {response.text}")
+
+    return client_ref_id, response.status_code
+
+
+def update_individual_bulk(token, client, individual_data, new_given_name):
+    payload = load_payload("individual", "update_bulk_individual.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Individuals"][0]["id"] = individual_data["id"]
+    payload["Individuals"][0]["tenantId"] = individual_data["tenantId"]
+    payload["Individuals"][0]["clientReferenceId"] = individual_data["clientReferenceId"]
+    payload["Individuals"][0]["rowVersion"] = individual_data["rowVersion"]
+    payload["Individuals"][0]["auditDetails"] = individual_data["auditDetails"]
+    payload["Individuals"][0]["clientAuditDetails"] = individual_data.get("clientAuditDetails")
+    payload["Individuals"][0]["individualId"] = individual_data["individualId"]
+    payload["Individuals"][0]["name"] = dict(individual_data["name"])
+    payload["Individuals"][0]["name"]["givenName"] = new_given_name
+    payload["Individuals"][0]["gender"] = individual_data.get("gender")
+    payload["Individuals"][0]["dateOfBirth"] = individual_data.get("dateOfBirth")
+    payload["Individuals"][0]["mobileNumber"] = individual_data.get("mobileNumber")
+    payload["Individuals"][0]["address"] = individual_data.get("address", [])
+    payload["Individuals"][0]["identifiers"] = individual_data.get("identifiers", [])
+    payload["Individuals"][0]["skills"] = individual_data.get("skills", [])
+    payload["Individuals"][0]["isDeleted"] = False
+
+    url = f"/{individual}/v1/bulk/_update"
+    response = client.post(url, payload)
+    return response
+
+
+def delete_individual_bulk(token, client, individual_data):
+    payload = load_payload("individual", "delete_bulk_individual.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Individuals"][0]["id"] = individual_data["id"]
+    payload["Individuals"][0]["tenantId"] = individual_data["tenantId"]
+    payload["Individuals"][0]["clientReferenceId"] = individual_data["clientReferenceId"]
+    payload["Individuals"][0]["rowVersion"] = individual_data["rowVersion"]
+    payload["Individuals"][0]["auditDetails"] = individual_data["auditDetails"]
+    payload["Individuals"][0]["clientAuditDetails"] = individual_data.get("clientAuditDetails")
+    payload["Individuals"][0]["individualId"] = individual_data["individualId"]
+    payload["Individuals"][0]["name"] = individual_data["name"]
+    payload["Individuals"][0]["gender"] = individual_data.get("gender")
+    payload["Individuals"][0]["dateOfBirth"] = individual_data.get("dateOfBirth")
+    payload["Individuals"][0]["mobileNumber"] = individual_data.get("mobileNumber")
+    payload["Individuals"][0]["address"] = individual_data.get("address", [])
+    payload["Individuals"][0]["identifiers"] = individual_data.get("identifiers", [])
+    payload["Individuals"][0]["skills"] = individual_data.get("skills", [])
+    payload["Individuals"][0]["isDeleted"] = True
+
+    url = f"/{individual}/v1/bulk/_delete"
+    response = client.post(url, payload)
+    return response
+
+
+def search_individual_by_client_ref(token, client, client_ref_id):
+    payload = load_payload("individual", "search_individual.json")
+    payload["RequestInfo"] = get_request_info(token)
+    payload["Individual"] = {"clientReferenceId": [client_ref_id]}
+
+    url = f"/{individual}/v1/_search?tenantId={tenantId}&limit={search_limit}&offset={search_offset}"
+    response = client.post(url, payload)
+
+    if response.status_code not in [200, 202]:
+        raise Exception(f"Individual search failed with status {response.status_code}: {response.text}")
+
+    return response.json().get("Individual", [])
 

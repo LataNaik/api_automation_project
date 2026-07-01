@@ -262,6 +262,7 @@ def test_search_mdms_data_with_invalid_tenant_id():
 def search_mdms_data(token, client, master_name):
     payload = load_payload("mdms", "search_mdmsData.json")
     payload["MdmsCriteria"]["schemaCode"] = master_name
+    payload["MdmsCriteria"]["tenantId"] = tenantId
     payload["RequestInfo"] = get_request_info(token)
     url = f"/{mdms}/v2/_search"
     response = client.post(url, payload)

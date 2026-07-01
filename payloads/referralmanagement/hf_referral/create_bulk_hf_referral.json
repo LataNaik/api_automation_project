@@ -1,0 +1,61 @@
+{
+    "RequestInfo": {
+        "authToken": "{{authToken}}"
+    },
+    "HFReferrals": [
+        {
+            "tenantId": "{{tenantId}}",
+            "clientReferenceId": "{{uuid}}",
+            "projectId": "{{projectIdIndividual}}",
+            "projectfacilityId": "{{projectFacilityId}}",
+            "symptom": "fever",
+            "symptomSurveyId": "abc1",
+            "beneficiaryId": "",
+            "referralCode": null,
+            "nationalLevelId": null,
+            "clientAuditDetails": {
+                "createdBy": "{{createdBy}}",
+                "lastModifiedBy": "{{createdBy}}",
+                "createdTime": 1765785281097,
+                "lastModifiedTime": 1765785281097
+            },
+            "auditDetails": {
+                "createdBy": "{{createdBy}}",
+                "lastModifiedBy": "{{createdBy}}",
+                "createdTime": 1765785281097,
+                "lastModifiedTime": 1765785281097
+            },
+            "additionalFields": {
+                "schema": "HFReferral",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "hfCoordinator",
+                        "value": "User with all roles"
+                    },
+                    {
+                        "key": "dateOfEvaluation",
+                        "value": "1700988948452"
+                    },
+                    {
+                        "key": "nameOfReferral",
+                        "value": "Kanishq"
+                    },
+                    {
+                        "key": "age",
+                        "value": "25"
+                    },
+                    {
+                        "key": "gender",
+                        "value": "MALE"
+                    },
+                    {
+                        "key": "cycle",
+                        "value": "1"
+                    }
+                ]
+            },
+            "rowVersion": 1
+        }
+    ]
+}

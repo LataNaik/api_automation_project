@@ -1,0 +1,63 @@
+{
+    "HFReferrals": [
+        {
+            "id": "4a0ba5c4-c63d-4257-8bcf-74e17f709d81",
+            "tenantId": "oy",
+            "source": null,
+            "rowVersion": 2,
+            "applicationId": null,
+            "hasErrors": false,
+            "additionalFields": {
+                "schema": "HFReferral",
+                "version": 1,
+                "fields": [
+                    {
+                        "key": "hfCoordinator",
+                        "value": "User with all roles"
+                    },
+                    {
+                        "key": "dateOfEvaluation",
+                        "value": "1700988948452"
+                    },
+                    {
+                        "key": "nameOfReferral",
+                        "value": "Kanishq"
+                    },
+                    {
+                        "key": "age",
+                        "value": "25"
+                    },
+                    {
+                        "key": "gender",
+                        "value": "MALE"
+                    },
+                    {
+                        "key": "cycle",
+                        "value": "1"
+                    }
+                ]
+            },
+            "auditDetails": {
+                "createdBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "lastModifiedBy": "31b7efd1-c900-40d3-abfe-2dadbca85f3e",
+                "createdTime": 1747925481897,
+                "lastModifiedTime": 1747925771683
+            },
+            "clientReferenceId": "e31a572a-4639-4078-a377-b5a3390263e0",
+            "clientAuditDetails": {
+                "createdBy": "97eb1ac8-335e-4a41-b4a6-ea6f9cfbc560",
+                "lastModifiedBy": "ebdcc16f-5048-48cb-bf9d-8129d07669e3",
+                "createdTime": 1747925480232,
+                "lastModifiedTime": 1747925480232
+            },
+            "projectId": "f14bba6a-be11-4995-8c48-48a36f00a220",
+            "projectFacilityId": null,
+            "symptom": "fever",
+            "symptomSurveyId": "Lata",
+            "beneficiaryId": "",
+            "referralCode": null,
+            "nationalLevelId": null,
+            "isDeleted": true
+        }
+    ]
+}
