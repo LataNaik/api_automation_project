@@ -35,6 +35,41 @@ def test_search_boundary():
             f.write(f"{b_type}: {code}\n")
 
 
+@pytest.mark.positive
+def test_fetch_boundary_codes_per_level():
+    """Fetch the first boundary code at each level of the hierarchy and save to ids.txt."""
+    token = get_auth_token("user")
+    client = APIClient(token=token)
+
+    res = search_boundary_data(token, client, tenantId, "COUNTRY", hierarchyType)
+    assert res.status_code == 200, f"Boundary search failed: {res.text}"
+
+    tenant_boundaries = res.json().get("TenantBoundary", [])
+    assert tenant_boundaries, "No TenantBoundary found in response"
+
+    boundaries_tree = tenant_boundaries[0].get("boundary", [])
+    assert boundaries_tree, "No boundary data found"
+
+    # Follow the first child at each depth to get one code per level
+    levels = []
+    current = boundaries_tree
+    while current:
+        first = current[0]
+        levels.append((first.get("boundaryType"), first.get("code")))
+        current = first.get("children") or []
+
+    assert levels, "Could not extract any boundary levels"
+
+    print(f"\nBoundary codes per level ({len(levels)} levels):")
+    for btype, code in levels:
+        print(f"  {btype}: {code}")
+
+    with open("output/ids.txt", "a") as f:
+        f.write("\n--- Boundary Codes Per Level ---\n")
+        for btype, code in levels:
+            f.write(f"Boundary {btype}: {code}\n")
+
+
 @pytest.mark.negative
 def test_search_boundary_with_invalid_tenant_id():
     """Negative test: Searching boundary with invalid tenantId should fail"""
